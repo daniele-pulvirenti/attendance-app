@@ -51,9 +51,6 @@ def login():
 
         db_user = user[0]
 
-        if "password" not in db_user:
-            return "Password mancante nel DB"
-
         if bcrypt.checkpw(password.encode(), db_user["password"].encode()):
             session["user"] = db_user
             return redirect("/dashboard")
@@ -175,6 +172,9 @@ def dashboard():
 
         for d in data:
 
+            selected_ferie = "selected" if d.get("type") == "ferie" else ""
+            selected_permesso = "selected" if d.get("type") == "permesso" else ""
+
             html += f"""
             <div class="card" style="
                 background:linear-gradient(135deg,#1e293b,#0f172a);
@@ -189,8 +189,8 @@ def dashboard():
 
                 Tipo:
                 <select class="type">
-                    <option value="ferie" {"selected" if d.get('type')=="ferie" else ""}>Ferie</option>
-                    <option value="permesso" {"selected" if d.get('type')=="permesso" else ""}>Permesso</option>
+                    <option value="ferie" {selected_ferie}>Ferie</option>
+                    <option value="permesso" {selected_permesso}>Permesso</option>
                 </select><br>
 
                 Data:
