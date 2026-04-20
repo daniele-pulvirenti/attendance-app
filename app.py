@@ -41,18 +41,26 @@ def login():
             headers=HEADERS
         )
 
-        user = res.json()
+        try:
+            user = res.json()
+        except:
+            return "Errore server"
 
-        if user:
+        if not user:
+            return "Utente non trovato"
 
-            db_user = user[0]
+        db_user = user[0]
 
-            if bcrypt.checkpw(
-                password.encode(),
-                db_user["password"].encode()
-            ):
-                session["user"] = db_user
-                return redirect("/dashboard")
+        # 🔐 sicurezza anti-crash
+        if "password" not in db_user:
+            return "Password mancante nel DB"
+
+        if bcrypt.checkpw(
+            password.encode(),
+            db_user["password"].encode()
+        ):
+            session["user"] = db_user
+            return redirect("/dashboard")
 
         return "Login errato"
 
