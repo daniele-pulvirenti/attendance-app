@@ -96,14 +96,14 @@ def dashboard():
                 color:white;
                 box-shadow:0 4px 12px rgba(0,0,0,0.4)
             ">
-                <b>{d['worker_name']}</b><br>
-                📅 {d['date']}<br>
-                🏷 {d.get('type','')}<br>
-                ⏰ {d.get('start_time','')} - {d.get('end_time','')}<br>
-                Stato: <span style="color:{color}">{d['status']}</span><br><br>
+                <b>{{d['worker_name']}}</b><br>
+                📅 {{d['date']}}<br>
+                🏷 {{d.get('type','')}}<br>
+                ⏰ {{d.get('start_time','')}} - {{d.get('end_time','')}}<br>
+                Stato: <span style="color:{{color}}">{{d['status']}}</span><br><br>
 
-                <a href="/approve/{d['id']}" style="color:#22c55e">✔ Approva</a> |
-                <a href="/reject/{d['id']}" style="color:#ef4444">✖ Rifiuta</a>
+                <a href="/approve/{{d['id']}}" style="color:#22c55e">✔ Approva</a> |
+                <a href="/reject/{{d['id']}}" style="color:#ef4444">✖ Rifiuta</a>
             </div>
             """
 
@@ -148,21 +148,21 @@ def dashboard():
         </form>
 
         <script>
-        function toggleAddForm(){
+        function toggleAddForm(){{
             let type = document.getElementById("type").value;
             let start = document.getElementById("start");
             let end = document.getElementById("end");
 
-            if(type === "ferie"){
+            if(type === "ferie"){{
                 start.disabled = true;
                 end.disabled = true;
                 start.value = "";
                 end.value = "";
-            } else {
+            }} else {{
                 start.disabled = false;
                 end.disabled = false;
-            }
-        }
+            }}
+        }}
         </script>
 
         <hr>
@@ -184,24 +184,23 @@ def dashboard():
                 color:white;
                 box-shadow:0 6px 15px rgba(0,0,0,0.3)
             ">
-
-                <input type="hidden" class="id" value="{d['id']}">
-
+                <input type="hidden" class="id" value="{d["id"]}">
+            
                 Tipo:
                 <select class="type">
                     <option value="ferie" {selected_ferie}>Ferie</option>
                     <option value="permesso" {selected_permesso}>Permesso</option>
                 </select><br>
-
+            
                 Data:
-                <input type="date" class="date" value="{d['date']}"><br>
-
+                <input type="date" class="date" value="{d["date"]}"><br>
+            
                 Dalle:
-                <input type="time" class="start" value="{d.get('start_time','')}"><br>
-
+                <input type="time" class="start" value="{d.get("start_time","")}"><br>
+            
                 Alle:
-                <input type="time" class="end" value="{d.get('end_time','')}"><br><br>
-
+                <input type="time" class="end" value="{d.get("end_time","")}"><br><br>
+            
                 <button onclick="update(this)" style="background:#3b82f6;color:white;">Modifica</button>
                 <button onclick="remove(this)" style="background:#ef4444;color:white;">Elimina</button>
             </div>
