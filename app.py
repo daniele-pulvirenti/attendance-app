@@ -208,57 +208,64 @@ def dashboard():
             """
 
         html += """
-        <script>
+<script>
 
-        function toggleRow(card){
+function toggleRow(card){
 
-            let type = card.querySelector(".type").value;
-            let start = card.querySelector(".start");
-            let end = card.querySelector(".end");
+    let type = card.querySelector(".type").value;
+    let start = card.querySelector(".start");
+    let end = card.querySelector(".end");
 
-            if(type === "ferie"){
-                start.disabled = true;
-                end.disabled = true;
-                start.value = "";
-                end.value = "";
-            } else {
-                start.disabled = false;
-                end.disabled = false;
-            }
-        }
+    if(type === "ferie"){
+        start.disabled = true;
+        end.disabled = true;
+        start.value = "";
+        end.value = "";
+    } else {
+        start.disabled = false;
+        end.disabled = false;
+    }
+}
 
-        document.querySelectorAll(".card").forEach(c => {
+window.addEventListener("DOMContentLoaded", function() {
+
+    document.querySelectorAll(".card").forEach(function(c){
+        toggleRow(c);
+
+        c.querySelector(".type").addEventListener("change", function(){
             toggleRow(c);
-            c.querySelector(".type").addEventListener("change", () => toggleRow(c));
         });
+    });
 
-        function update(btn){
+});
 
-            let card = btn.parentElement;
+function update(btn){
 
-            fetch("/update_absence", {
-                method:"POST",
-                headers:{"Content-Type":"application/json"},
-                body: JSON.stringify({
-                    id: card.querySelector(".id").value,
-                    type: card.querySelector(".type").value,
-                    date: card.querySelector(".date").value,
-                    start_time: card.querySelector(".start").value,
-                    end_time: card.querySelector(".end").value
-                })
-            }).then(()=>location.reload());
-        }
+    let card = btn.parentElement;
 
-        function remove(btn){
+    fetch("/update_absence", {
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({
+            id: card.querySelector(".id").value,
+            type: card.querySelector(".type").value,
+            date: card.querySelector(".date").value,
+            start_time: card.querySelector(".start").value,
+            end_time: card.querySelector(".end").value
+        })
+    }).then(()=>location.reload());
+}
 
-            let id = btn.parentElement.querySelector(".id").value;
+function remove(btn){
 
-            fetch("/delete_absence/"+id)
-            .then(()=>location.reload());
-        }
+    let id = btn.parentElement.querySelector(".id").value;
 
-        </script>
-        """
+    fetch("/delete_absence/"+id)
+    .then(()=>location.reload());
+}
+
+</script>
+"""
 
         return html
 
