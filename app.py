@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, render_template_string
+from flask import Flask, request, session, redirect, render_template_string
 import requests
 import os
 from dotenv import load_dotenv
@@ -7,8 +7,12 @@ load_dotenv()
 
 app = Flask(__name__)
 
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+# 🔐 meglio da env (Render + sicurezza)
+app.secret_key = os.getenv("SECRET_KEY", "dev_key")
+
+# ☁️ SUPABASE CORRETTO
+SUPABASE_URL = "https://dlhayirunoremlpkyxlo.supabase.co"
+SUPABASE_KEY = "sb_publishable_DZ69ih5L9IqvJmt44VUK4w_8uelJ5xU"
 
 HEADERS = {
     "apikey": SUPABASE_KEY,
@@ -16,70 +20,77 @@ HEADERS = {
     "Content-Type": "application/json"
 }
 
-# -----------------------
-# HOME (semplice UI)
-# -----------------------
-HTML = """
-<h2>Gestione Presenze</h2>
-
-<h3>Lavoratore</h3>
-<form action="/add" method="post">
-  Nome: <input name="worker_name"><br>
-  Data: <input type="date" name="date"><br>
-  <button type="submit">Segnala assenza</button>
+# ---------------- LOGIN PAGE ----------------
+LOGIN_HTML = """
+<h2>Login Sistema Presenze</h2>
+<form method="post">
+  Username: <input name="username"><br>
+  Password: <input name="password" type="password"><br>
+  <button type="submit">Login</button>
 </form>
-
-<hr>
-
-<h3>Capo - Dashboard</h3>
-<a href="/dashboard">Vedi assenze</a>
 """
 
-@app.route("/")
-def home():
-    return render_template_string(HTML)
+@app.route("/", methods=["GET", "POST"])
+def login():
 
-# -----------------------
-# AGGIUNGI ASSENZA
-# -----------------------
-@app.route("/add", methods=["POST"])
-def add_absence():
-    data = {
-        "worker_name": request.form["worker_name"],
-        "date": request.form["date"]
-    }
+    if request.method == "POST":
+        username = request.form["username"]
+        password = request.form["password"]
 
-    res = requests.post(
-        f"{SUPABASE_URL}/rest/v1/absences",
-        headers=HEADERS,
-        json=data
-    )
+        res = requests.get(
+            f"{SUPABASE_URL}/rest/v1/users?username=eq.{username}&password=eq.{password}",
+            headers=HEADERS
+        )
 
-    return "Assenza registrata! <a href='/'>torna</a>"
+        user = res.json()
 
-# -----------------------
-# DASHBOARD CAPO
-# -----------------------
+        if user:
+            session["user"] = user[0]
+            return redirect("/dashboard")
+
+        return "Login errato"
+
+    return render_template_string(LOGIN_HTML)
+
+# ---------------- DASHBOARD ----------------
 @app.route("/dashboard")
 def dashboard():
-    res = requests.get(
-        f"{SUPABASE_URL}/rest/v1/absences?select=*",
-        headers=HEADERS
-    )
+
+    if "user" not in session:
+        return redirect("/")
+
+    user = session["user"]
+
+    if user["role"] == "manager":
+        res = requests.get(
+            f"{SUPABASE_URL}/rest/v1/absences?select=*",
+            headers=HEADERS
+        )
+    else:
+        res = requests.get(
+            f"{SUPABASE_URL}/rest/v1/absences?worker_name=eq.{user['username']}",
+            headers=HEADERS
+        )
 
     data = res.json()
 
-    html = "<h2>Dashboard Capo</h2>"
-    html += "<ul>"
+    html = f"<h2>Benvenuto {user['username']}</h2>"
+    html += "<a href='/logout'>Logout</a><hr>"
+    html += "<h3>Assenze</h3><ul>"
 
     for d in data:
         html += f"<li>{d['worker_name']} - {d['date']}</li>"
 
-    html += "</ul><a href='/'>home</a>"
+    html += "</ul>"
+
     return html
 
+# ---------------- LOGOUT ----------------
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect("/")
 
-import os
-
+# ---------------- RUN ----------------
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
