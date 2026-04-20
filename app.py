@@ -51,7 +51,6 @@ def login():
 
         db_user = user[0]
 
-        # 🔐 sicurezza anti-crash
         if "password" not in db_user:
             return "Password mancante nel DB"
 
@@ -66,6 +65,7 @@ def login():
 
     return render_template_string(LOGIN_HTML)
 
+
 # ---------------- DASHBOARD ----------------
 @app.route("/dashboard")
 def dashboard():
@@ -77,17 +77,17 @@ def dashboard():
 
     html = ""
 
-    # CAPO
+    # CAPO vs LAVORATORE
     if user["role"] != "manager":
-
         url = f"{SUPABASE_URL}/rest/v1/absences?worker_name=eq.{user['username']}"
-
     else:
-
         url = f"{SUPABASE_URL}/rest/v1/absences?select=*"
 
     res = requests.get(url, headers=HEADERS)
     data = res.json()
+
+    # ---------------- CAPO ----------------
+    if user["role"] == "manager":
 
         html += f"<h2>Dashboard Capo - {user['username']}</h2>"
         html += "<a href='/logout'>Logout</a><hr>"
@@ -109,15 +109,8 @@ def dashboard():
             </div>
             """
 
-    # LAVORATORE
+    # ---------------- LAVORATORE ----------------
     else:
-
-        res = requests.get(
-            f"{SUPABASE_URL}/rest/v1/absences?worker_name=eq.{user['username']}",
-            headers=HEADERS
-        )
-
-        data = res.json()
 
         html += f"<h2>Benvenuto {user['username']}</h2>"
         html += "<a href='/logout'>Logout</a><hr>"
@@ -152,6 +145,7 @@ def dashboard():
 
     return html
 
+
 # ---------------- ADD ----------------
 @app.route("/add_absence", methods=["POST"])
 def add_absence():
@@ -178,6 +172,7 @@ def add_absence():
 
     return redirect("/dashboard")
 
+
 # ---------------- APPROVE ----------------
 @app.route("/approve/<id>")
 def approve(id):
@@ -189,6 +184,7 @@ def approve(id):
     )
 
     return redirect("/dashboard")
+
 
 # ---------------- REJECT ----------------
 @app.route("/reject/<id>")
@@ -202,11 +198,13 @@ def reject(id):
 
     return redirect("/dashboard")
 
+
 # ---------------- LOGOUT ----------------
 @app.route("/logout")
 def logout():
     session.clear()
     return redirect("/")
+
 
 # ---------------- RUN ----------------
 if __name__ == "__main__":
