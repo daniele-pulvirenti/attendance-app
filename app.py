@@ -78,14 +78,16 @@ def dashboard():
     html = ""
 
     # CAPO
-    if user["role"] == "manager":
+    if user["role"] != "manager":
 
-        res = requests.get(
-            f"{SUPABASE_URL}/rest/v1/absences?select=*",
-            headers=HEADERS
-        )
+        url = f"{SUPABASE_URL}/rest/v1/absences?worker_name=eq.{user['username']}"
 
-        data = res.json()
+    else:
+
+        url = f"{SUPABASE_URL}/rest/v1/absences?select=*"
+
+    res = requests.get(url, headers=HEADERS)
+    data = res.json()
 
         html += f"<h2>Dashboard Capo - {user['username']}</h2>"
         html += "<a href='/logout'>Logout</a><hr>"
