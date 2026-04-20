@@ -72,10 +72,10 @@ def dashboard():
 
     if user["role"] == "manager":
 
-    res = requests.get(
+        res = requests.get(
         f"{SUPABASE_URL}/rest/v1/absences?select=*",
         headers=HEADERS
-    )
+        )
 
     data = res.json()
 
