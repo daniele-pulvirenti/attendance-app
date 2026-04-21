@@ -339,11 +339,14 @@ def delete_absence(id):
 @app.route("/approve/<id>")
 def approve(id):
 
-    requests.patch(
+    r = requests.patch(
         f"{SUPABASE_URL}/rest/v1/absences?id=eq.{id}",
         headers=HEADERS,
         json={"status": "approved"}
     )
+
+    print("APPROVE STATUS:", r.status_code)
+    print("APPROVE RESPONSE:", r.text)
 
     return redirect("/dashboard")
 
