@@ -351,23 +351,13 @@ def update_absence():
 
 @app.route("/delete/<int:id>", methods=["DELETE"])
 def delete_absence(id):
+
     r = requests.delete(
         f"{SUPABASE_URL}/rest/v1/absences?id=eq.{id}",
         headers=HEADERS
     )
+
     return ("", 204)
-
-    
-@app.route("/delete_absence/<id>")
-def delete_absence(id):
-
-    requests.delete(
-        f"{SUPABASE_URL}/rest/v1/absences?id=eq.{id}",
-        headers=HEADERS
-    )
-
-    return {"ok": True}
-
 
 # ---------------- APPROVE ----------------
 @app.route("/approve/<id>")
