@@ -351,10 +351,15 @@ def update_absence():
 @app.route("/delete/<int:id>")
 def delete_absence(id):
 
+    print("DELETE CHIAMATA CON ID:", id)
+
     r = requests.delete(
         f"{SUPABASE_URL}/rest/v1/absences?id=eq.{id}",
         headers=HEADERS
     )
+
+    print("STATUS DELETE:", r.status_code)
+    print("RESPONSE:", r.text)
 
     return redirect("/dashboard")
 
