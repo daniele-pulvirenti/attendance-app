@@ -97,16 +97,16 @@ def dashboard():
                 color:white;
                 box-shadow:0 4px 12px rgba(0,0,0,0.4)
             ">
-                <b>{{d['worker_name']}}</b><br>
-                📅 {{d['date']}}<br>
-                🏷 {{d.get('type','')}}<br>
-                ⏰ {{d.get('start_time','')}} - {{d.get('end_time','')}}<br>
-                Stato: <span style="color:{{color}}">{{d['status']}}</span><br><br>
-
-                <a href="/approve/{{d['id']}}" style="color:#22c55e">✔ Approva</a> |
-                <a href="/reject/{{d['id']}}" style="color:#ef4444">✖ Rifiuta</a>
+                <b>{d["worker_name"]}</b><br>
+                📅 {d["date"]}<br>
+                🏷 {d.get("type","")}<br>
+                ⏰ {d.get("start_time","")} - {d.get("end_time","")}<br>
+                Stato: <span style="color:{color}">{d["status"]}</span><br><br>
+            
+                <a href="/approve/{d["id"]}" style="color:#22c55e">✔ Approva</a> |
+                <a href="/reject/{d["id"]}" style="color:#ef4444">✖ Rifiuta</a>
             </div>
-            """
+"""
 
         return html
 
