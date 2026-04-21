@@ -227,10 +227,10 @@ def dashboard():
         el.addEventListener("input", validateForm);
     }});
 
-            window.onload = function(){
+            window.onload = function(){{
             toggleAddForm();
             validateForm();
-        }
+        }}
                 
         </script>
 
