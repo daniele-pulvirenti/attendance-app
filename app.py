@@ -176,12 +176,44 @@ def dashboard():
         <hr>
 
         <h3>📌 Le tue assenze</h3>
-        <h3>📅 Calendario assenze</h3>
+        <h3 style="color:#38bdf8;margin-bottom:10px;">📅 Calendario assenze</h3>
 
-        <div style="display:flex;justify-content:space-between;align-items:center;color:white;margin-bottom:10px;">
-            <button onclick="changeMonth(-1)" style="background:#3b82f6;color:white;border:none;padding:5px 10px;border-radius:6px;">◀</button>
-            <h4 id="monthLabel"></h4>
-            <button onclick="changeMonth(1)" style="background:#3b82f6;color:white;border:none;padding:5px 10px;border-radius:6px;">▶</button>
+        <div style="
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            background:#0f172a;
+            padding:10px 15px;
+            border-radius:12px;
+            color:white;
+            margin-bottom:15px;
+            box-shadow:0 4px 12px rgba(0,0,0,0.3);
+        ">
+        
+            <button onclick="changeMonth(-1)" style="
+                background:#1e40af;
+                color:white;
+                border:none;
+                padding:6px 12px;
+                border-radius:8px;
+                cursor:pointer;
+            ">◀</button>
+        
+            <div id="monthLabel" style="
+                font-weight:bold;
+                font-size:16px;
+                letter-spacing:0.5px;
+            "></div>
+        
+            <button onclick="changeMonth(1)" style="
+                background:#1e40af;
+                color:white;
+                border:none;
+                padding:6px 12px;
+                border-radius:8px;
+                cursor:pointer;
+            ">▶</button>
+        
         </div>
         
         <div id="calendar"></div>
@@ -316,7 +348,10 @@ function renderCalendar(){
         "Luglio","Agosto","Settembre","Ottobre","Novembre","Dicembre"
     ];
 
-    monthLabel.innerText = monthNames[month] + " " + year;
+    monthLabel.innerHTML = `
+        <span style="color:#38bdf8">${monthNames[month]}</span>
+        <span style="opacity:0.7">${year}</span>
+    `;
 
     const daysInMonth = new Date(year, month + 1, 0).getDate();
 
