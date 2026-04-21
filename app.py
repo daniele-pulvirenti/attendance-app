@@ -229,8 +229,11 @@ function remove(btn){
     let card = btn.closest(".card");
     let id = card.querySelector(".id").value;
 
-    fetch("/delete/" + id, { method: "DELETE" })
-    .then(() => card.remove());
+    fetch("/delete/" + id)
+        .then(res => res.text())
+        .then(() => {
+            card.remove(); // sparisce subito senza reload
+        });
 }
 
 
@@ -353,15 +356,12 @@ def delete_absence(id):
 
     print("DELETE CHIAMATA CON ID:", id)
 
-    r = requests.delete(
+    requests.delete(
         f"{SUPABASE_URL}/rest/v1/absences?id=eq.{id}",
         headers=HEADERS
     )
 
-    print("STATUS DELETE:", r.status_code)
-    print("RESPONSE:", r.text)
-
-    return redirect("/dashboard")
+    return ("ok", 200)
 
 # ---------------- APPROVE ----------------
 @app.route("/approve/<id>")
