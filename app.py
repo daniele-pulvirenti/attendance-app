@@ -131,15 +131,15 @@ def dashboard():
         <button onclick="remove(this)" style="background:#ef4444;color:white;">Elimina</button>
     </div>
     """
-            html += """
-            <script>
-            setInterval(() => {
-                location.reload();
-            }, 5000);
-            </script>
-            """
-            
-        return html
+    html += """
+    <script>
+    setInterval(() => {
+        location.reload();
+    }, 5000);
+    </script>
+    """
+    
+return html
 
     # ================= LAVORATORE =================
     else:
