@@ -282,8 +282,8 @@ def dashboard():
 
         for d in data:
 
-    status = d.get("status", "pending")
-    color = "#f59e0b" if status == "pending" else "#22c55e" if status == "approved" else "#ef4444"
+            status = d.get("status", "pending")
+            color = "#f59e0b" if status == "pending" else "#22c55e" if status == "approved" else "#ef4444"
 
     # ---------------- DATA DISPLAY CORRETTA ----------------
     if d.get("type") == "ferie":
