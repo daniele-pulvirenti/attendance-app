@@ -144,119 +144,119 @@ return html
     # ================= LAVORATORE =================
 
 
-        res = requests.get(
-            f"{SUPABASE_URL}/rest/v1/absences?worker_name=eq.{user['username']}",
-            headers=HEADERS
-        )
-        data = res.json()
+    res = requests.get(
+        f"{SUPABASE_URL}/rest/v1/absences?worker_name=eq.{user['username']}",
+        headers=HEADERS
+    )
+    data = res.json()
 
-        html = f"""
-        <h2 style="color:#38bdf8">Benvenuto {user['username']}</h2>
-        <a href='/logout'>Logout</a>
-        <hr>
+    html = f"""
+    <h2 style="color:#38bdf8">Benvenuto {user['username']}</h2>
+    <a href='/logout'>Logout</a>
+    <hr>
 
-        <h3>➕ Inserisci assenza</h3>
+    <h3>➕ Inserisci assenza</h3>
 
-        <form method="post" action="/add_absence" style="
-            background:#111827;
-            padding:15px;
-            border-radius:10px;
-            color:white;
-        ">
+    <form method="post" action="/add_absence" style="
+        background:#111827;
+        padding:15px;
+        border-radius:10px;
+        color:white;
+    ">
 
-          Tipo:
-          <select name="type" id="type" onchange="toggleAddForm()">
-            <option value="ferie">Ferie</option>
-            <option value="permesso">Permesso</option>
-          </select><br><br>
+      Tipo:
+      <select name="type" id="type" onchange="toggleAddForm()">
+        <option value="ferie">Ferie</option>
+        <option value="permesso">Permesso</option>
+      </select><br><br>
 
-          <div id="singleDate">
-            Data: <input type="date" name="date"><br><br>
-        </div>
-        
-        <div id="rangeDate" style="display:none;">
-            Dal: <input type="date" name="date_from"><br><br>
-            Al: <input type="date" name="date_to"><br><br>
-        </div>
+      <div id="singleDate">
+        Data: <input type="date" name="date"><br><br>
+    </div>
+    
+    <div id="rangeDate" style="display:none;">
+        Dal: <input type="date" name="date_from"><br><br>
+        Al: <input type="date" name="date_to"><br><br>
+    </div>
 
-          Dalle: <input type="time" name="start_time" id="start" min="09:00" max="18:00"><br><br>
-          
-          Alle: <input type="time" name="end_time" id="end" min="09:00" max="18:00"><br><br>
+      Dalle: <input type="time" name="start_time" id="start" min="09:00" max="18:00"><br><br>
+      
+      Alle: <input type="time" name="end_time" id="end" min="09:00" max="18:00"><br><br>
 
-        <button id="submitBtn" type="submit" disabled
-        style="background:#3b82f6;color:white;padding:6px;border:none;border-radius:6px;opacity:0.5;">
-        Invia
-        </button>
-        </form>
+    <button id="submitBtn" type="submit" disabled
+    style="background:#3b82f6;color:white;padding:6px;border:none;border-radius:6px;opacity:0.5;">
+    Invia
+    </button>
+    </form>
 
-        <script>
-        function toggleAddForm(){{
-            document.getElementById("type").addEventListener("change", toggleAddForm);
-            let type = document.getElementById("type").value;
-        
-            let start = document.getElementById("start");
-            let end = document.getElementById("end");
-        
-            let singleDate = document.getElementById("singleDate");
-            let rangeDate = document.getElementById("rangeDate");
-        
-            if(type === "ferie"){{
-                start.disabled = true;
-                end.disabled = true;
-                start.value = "";
-                end.value = "";
-        
-                singleDate.style.display = "none";
-                rangeDate.style.display = "block";
-        
-            }} else {{
-                start.disabled = false;
-                end.disabled = false;
-        
-                singleDate.style.display = "block";
-                rangeDate.style.display = "none";
-            }}
-        
-            validateForm();
+    <script>
+    function toggleAddForm(){{
+        document.getElementById("type").addEventListener("change", toggleAddForm);
+        let type = document.getElementById("type").value;
+    
+        let start = document.getElementById("start");
+        let end = document.getElementById("end");
+    
+        let singleDate = document.getElementById("singleDate");
+        let rangeDate = document.getElementById("rangeDate");
+    
+        if(type === "ferie"){{
+            start.disabled = true;
+            end.disabled = true;
+            start.value = "";
+            end.value = "";
+    
+            singleDate.style.display = "none";
+            rangeDate.style.display = "block";
+    
+        }} else {{
+            start.disabled = false;
+            end.disabled = false;
+    
+            singleDate.style.display = "block";
+            rangeDate.style.display = "none";
         }}
+    
+        validateForm();
+    }}
 
-        function validateForm(){{
+    function validateForm(){{
 
-            let type = document.getElementById("type").value;
-        
-            let start = document.getElementById("start").value;
-            let end = document.getElementById("end").value;
-        
-            let submitBtn = document.getElementById("submitBtn");
-        
-            let valid = true;
-        
-            if(type === "ferie"){{
-                let from = document.querySelector("input[name='date_from']").value;
-                let to = document.querySelector("input[name='date_to']").value;
-        
-                if(!from || !to) valid = false;
-        
-            }} else {{
-                let date = document.querySelector("input[name='date']").value;
-        
-                if(!date || !start || !end) valid = false;
-            }}
-        
-            submitBtn.disabled = !valid;
-            submitBtn.style.opacity = valid ? "1" : "0.5";
+        let type = document.getElementById("type").value;
+    
+        let start = document.getElementById("start").value;
+        let end = document.getElementById("end").value;
+    
+        let submitBtn = document.getElementById("submitBtn");
+    
+        let valid = true;
+    
+        if(type === "ferie"){{
+            let from = document.querySelector("input[name='date_from']").value;
+            let to = document.querySelector("input[name='date_to']").value;
+    
+            if(!from || !to) valid = false;
+    
+        }} else {{
+            let date = document.querySelector("input[name='date']").value;
+    
+            if(!date || !start || !end) valid = false;
         }}
+    
+        submitBtn.disabled = !valid;
+        submitBtn.style.opacity = valid ? "1" : "0.5";
+    }}
 
-            document.querySelectorAll("input, select").forEach(el => {{
-        el.addEventListener("input", validateForm);
-    }});
+        document.querySelectorAll("input, select").forEach(el => {{
+    el.addEventListener("input", validateForm);
+}});
 
-            window.onload = function(){
-            toggleAddForm();
-            validateForm();
-        }
-                
-        </script>
+        window.onload = function(){
+        toggleAddForm();
+        validateForm();
+    }
+            
+    </script>
 
         <hr>
 
