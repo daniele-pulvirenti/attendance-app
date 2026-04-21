@@ -176,6 +176,8 @@ def dashboard():
         <hr>
 
         <h3>📌 Le tue assenze</h3>
+        <h3>📅 Calendario assenze</h3>
+        <div id="calendar"></div>
         """
 
         for d in data:
@@ -290,10 +292,59 @@ function remove(btn){
     .then(() => location.reload());
 }
 
+function renderCalendar(data){
+
+    const calendar = document.getElementById("calendar");
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = today.getMonth();
+
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    let html = '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:5px;">';
+
+    for(let i=1;i<=daysInMonth;i++){
+
+        let dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
+
+        let entry = data.find(d => d.date === dateStr);
+
+        let bg = "#1e293b";
+
+        if(entry){
+            if(entry.status === "approved") bg = "#22c55e";
+            else if(entry.status === "rejected") bg = "#ef4444";
+            else bg = "#f59e0b";
+        }
+
+        html += `
+        <div style="
+            background:${bg};
+            color:white;
+            padding:8px;
+            border-radius:6px;
+            text-align:center;
+            font-size:12px;
+        ">
+            ${i}
+        </div>
+        `;
+    }
+
+    html += '</div>';
+
+    calendar.innerHTML = html;
+}
+
+// dati dal backend
+const data = {{ data | tojson }};
+
+renderCalendar(data);
+
 </script>
 """
 
-        return html
+        return render_template_string(html, data=data)
 
 
 # ---------------- ADD ----------------
