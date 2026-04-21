@@ -42,6 +42,232 @@ def login():
             headers=HEADERS
         )
 
+        user = res.json()
+
+        if not user:
+            return "Utente non trovato"
+
+        db_user = user[0]
+
+        if bcrypt.checkpw(password.encode(), db_user["password"].encode()):
+            session["user"] = db_user
+            return redirect("/dashboard")
+
+        return "Login errato"
+
+    return render_template_string(LOGIN_HTML)
+
+
+# ---------------- DASHBOARD ----------------
+@app.route("/dashboard")
+def dashboard():
+
+    if "user" not in session:
+        return redirect("/")
+
+    user = session["user"]
+
+    # ================= CAPO =================
+    if user["role"] == "manager":
+
+        res = requests.get(
+            f"{SUPABASE_URL}/rest/v1/absences?select=*",
+            headers=HEADERS
+        )
+        data = res.json()
+
+        html = f"""
+        <h2>Dashboard Capo - {user['username']}</h2>
+        <a href="/logout">Logout</a><hr>
+        """
+
+        for d in data:
+
+            status = d.get("status", "pending")
+            color = "#f59e0b" if status == "pending" else "#22c55e" if status == "approved" else "#ef4444"
+
+            date_display = (
+                f"{d.get('date_from','')} → {d.get('date_to','')}"
+                if d.get("type") == "ferie"
+                else d.get("date","")
+            )
+
+            html += f"""
+            <div style="background:#0f172a;padding:12px;border-radius:10px;color:white;margin-bottom:10px;">
+                <b>{d.get("worker_name")}</b><br>
+                📅 {date_display}<br>
+                🏷 {d.get("type","")}<br>
+                ⏰ {d.get("start_time","")} - {d.get("end_time","")}<br>
+                Stato: <span style="color:{color}">{status}</span><br><br>
+
+                <a href="/approve/{d['id']}">✔ Approva</a> |
+                <a href="/reject/{d['id']}">✖ Rifiuta</a>
+            </div>
+            """
+
+        html += """
+        <script>
+        setInterval(() => location.reload(), 5000);
+        </script>
+        """
+
+        return html
+
+    # ================= LAVORATORE =================
+    res = requests.get(
+        f"{SUPABASE_URL}/rest/v1/absences?worker_name=eq.{user['username']}",
+        headers=HEADERS
+    )
+    data = res.json()
+
+    html = f"""
+    <h2>Benvenuto {user['username']}</h2>
+    <a href="/logout">Logout</a>
+    <hr>
+
+    <h3>➕ Inserisci assenza</h3>
+
+    <form method="post" action="/add_absence">
+        Tipo:
+        <select name="type">
+            <option value="ferie">Ferie</option>
+            <option value="permesso">Permesso</option>
+        </select><br><br>
+
+        Data: <input type="date" name="date"><br><br>
+
+        Dal: <input type="date" name="date_from"><br><br>
+        Al: <input type="date" name="date_to"><br><br>
+
+        Dalle: <input type="time" name="start_time"><br><br>
+        Alle: <input type="time" name="end_time"><br><br>
+
+        <button type="submit">Invia</button>
+    </form>
+
+    <hr>
+    <h3>📌 Le tue assenze</h3>
+    """
+
+    for d in data:
+
+        status = d.get("status", "pending")
+        color = "#f59e0b" if status == "pending" else "#22c55e" if status == "approved" else "#ef4444"
+
+        date_display = (
+            f"{d.get('date_from','')} → {d.get('date_to','')}"
+            if d.get("type") == "ferie"
+            else d.get("date","")
+        )
+
+        html += f"""
+        <div style="background:#1e293b;padding:10px;margin:10px 0;color:white;">
+            <input type="hidden" value="{d['id']}">
+
+            <b>{status.upper()}</b><br>
+            {date_display}<br>
+            {d.get("type")}<br>
+
+            <button onclick="fetch('/delete/{d['id']}').then(()=>location.reload())">
+                Elimina
+            </button>
+        </div>
+        """
+
+    return render_template_string(html, data=data)
+
+
+# ---------------- ADD ----------------
+@app.route("/add_absence", methods=["POST"])
+def add_absence():
+
+    user = session["user"]
+    absence_type = request.form["type"]
+
+    if absence_type == "ferie":
+        date_from = request.form["date_from"]
+        date_to = request.form["date_to"]
+        start_time = None
+        end_time = None
+    else:
+        date_from = request.form["date"]
+        date_to = request.form["date"]
+        start_time = request.form["start_time"]
+        end_time = request.form["end_time"]
+
+    payload = {
+        "worker_name": user["username"],
+        "date_from": date_from,
+        "date_to": date_to,
+        "type": absence_type,
+        "start_time": start_time,
+        "end_time": end_time,
+        "status": "pending"
+    }
+
+    requests.post(
+        f"{SUPABASE_URL}/rest/v1/absences",
+        headers=HEADERS,
+        json=payload
+    )
+
+    return redirect("/dashboard")
+
+
+# ---------------- DELETE ----------------
+@app.route("/delete/<int:id>")
+def delete_absence(id):
+
+    requests.delete(
+        f"{SUPABASE_URL}/rest/v1/absences?id=eq.{id}",
+        headers=HEADERS
+    )
+
+    return ("ok", 200)
+
+
+# ---------------- APPROVE ----------------
+@app.route("/approve/<id>")
+def approve(id):
+
+    requests.patch(
+        f"{SUPABASE_URL}/rest/v1/absences?id=eq.{id}",
+        headers=HEADERS,
+        json={"status": "approved"}
+    )
+
+    return redirect("/dashboard")
+
+
+# ---------------- REJECT ----------------
+@app.route("/reject/<id>")
+def reject(id):
+
+    requests.patch(
+        f"{SUPABASE_URL}/rest/v1/absences?id=eq.{id}",
+        headers=HEADERS,
+        json={"status": "rejected"}
+    )
+
+    return redirect("/dashboard")
+
+
+# ---------------- LOGOUT ----------------
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect("/")
+
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))        username = request.form["username"]
+        password = request.form["password"]
+
+        res = requests.get(
+            f"{SUPABASE_URL}/rest/v1/users?username=eq.{username}",
+            headers=HEADERS
+        )
+
         try:
             user = res.json()
         except:
