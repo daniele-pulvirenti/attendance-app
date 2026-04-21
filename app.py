@@ -177,6 +177,13 @@ def dashboard():
 
         <h3>📌 Le tue assenze</h3>
         <h3>📅 Calendario assenze</h3>
+
+        <div style="display:flex;justify-content:space-between;align-items:center;color:white;margin-bottom:10px;">
+            <button onclick="changeMonth(-1)" style="background:#3b82f6;color:white;border:none;padding:5px 10px;border-radius:6px;">◀</button>
+            <h4 id="monthLabel"></h4>
+            <button onclick="changeMonth(1)" style="background:#3b82f6;color:white;border:none;padding:5px 10px;border-radius:6px;">▶</button>
+        </div>
+        
         <div id="calendar"></div>
         """
 
@@ -292,12 +299,24 @@ function remove(btn){
     .then(() => location.reload());
 }
 
-function renderCalendar(data){
+const data = {{ data | tojson }};
+
+let currentDate = new Date();
+
+function renderCalendar(){
 
     const calendar = document.getElementById("calendar");
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = today.getMonth();
+    const monthLabel = document.getElementById("monthLabel");
+
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+
+    const monthNames = [
+        "Gennaio","Febbraio","Marzo","Aprile","Maggio","Giugno",
+        "Luglio","Agosto","Settembre","Ottobre","Novembre","Dicembre"
+    ];
+
+    monthLabel.innerText = monthNames[month] + " " + year;
 
     const daysInMonth = new Date(year, month + 1, 0).getDate();
 
@@ -336,10 +355,12 @@ function renderCalendar(data){
     calendar.innerHTML = html;
 }
 
-// dati dal backend
-const data = {{ data | tojson }};
+function changeMonth(step){
+    currentDate.setMonth(currentDate.getMonth() + step);
+    renderCalendar();
+}
 
-renderCalendar(data);
+renderCalendar();
 
 </script>
 """
