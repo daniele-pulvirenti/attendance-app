@@ -461,7 +461,7 @@ function changeMonth(step){
 renderCalendar();
 
 </script>
-"""
+
 
         return render_template_string(html, data=data)
 
