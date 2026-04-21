@@ -283,9 +283,8 @@ function update(btn){
 function remove(btn){
     let id = btn.parentElement.querySelector(".id").value;
 
-    fetch("/delete_absence/" + id, { method: "GET" })
-        .then(response => response.json())
-        .then(() => location.reload());
+    fetch("/delete/" + id)
+    .then(() => location.reload());
 }
 
 </script>
@@ -349,7 +348,7 @@ def update_absence():
 
 # ---------------- DELETE ----------------
 
-@app.route("/delete/<int:id>", methods=["DELETE"])
+@app.route("/delete/<int:id>")
 def delete_absence(id):
 
     r = requests.delete(
@@ -357,7 +356,7 @@ def delete_absence(id):
         headers=HEADERS
     )
 
-    return ("", 204)
+    return redirect("/dashboard")
 
 # ---------------- APPROVE ----------------
 @app.route("/approve/<id>")
