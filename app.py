@@ -77,8 +77,8 @@ def dashboard():
         data = res.json()
 
         html = f"""
-        <h2>Dashboard Capo - {user['username']}</h2>
-        <a href="/logout">Logout</a><hr>
+        <h2>Dashboard Capo</h2>
+        <a href='/logout'>Logout</a><hr>
         """
 
         for d in data:
@@ -93,15 +93,10 @@ def dashboard():
             )
 
             html += f"""
-            <div style="background:#0f172a;padding:12px;border-radius:10px;color:white;margin-bottom:10px;">
-                <b>{d.get("worker_name")}</b><br>
-                📅 {date_display}<br>
-                🏷 {d.get("type","")}<br>
-                ⏰ {d.get("start_time","")} - {d.get("end_time","")}<br>
-                Stato: <span style="color:{color}">{status}</span><br><br>
-
-                <a href="/approve/{d['id']}">✔ Approva</a> |
-                <a href="/reject/{d['id']}">✖ Rifiuta</a>
+            <div style="background:#0f172a;padding:12px;color:white;margin-bottom:10px;">
+                <b>{d["worker_name"]}</b><br>
+                {date_display}<br>
+                Stato: {status}
             </div>
             """
 
@@ -110,7 +105,7 @@ def dashboard():
         setInterval(() => location.reload(), 5000);
         </script>
         """
-
+        
         return html
 
     # ================= LAVORATORE =================
