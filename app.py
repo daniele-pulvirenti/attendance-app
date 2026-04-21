@@ -436,18 +436,16 @@ function renderCalendar(){
             else bg = "#f59e0b";
         }
 
-        html += `
-        <div style="
-            background:${bg};
-            color:white;
-            padding:8px;
-            border-radius:6px;
-            text-align:center;
-            font-size:12px;
-        ">
-            ${i}
-        </div>
-        `;
+            html += "<div style='"
+        + "background:" + bg + ";"
+        + "color:white;"
+        + "padding:8px;"
+        + "border-radius:6px;"
+        + "text-align:center;"
+        + "font-size:12px;"
+        + "'>"
+        + i +
+    "</div>";
     }
 
     html += '</div>';
