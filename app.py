@@ -146,31 +146,86 @@ def dashboard():
             <option value="permesso">Permesso</option>
           </select><br><br>
 
-          Data: <input type="date" name="date"><br><br>
+          <div id="singleDate">
+            Data: <input type="date" name="date"><br><br>
+        </div>
+        
+        <div id="rangeDate" style="display:none;">
+            Dal: <input type="date" name="date_from"><br><br>
+            Al: <input type="date" name="date_to"><br><br>
+        </div>
 
-          Dalle: <input type="time" name="start_time" id="start"><br><br>
+          Dalle: <input type="time" name="start_time" id="start" min="09:00" max="18:00"><br><br>
+          
+          Alle: <input type="time" name="end_time" id="end" min="09:00" max="18:00"><br><br>
 
-          Alle: <input type="time" name="end_time" id="end"><br><br>
-
-          <button type="submit" style="background:#3b82f6;color:white;padding:6px;border:none;border-radius:6px;">Salva</button>
+        <button id="submitBtn" type="submit" disabled
+        style="background:#3b82f6;color:white;padding:6px;border:none;border-radius:6px;opacity:0.5;">
+        Invia
+        </button>
         </form>
 
         <script>
         function toggleAddForm(){{
+
             let type = document.getElementById("type").value;
+        
             let start = document.getElementById("start");
             let end = document.getElementById("end");
-
+        
+            let singleDate = document.getElementById("singleDate");
+            let rangeDate = document.getElementById("rangeDate");
+        
             if(type === "ferie"){{
                 start.disabled = true;
                 end.disabled = true;
                 start.value = "";
                 end.value = "";
+        
+                singleDate.style.display = "none";
+                rangeDate.style.display = "block";
+        
             }} else {{
                 start.disabled = false;
                 end.disabled = false;
+        
+                singleDate.style.display = "block";
+                rangeDate.style.display = "none";
             }}
+        
+            validateForm();
         }}
+
+        function validateForm(){{
+
+            let type = document.getElementById("type").value;
+        
+            let start = document.getElementById("start").value;
+            let end = document.getElementById("end").value;
+        
+            let submitBtn = document.getElementById("submitBtn");
+        
+            let valid = true;
+        
+            if(type === "ferie"){{
+                let from = document.querySelector("input[name='date_from']").value;
+                let to = document.querySelector("input[name='date_to']").value;
+        
+                if(!from || !to) valid = false;
+        
+            }} else {{
+                let date = document.querySelector("input[name='date']").value;
+        
+                if(!date || !start || !end) valid = false;
+            }}
+        
+            submitBtn.disabled = !valid;
+            submitBtn.style.opacity = valid ? "1" : "0.5";
+        }}
+
+            document.querySelectorAll("input, select").forEach(el => {{
+        el.addEventListener("input", validateForm);
+    }});
         </script>
 
         <hr>
@@ -406,6 +461,49 @@ renderCalendar();
 # ---------------- ADD ----------------
 @app.route("/add_absence", methods=["POST"])
 def add_absence():
+
+    if "user" not in session:
+        return redirect("/")
+
+    user = session["user"]
+
+    absence_type = request.form["type"]
+
+    # ---------------- FERIE ----------------
+    if absence_type == "ferie":
+
+        date_from = request.form["date_from"]
+        date_to = request.form["date_to"]
+
+        start_time = None
+        end_time = None
+
+    # ---------------- PERMESSO ----------------
+    else:
+
+        date_from = request.form["date"]
+        date_to = request.form["date"]
+
+        start_time = request.form["start_time"]
+        end_time = request.form["end_time"]
+
+    data = {
+        "worker_name": user["username"],
+        "date_from": date_from,
+        "date_to": date_to,
+        "type": absence_type,
+        "start_time": start_time,
+        "end_time": end_time,
+        "status": "pending"
+    }
+
+    requests.post(
+        f"{SUPABASE_URL}/rest/v1/absences",
+        headers=HEADERS,
+        json=data
+    )
+
+    return redirect("/dashboard")
 
     if "user" not in session:
         return redirect("/")
