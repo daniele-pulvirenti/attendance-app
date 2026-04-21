@@ -107,7 +107,14 @@ def dashboard():
                 <a href="/reject/{d["id"]}" style="color:#ef4444">✖ Rifiuta</a>
             </div>
 """
-
+            html += """
+            <script>
+            setInterval(() => {
+                location.reload();
+            }, 5000);
+            </script>
+            """
+            
         return html
 
     # ================= LAVORATORE =================
@@ -173,9 +180,9 @@ def dashboard():
 
         for d in data:
 
-            selected_ferie = "selected" if d.get("type") == "ferie" else ""
-            selected_permesso = "selected" if d.get("type") == "permesso" else ""
-
+            status = d.get("status", "pending")
+            color = "#f59e0b" if status == "pending" else "#22c55e" if status == "approved" else "#ef4444"
+        
             html += f"""
             <div class="card" style="
                 background:linear-gradient(135deg,#1e293b,#0f172a);
@@ -185,23 +192,30 @@ def dashboard():
                 color:white;
                 box-shadow:0 6px 15px rgba(0,0,0,0.3)
             ">
-                <input type="hidden" class="id" value="{d["id"]}">
-            
+        
+                <input type="hidden" class="id" value='{d["id"]}'>
+        
+                <b>Stato:
+                    <span style="color:{color}; font-weight:bold;">
+                        {status.upper()}
+                    </span>
+                </b><br><br>
+        
                 Tipo:
                 <select class="type">
-                    <option value="ferie" {selected_ferie}>Ferie</option>
-                    <option value="permesso" {selected_permesso}>Permesso</option>
+                    <option value="ferie" {"selected" if d.get("type")=="ferie" else ""}>Ferie</option>
+                    <option value="permesso" {"selected" if d.get("type")=="permesso" else ""}>Permesso</option>
                 </select><br>
-            
+        
                 Data:
-                <input type="date" class="date" value="{d["date"]}"><br>
-            
+                <input type="date" class="date" value='{d["date"]}'><br>
+        
                 Dalle:
-                <input type="time" class="start" value="{d.get("start_time","")}"><br>
-            
+                <input type="time" class="start" value='{d.get("start_time","")}'><br>
+        
                 Alle:
-                <input type="time" class="end" value="{d.get("end_time","")}"><br><br>
-            
+                <input type="time" class="end" value='{d.get("end_time","")}'><br><br>
+        
                 <button onclick="update(this)" style="background:#3b82f6;color:white;">Modifica</button>
                 <button onclick="remove(this)" style="background:#ef4444;color:white;">Elimina</button>
             </div>
@@ -209,6 +223,16 @@ def dashboard():
 
         html += """
 <script>
+
+
+function remove(btn){
+    let card = btn.closest(".card");
+    let id = card.querySelector(".id").value;
+
+    fetch("/delete/" + id, { method: "DELETE" })
+    .then(() => card.remove());
+}
+
 
 function toggleRow(card){
 
@@ -324,6 +348,16 @@ def update_absence():
 
 
 # ---------------- DELETE ----------------
+
+@app.route("/delete/<int:id>", methods=["DELETE"])
+def delete_absence(id):
+    r = requests.delete(
+        f"{SUPABASE_URL}/rest/v1/absences?id=eq.{id}",
+        headers=HEADERS
+    )
+    return ("", 204)
+
+    
 @app.route("/delete_absence/<id>")
 def delete_absence(id):
 
