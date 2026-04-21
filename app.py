@@ -292,43 +292,42 @@ def dashboard():
         date_display = d.get("date","")
 
     html += f"""
-    <div class="card" style="
-        background:linear-gradient(135deg,#1e293b,#0f172a);
-        padding:12px;
-        border-radius:10px;
-        margin-bottom:10px;
-        color:white;
-        box-shadow:0 6px 15px rgba(0,0,0,0.3)
-    ">
+<div class="card" style="
+    background:linear-gradient(135deg,#1e293b,#0f172a);
+    padding:12px;
+    border-radius:10px;
+    margin-bottom:10px;
+    color:white;
+    box-shadow:0 6px 15px rgba(0,0,0,0.3)
+">
 
-        <input type="hidden" class="id" value='{{d["id"]}}'>
+    <input type="hidden" class="id" value='{d["id"]}'>
 
-        <b>Stato:
-            <span style="color:{{color}}; font-weight:bold;">
-                {{status.upper()}}
-            </span>
-        </b><br><br>
+    <b>Stato:
+        <span style="color:{color}; font-weight:bold;">
+            {status.upper()}
+        </span>
+    </b><br><br>
 
-        Tipo:
-        <select class="type">
-            <option value="ferie" {{"selected" if d.get("type")=="ferie" else ""}}>Ferie</option>
-            <option value="permesso" {{"selected" if d.get("type")=="permesso" else ""}}>Permesso</option>
-        </select><br>
+    Tipo:
+    <select class="type">
+        <option value="ferie" {"selected" if d.get("type")=="ferie" else ""}>Ferie</option>
+        <option value="permesso" {"selected" if d.get("type")=="permesso" else ""}>Permesso</option>
+    </select><br>
 
-        Data:
-        <b>{{date_display}}</b><br><br>
+    Data:
+    <b>{date_display}</b><br><br>
 
-        Dalle:
-        <input type="time" class="start" value='{{d.get("start_time","")}}'><br>
+    Dalle:
+    <input type="time" class="start" value='{d.get("start_time","")}'><br>
 
-        Alle:
-        <input type="time" class="end" value='{{d.get("end_time","")}}'><br><br>
+    Alle:
+    <input type="time" class="end" value='{d.get("end_time","")}'><br><br>
 
-        <button onclick="update(this)" style="background:#3b82f6;color:white;">Modifica</button>
-        <button onclick="remove(this)" style="background:#ef4444;color:white;">Elimina</button>
-    </div>
-    """
-<script>
+    <button onclick="update(this)" style="background:#3b82f6;color:white;">Modifica</button>
+    <button onclick="remove(this)" style="background:#ef4444;color:white;">Elimina</button>
+</div>
+"""
 
 
 function remove(btn){
