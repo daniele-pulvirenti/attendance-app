@@ -15,7 +15,8 @@ SUPABASE_KEY = "sb_publishable_DZ69ih5L9IqvJmt44VUK4w_8uelJ5xU"
 HEADERS = {
     "apikey": SUPABASE_KEY,
     "Authorization": f"Bearer {SUPABASE_KEY}",
-    "Content-Type": "application/json"
+    "Content-Type": "application/json",
+    "Prefer": "return=minimal"
 }
 
 LOGIN_HTML = """
@@ -256,11 +257,11 @@ function update(btn){
 }
 
 function remove(btn){
-
     let id = btn.parentElement.querySelector(".id").value;
 
-    fetch("/delete_absence/"+id)
-    .then(()=>location.reload());
+    fetch("/delete_absence/" + id, { method: "GET" })
+        .then(response => response.json())
+        .then(() => location.reload());
 }
 
 </script>
