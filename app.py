@@ -55,11 +55,17 @@ def register():
             "sector": sector
         }
 
-        requests.post(
+        res = requests.post(
             f"{SUPABASE_URL}/rest/v1/users",
             headers=HEADERS,
             json=data
         )
+
+        print("STATUS REGISTER:", res.status_code)
+        print("RESPONSE REGISTER:", res.text)
+
+        if res.status_code not in [200, 201]:
+            return f"Errore registrazione: {res.text}"
 
         return "Registrazione completata. Puoi fare login."
 
