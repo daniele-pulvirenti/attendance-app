@@ -424,74 +424,55 @@ const data = {{ data | tojson }};
 
 let currentDate = new Date();
 
-document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener("DOMContentLoaded", function () {
 
-    const calendarEl = document.getElementById('calendar');
+    if (!window.FullCalendar) {
+        console.error("FullCalendar non caricato");
+        return;
+    }
+
+    const calendarEl = document.getElementById("calendar");
 
     const calendar = new FullCalendar.Calendar(calendarEl, {
-        initialView: 'dayGridMonth',
-        locale: 'it',
-        firstDay: 1, // lunedì
-        weekends: true, // li vediamo ma li blocchiamo
-        height: 650,
+        initialView: "dayGridMonth",
+        locale: "it",
+        firstDay: 1,
 
-        validRange: function(nowDate) {
-            return {
-                start: nowDate
-            };
-        },
+        weekends: true,
 
         dayCellDidMount: function(info) {
             const day = info.date.getDay();
             if (day === 0 || day === 6) {
-                info.el.style.backgroundColor = '#111827';
-                info.el.style.opacity = '0.4';
+                info.el.style.backgroundColor = "#0b1220";
+                info.el.style.opacity = "0.5";
             }
         },
 
-        dateClick: function(info) {
-            const day = new Date(info.dateStr).getDay();
-            if (day === 0 || day === 6) {
-                alert("Non puoi inserire ferie o permessi nel weekend");
-            }
-        },
-
-        events: data.map(d => {
+        events: (typeof data !== "undefined" ? data : []).map(d => {
 
             if (d.type === "ferie") {
                 return {
                     title: "Ferie",
                     start: d.date_from,
-                    end: new Date(new Date(d.date_to).getTime() + 86400000),
-                    color: d.status === "approved" ? "#22c55e" :
-                           d.status === "rejected" ? "#ef4444" : "#f59e0b"
-                };
-            } else {
-                return {
-                    title: "Permesso",
-                    start: d.date_from,
-                    color: d.status === "approved" ? "#22c55e" :
-                           d.status === "rejected" ? "#ef4444" : "#f59e0b"
+                    end: d.date_to,
+                    color: d.status === "approved" ? "#22c55e"
+                          : d.status === "rejected" ? "#ef4444"
+                          : "#f59e0b"
                 };
             }
 
+            return {
+                title: "Permesso",
+                start: d.date_from,
+                color: d.status === "approved" ? "#22c55e"
+                      : d.status === "rejected" ? "#ef4444"
+                      : "#f59e0b"
+            };
         })
     });
 
     calendar.render();
 });
-
-    html += '</div>';
-
-    calendar.innerHTML = html;
-}
-
-function changeMonth(step){
-    currentDate.setMonth(currentDate.getMonth() + step);
-    renderCalendar();
-}
-
-renderCalendar();
 
 </script>
 """
@@ -576,17 +557,15 @@ def update_absence():
     data = request.json
 
     payload = {
-    "type": data["type"],
-    "date_from": data["date_from"],
-    "date_to": data["date_to"],
-    "start_time": data["start_time"],
-    "end_time": data["end_time"],
-    "status": "pending"   # ← QUESTA È LA CHIAVE
-}
+        "type": data["type"],
+        "date_from": data.get("date_from"),
+        "date_to": data.get("date_to"),
+        "start_time": data.get("start_time"),
+        "end_time": data.get("end_time"),
 
-    if data["type"] == "ferie":
-        payload["start_time"] = None
-        payload["end_time"] = None
+        # 🔥 FORZA RESET STATO
+        "status": "pending"
+    }
 
     requests.patch(
         f"{SUPABASE_URL}/rest/v1/absences?id=eq.{data['id']}",
