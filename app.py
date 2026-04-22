@@ -95,9 +95,9 @@ def send_email(to, link):
         server.send_message(msg)
 
  @app.route("/forgot", methods=["GET", "POST"])
-def forgot():
+ def forgot():
 
-    if request.method == "POST":
+     if request.method == "POST":
 
         email = request.form["email"]
         token = secrets.token_urlsafe(32)
