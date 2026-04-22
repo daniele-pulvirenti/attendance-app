@@ -87,47 +87,47 @@ def send_email(to, link):
 
     msg = MIMEText(f"Clicca qui per reimpostare la password:\n{link}")
     msg["Subject"] = "Reset Password"
-    msg["From"] = "noreply.team104@gmail.com"
-    msg["To"] = to
+msg["From"] = "noreply.team104@gmail.com"
+msg["To"] = to
 
-    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
-        server.login("noreply.team104@gmail.com", "turf tlus ngor onwr")
-        server.send_message(msg)
+with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+    server.login("noreply.team104@gmail.com", "turf tlus ngor onwr")
+    server.send_message(msg)
 
- @app.route("/forgot", methods=["GET", "POST"])
- def forgot():
+@app.route("/forgot", methods=["GET", "POST"])
+def forgot():
 
-     if request.method == "POST":
+ if request.method == "POST":
 
-        email = request.form["email"]
-        token = secrets.token_urlsafe(32)
-        expires = (datetime.utcnow() + timedelta(minutes=15)).isoformat()
+    email = request.form["email"]
+    token = secrets.token_urlsafe(32)
+    expires = (datetime.utcnow() + timedelta(minutes=15)).isoformat()
 
-        data = {
-            "email": email,
-            "token": token,
-            "expires_at": expires
-        }
+    data = {
+        "email": email,
+        "token": token,
+        "expires_at": expires
+    }
 
-        requests.post(
-            f"{SUPABASE_URL}/rest/v1/password_resets",
-            headers=HEADERS,
-            json=data
-        )
+    requests.post(
+        f"{SUPABASE_URL}/rest/v1/password_resets",
+        headers=HEADERS,
+        json=data
+    )
 
-        reset_link = f"https://attendance-app-9ozz.onrender.com/reset/{token}"
+    reset_link = f"https://attendance-app-9ozz.onrender.com/reset/{token}"
 
-        send_email(email, reset_link)
+    send_email(email, reset_link)
 
-        return "Ti abbiamo inviato una mail per il reset."
+    return "Ti abbiamo inviato una mail per il reset."
 
-    return """
-    <h2>Password smarrita</h2>
-    <form method="post">
-        Inserisci la tua email:<br>
-        <input name="email">
-        <button type="submit">Invia</button>
-    </form>
+return """
+<h2>Password smarrita</h2>
+<form method="post">
+    Inserisci la tua email:<br>
+    <input name="email">
+    <button type="submit">Invia</button>
+</form>
     """   
 
 @app.route("/reset/<token>", methods=["GET", "POST"])
