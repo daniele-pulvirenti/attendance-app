@@ -196,22 +196,22 @@ def dashboard():
 
         <script>
 
-        function filterSector(sector){
+        function filterSector(sector){{
 
-            document.querySelectorAll(".card").forEach(card => {
+            document.querySelectorAll(".card").forEach(card => {{
         
-                if(sector === "all"){
+                if(sector === "all"){{
                     card.style.display = "block";
                     return;
-                }
+                }}
         
-                if(card.dataset.sector === sector){
+                if(card.dataset.sector === sector){{
                     card.style.display = "block";
-                } else {
+                }} else {{
                     card.style.display = "none";
-                }
-            });
-        }
+                }}
+            }});
+        }}
         function toggleAddForm(){{
 
             let type = document.getElementById("type").value;
