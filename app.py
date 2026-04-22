@@ -72,17 +72,21 @@ def dashboard():
     user = session["user"]
 
     # ================= CAPO =================
-    sector = request.args.get("sector")
     if user["role"] == "manager":
 
         sector = request.args.get("sector")
-
-        url = f"{SUPABASE_URL}/rest/v1/absences?select=*"
-        
+    
+        params = {"select": "*"}
+    
         if sector and sector != "all":
-            url += f"&sector=eq.{sector}"
-        
-        res = requests.get(url, headers=HEADERS)
+            params["sector"] = f"eq.{sector}"
+    
+        res = requests.get(
+            f"{SUPABASE_URL}/rest/v1/absences",
+            headers=HEADERS,
+            params=params
+        )
+    
         data = res.json()
 
         html = f"""
