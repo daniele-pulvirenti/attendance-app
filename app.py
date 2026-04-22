@@ -86,35 +86,35 @@ def dashboard():
 
     for d in data:
 
-color = "#f59e0b" if d["status"] == "pending" else "#22c55e" if d["status"] == "approved" else "#ef4444"
-
-# ----- DATA E ORARI CORRETTI -----
-if d.get("type") == "ferie":
-    date_display = f'{d.get("date_from","")} → {d.get("date_to","")}'
-    time_display = "09:00 - 18:00"
-else:
-    date_display = d.get("date_from","")
-    time_display = f'{d.get("start_time","")} - {d.get("end_time","")}'
-
-html += f"""
-<div style="
-    background:#0f172a;
-    padding:12px;
-    border-radius:10px;
-    margin-bottom:10px;
-    color:white;
-    box-shadow:0 4px 12px rgba(0,0,0,0.4)
-">
-    <b>{d["worker_name"]}</b><br>
-    📅 {date_display}<br>
-    🏷 {d.get("type","")}<br>
-    ⏰ {time_display}<br>
-    Stato: <span style="color:{color}">{d["status"]}</span><br><br>
-
-    <a href="/approve/{d["id"]}" style="color:#22c55e">✔ Approva</a> |
-    <a href="/reject/{d["id"]}" style="color:#ef4444">✖ Rifiuta</a>
-</div>
-"""
+        color = "#f59e0b" if d["status"] == "pending" else "#22c55e" if d["status"] == "approved" else "#ef4444"
+        
+        # ----- DATA E ORARI CORRETTI -----
+        if d.get("type") == "ferie":
+            date_display = f'{d.get("date_from","")} → {d.get("date_to","")}'
+            time_display = "09:00 - 18:00"
+        else:
+            date_display = d.get("date_from","")
+            time_display = f'{d.get("start_time","")} - {d.get("end_time","")}'
+        
+        html += f"""
+        <div style="
+            background:#0f172a;
+            padding:12px;
+            border-radius:10px;
+            margin-bottom:10px;
+            color:white;
+            box-shadow:0 4px 12px rgba(0,0,0,0.4)
+        ">
+            <b>{d["worker_name"]}</b><br>
+            📅 {date_display}<br>
+            🏷 {d.get("type","")}<br>
+            ⏰ {time_display}<br>
+            Stato: <span style="color:{color}">{d["status"]}</span><br><br>
+        
+            <a href="/approve/{d["id"]}" style="color:#22c55e">✔ Approva</a> |
+            <a href="/reject/{d["id"]}" style="color:#ef4444">✖ Rifiuta</a>
+        </div>
+        """
 html += """
 <script>
 setInterval(() => {
