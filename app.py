@@ -148,36 +148,35 @@ def forgot():
     if request.method == "POST":
 
         email = request.form["email"]
+
+        # 🔎 controllo che email esista
+        check = requests.get(
+            f"{SUPABASE_URL}/rest/v1/users?email=eq.{email}",
+            headers=HEADERS
+        )
+
+        user_data = check.json()
+
+        if not user_data:
+            return "Email non registrata"
+
+        # 🔐 genera token
         token = secrets.token_urlsafe(32)
         expires = (datetime.utcnow() + timedelta(minutes=15)).isoformat()
 
-            # 1. controllo che email esista
-    check = requests.get(
-        f"{SUPABASE_URL}/rest/v1/users?email=eq.{email}",
-        headers=HEADERS
-    )
-    
-    user_data = check.json()
-    
-    if not user_data:
-        return "Email non registrata"
-    
-    # 2. genera token
-    token = secrets.token_urlsafe(32)
-    
-    # 3. salva token
-    res = requests.patch(
-        f"{SUPABASE_URL}/rest/v1/users?email=eq.{email}",
-        headers=HEADERS,
-        json={
-            "reset_token": token
-        }
-    )
-    
-    print("RESET PATCH STATUS:", res.status_code)
-    print("RESET PATCH RESPONSE:", res.text)
+        # 💾 salva token su users
+        res = requests.patch(
+            f"{SUPABASE_URL}/rest/v1/users?email=eq.{email}",
+            headers=HEADERS,
+            json={
+                "reset_token": token
+            }
+        )
 
-        # 2. link reset
+        print("RESET PATCH STATUS:", res.status_code)
+        print("RESET PATCH RESPONSE:", res.text)
+
+        # 🔗 link reset
         reset_link = f"https://attendance-app-9ozz.onrender.com/reset/{token}"
 
         send_email(email, reset_link)
@@ -185,6 +184,7 @@ def forgot():
         return """
         <h3>Ti abbiamo inviato una mail 📩</h3>
         <p>Controlla la tua casella e segui il link per reimpostare la password.</p>
+
         <a href="/" style="
             display:inline-block;
             margin-top:10px;
