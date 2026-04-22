@@ -140,7 +140,23 @@ def forgot():
 
         send_email(email, reset_link)
 
-        return "Ti abbiamo inviato una mail per il reset."
+        return """
+        <h3>Ti abbiamo inviato una mail 📩</h3>
+        
+        <p>Controlla la tua casella e segui il link per reimpostare la password.</p>
+        
+        <a href="/" style="
+            display:inline-block;
+            margin-top:10px;
+            padding:8px 12px;
+            background:#3b82f6;
+            color:white;
+            text-decoration:none;
+            border-radius:6px;
+        ">
+            Torna al login
+        </a>
+        """
 
     return """
     <h2>Password smarrita</h2>
@@ -152,31 +168,42 @@ def forgot():
     """
 @app.route("/reset/<token>", methods=["GET", "POST"])
 def reset_password(token):
+
+    headers = {
+        "apikey": SUPABASE_KEY,
+        "Authorization": f"Bearer {SUPABASE_KEY}",
+        "Content-Type": "application/json"
+    }
+
     if request.method == "POST":
+
         new_password = request.form["password"].encode("utf-8")
         hashed = bcrypt.hashpw(new_password, bcrypt.gensalt()).decode("utf-8")
 
-        headers = {
-            "apikey": SUPABASE_KEY,
-            "Authorization": f"Bearer {SUPABASE_KEY}",
-            "Content-Type": "application/json"
-        }
-
-        # Cerco l'utente con quel token
+        # 🔎 1. CERCO UTENTE COL TOKEN
         res = requests.get(
             f"{SUPABASE_URL}/rest/v1/users?reset_token=eq.{token}",
             headers=headers
         )
 
-        users = res.json()
+        print("RESET GET STATUS:", res.status_code)
+        print("RESET GET TEXT:", res.text)
+
+        if res.status_code != 200:
+            return "Errore server durante verifica token"
+
+        try:
+            users = res.json()
+        except:
+            return "Errore lettura dati token"
 
         if not users:
             return "Token non valido o scaduto"
 
         user_id = users[0]["id"]
 
-        # Aggiorno password e rimuovo token
-        requests.patch(
+        # 🔄 2. UPDATE PASSWORD
+        update = requests.patch(
             f"{SUPABASE_URL}/rest/v1/users?id=eq.{user_id}",
             headers=headers,
             json={
@@ -185,14 +212,34 @@ def reset_password(token):
             }
         )
 
-        return "Password aggiornata con successo. Puoi fare login."
+        print("UPDATE STATUS:", update.status_code)
+        print("UPDATE TEXT:", update.text)
+
+        if update.status_code not in [200, 204]:
+            return f"Errore aggiornamento password: {update.text}"
+
+        return """
+        <h3>Password aggiornata con successo ✅</h3>
+
+        <a href="/" style="
+            display:inline-block;
+            margin-top:10px;
+            padding:8px 12px;
+            background:#3b82f6;
+            color:white;
+            text-decoration:none;
+            border-radius:6px;
+        ">
+            Torna al login
+        </a>
+        """
 
     return """
-        <form method="POST">
-            <h3>Inserisci nuova password</h3>
-            <input type="password" name="password" required>
-            <button type="submit">Reset Password</button>
-        </form>
+    <form method="POST">
+        <h3>Inserisci nuova password</h3>
+        <input type="password" name="password" required>
+        <button type="submit">Reset Password</button>
+    </form>
     """
 # ---------------- LOGIN ----------------
 @app.route("/", methods=["GET", "POST"])
