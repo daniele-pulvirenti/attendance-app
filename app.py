@@ -226,6 +226,9 @@ def dashboard():
             document.querySelectorAll("input, select").forEach(el => {{
         el.addEventListener("input", validateForm);
     }});
+            window.addEventListener("DOMContentLoaded", function () {{
+            toggleAddForm();
+        }});
         </script>
 
         <hr>
@@ -303,8 +306,13 @@ def dashboard():
                     <option value="permesso" {"selected" if d.get("type")=="permesso" else ""}>Permesso</option>
                 </select><br>
         
-                Data:
-                <input type="date" class="date" value='{d["date"]}'><br>
+                Data:<br>
+                {f"""
+                Dal: <input type='date' class='date_from' value='{d.get("date_from","")}'><br>
+                Al: <input type='date' class='date_to' value='{d.get("date_to","")}'><br>
+                """ if d.get("type")=="ferie" else f"""
+                <input type='date' class='date' value='{d.get("date_from","")}'><br>
+                """}
         
                 Dalle:
                 <input type="time" class="start" value='{d.get("start_time","")}'><br>
@@ -365,17 +373,27 @@ window.addEventListener("DOMContentLoaded", function() {
 function update(btn){
 
     let card = btn.parentElement;
+    let type = card.querySelector(".type").value;
+
+    let payload = {
+        id: card.querySelector(".id").value,
+        type: type,
+        start_time: card.querySelector(".start").value,
+        end_time: card.querySelector(".end").value
+    };
+
+    if(type === "ferie"){
+        payload.date_from = card.querySelector(".date_from").value;
+        payload.date_to = card.querySelector(".date_to").value;
+    } else {
+        payload.date_from = card.querySelector(".date").value;
+        payload.date_to = card.querySelector(".date").value;
+    }
 
     fetch("/update_absence", {
         method:"POST",
         headers:{"Content-Type":"application/json"},
-        body: JSON.stringify({
-            id: card.querySelector(".id").value,
-            type: card.querySelector(".type").value,
-            date: card.querySelector(".date").value,
-            start_time: card.querySelector(".start").value,
-            end_time: card.querySelector(".end").value
-        })
+        body: JSON.stringify(payload)
     }).then(()=>location.reload());
 }
 
@@ -416,7 +434,12 @@ function renderCalendar(){
 
         let dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
 
-        let entry = data.find(d => d.date === dateStr);
+        let entry = data.find(d => {
+            if(d.type === "ferie"){
+                return dateStr >= d.date_from && dateStr <= d.date_to;
+            }
+            return d.date_from === dateStr;
+        });
 
         let bg = "#1e293b";
 
@@ -536,7 +559,8 @@ def update_absence():
 
     payload = {
         "type": data["type"],
-        "date": data["date"],
+        "date_from": data["date_from"],
+        "date_to": data["date_to"],
         "start_time": data["start_time"],
         "end_time": data["end_time"]
     }
