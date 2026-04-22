@@ -80,12 +80,11 @@ def dashboard():
         data = res.json()
 
         html = f"""
-        <h2 style="color:#38bdf8">Dashboard Capo - {user['username']}</h2>
-        <a href='/logout'>Logout</a><hr>
-        """
+        <h2>Dashboard Capo - {user['username']}</h2>
+        
         <div style="margin-bottom:15px; display:flex; gap:8px; flex-wrap:wrap;">
-
-            <button onclick="filterSector('all')" style="padding:6px 10px;">Tutti</button>
+        
+            <button onclick="filterSector('all')">Tutti</button>
             <button onclick="filterSector('Dogane')">Dogane</button>
             <button onclick="filterSector('Syllabus')">Syllabus</button>
             <button onclick="filterSector('Unica')">Unica</button>
@@ -94,6 +93,7 @@ def dashboard():
             <button onclick="filterSector('Bonus')">Bonus</button>
         
         </div>
+        """
 
         for d in data:
 
