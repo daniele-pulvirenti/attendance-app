@@ -167,7 +167,7 @@ def dashboard():
 
         <script>
         function toggleAddForm(){{
-            document.getElementById("type").addEventListener("change", toggleAddForm);
+
             let type = document.getElementById("type").value;
         
             let start = document.getElementById("start");
@@ -226,12 +226,6 @@ def dashboard():
             document.querySelectorAll("input, select").forEach(el => {{
         el.addEventListener("input", validateForm);
     }});
-
-            window.onload = function(){
-            toggleAddForm();
-            validateForm();
-        }
-                
         </script>
 
         <hr>
@@ -282,52 +276,48 @@ def dashboard():
 
         for d in data:
 
-    status = d.get("status", "pending")
-    color = "#f59e0b" if status == "pending" else "#22c55e" if status == "approved" else "#ef4444"
+            status = d.get("status", "pending")
+            color = "#f59e0b" if status == "pending" else "#22c55e" if status == "approved" else "#ef4444"
+        
+            html += f"""
+            <div class="card" style="
+                background:linear-gradient(135deg,#1e293b,#0f172a);
+                padding:12px;
+                border-radius:10px;
+                margin-bottom:10px;
+                color:white;
+                box-shadow:0 6px 15px rgba(0,0,0,0.3)
+            ">
+        
+                <input type="hidden" class="id" value='{d["id"]}'>
+        
+                <b>Stato:
+                    <span style="color:{color}; font-weight:bold;">
+                        {status.upper()}
+                    </span>
+                </b><br><br>
+        
+                Tipo:
+                <select class="type">
+                    <option value="ferie" {"selected" if d.get("type")=="ferie" else ""}>Ferie</option>
+                    <option value="permesso" {"selected" if d.get("type")=="permesso" else ""}>Permesso</option>
+                </select><br>
+        
+                Data:
+                <input type="date" class="date" value='{d["date"]}'><br>
+        
+                Dalle:
+                <input type="time" class="start" value='{d.get("start_time","")}'><br>
+        
+                Alle:
+                <input type="time" class="end" value='{d.get("end_time","")}'><br><br>
+        
+                <button onclick="update(this)" style="background:#3b82f6;color:white;">Modifica</button>
+                <button onclick="remove(this)" style="background:#ef4444;color:white;">Elimina</button>
+            </div>
+            """
 
-    # ---------------- DATA DISPLAY CORRETTA ----------------
-    if d.get("type") == "ferie":
-        date_display = f"{d.get('date_from','')} → {d.get('date_to','')}"
-    else:
-        date_display = d.get("date","")
-
-    html += f"""
-    <div class="card" style="
-        background:linear-gradient(135deg,#1e293b,#0f172a);
-        padding:12px;
-        border-radius:10px;
-        margin-bottom:10px;
-        color:white;
-        box-shadow:0 6px 15px rgba(0,0,0,0.3)
-    ">
-
-        <input type="hidden" class="id" value='{{d["id"]}}'>
-
-        <b>Stato:
-            <span style="color:{{color}}; font-weight:bold;">
-                {{status.upper()}}
-            </span>
-        </b><br><br>
-
-        Tipo:
-        <select class="type">
-            <option value="ferie" {{"selected" if d.get("type")=="ferie" else ""}}>Ferie</option>
-            <option value="permesso" {{"selected" if d.get("type")=="permesso" else ""}}>Permesso</option>
-        </select><br>
-
-        Data:
-        <b>{{date_display}}</b><br><br>
-
-        Dalle:
-        <input type="time" class="start" value='{{d.get("start_time","")}}'><br>
-
-        Alle:
-        <input type="time" class="end" value='{{d.get("end_time","")}}'><br><br>
-
-        <button onclick="update(this)" style="background:#3b82f6;color:white;">Modifica</button>
-        <button onclick="remove(this)" style="background:#ef4444;color:white;">Elimina</button>
-    </div>
-    """
+        html += """
 <script>
 
 
