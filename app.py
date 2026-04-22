@@ -3,6 +3,10 @@ import requests
 import os
 from dotenv import load_dotenv
 import bcrypt
+import secrets 
+from datetime import datetime, timedelta
+import smtplib
+from email.mime.text import MIMEText
 
 load_dotenv()
 
@@ -25,9 +29,151 @@ LOGIN_HTML = """
   Username: <input name="username"><br>
   Password: <input name="password" type="password"><br>
   <button type="submit">Login</button>
+  <br>
+    <a href="/register">Registrati</a><br>
+    <a href="/forgot">Password smarrita?</a>
 </form>
 """
 
+@app.route("/register", methods=["GET", "POST"])
+def register():
+
+    if request.method == "POST":
+
+        username = request.form["username"]
+        email = request.form["email"]
+        password = request.form["password"]
+        sector = request.form["sector"]
+
+        hashed = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
+
+        data = {
+            "username": username,
+            "email": email,
+            "password": hashed,
+            "role": "worker",
+            "sector": sector
+        }
+
+        requests.post(
+            f"{SUPABASE_URL}/rest/v1/users",
+            headers=HEADERS,
+            json=data
+        )
+
+        return "Registrazione completata. Puoi fare login."
+
+    return """
+    <h2>Registrazione</h2>
+    <form method="post">
+        Username: <input name="username"><br>
+        Email: <input name="email"><br>
+        Password: <input name="password" type="password"><br>
+
+        Settore:
+        <select name="sector">
+            <option>Dogane</option>
+            <option>Syllabus</option>
+            <option>Unica</option>
+            <option>Accise</option>
+            <option>Fabbisogni</option>
+            <option>Bonus</option>
+        </select><br><br>
+
+        <button type="submit">Registrati</button>
+    </form>
+    """
+def send_email(to, link):
+
+    msg = MIMEText(f"Clicca qui per reimpostare la password:\n{link}")
+    msg["Subject"] = "Reset Password"
+    msg["From"] = "noreply.team104@gmail.com"
+    msg["To"] = to
+
+    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+        server.login("noreply.team104@gmail.com", "turf tlus ngor onwr")
+        server.send_message(msg)
+
+ @app.route("/forgot", methods=["GET", "POST"])
+def forgot():
+
+    if request.method == "POST":
+
+        email = request.form["email"]
+        token = secrets.token_urlsafe(32)
+        expires = (datetime.utcnow() + timedelta(minutes=15)).isoformat()
+
+        data = {
+            "email": email,
+            "token": token,
+            "expires_at": expires
+        }
+
+        requests.post(
+            f"{SUPABASE_URL}/rest/v1/password_resets",
+            headers=HEADERS,
+            json=data
+        )
+
+        reset_link = f"https://attendance-app-9ozz.onrender.com/reset/{token}"
+
+        send_email(email, reset_link)
+
+        return "Ti abbiamo inviato una mail per il reset."
+
+    return """
+    <h2>Password smarrita</h2>
+    <form method="post">
+        Inserisci la tua email:<br>
+        <input name="email">
+        <button type="submit">Invia</button>
+    </form>
+    """   
+
+@app.route("/reset/<token>", methods=["GET", "POST"])
+def reset_password(token):
+    if request.method == "POST":
+        new_password = request.form["password"].encode("utf-8")
+        hashed = bcrypt.hashpw(new_password, bcrypt.gensalt()).decode("utf-8")
+
+        headers = {
+            "apikey": SUPABASE_KEY,
+            "Authorization": f"Bearer {SUPABASE_KEY}",
+            "Content-Type": "application/json"
+        }
+
+        # Cerco l'utente con quel token
+        res = requests.get(
+            f"{SUPABASE_URL}/rest/v1/users?reset_token=eq.{token}",
+            headers=headers
+        )
+
+        users = res.json()
+
+        if not users:
+            return "Token non valido o scaduto"
+
+        user_id = users[0]["id"]
+
+        # Aggiorno password e rimuovo token
+        requests.patch(
+            f"{SUPABASE_URL}/rest/v1/users?id=eq.{user_id}",
+            headers=headers,
+            json={
+                "password": hashed,
+                "reset_token": None
+            }
+        )
+
+        return "Password aggiornata con successo. Puoi fare login."
+
+    return """
+        <form method="POST">
+            <h3>Inserisci nuova password</h3>
+            <input type="password" name="password" required>
+            <button type="submit">Reset Password</button>
+        </form>
+    """
 # ---------------- LOGIN ----------------
 @app.route("/", methods=["GET", "POST"])
 def login():
