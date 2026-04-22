@@ -38,6 +38,7 @@ LOGIN_HTML = """
 @app.route("/register", methods=["GET", "POST"])
 def register():
 
+    # ================= POST (SALVATAGGIO UTENTE) =================
     if request.method == "POST":
 
         username = request.form["username"]
@@ -45,6 +46,20 @@ def register():
         password = request.form["password"]
         sector = request.form["sector"]
 
+        # 🔒 controllo base
+        if not username or not email or not password or not sector:
+            return "Tutti i campi sono obbligatori"
+
+        # 🔎 evita duplicati username
+        check = requests.get(
+            f"{SUPABASE_URL}/rest/v1/users?username=eq.{username}",
+            headers=HEADERS
+        )
+
+        if check.json():
+            return "Username già registrato"
+
+        # 🔐 hash password
         hashed = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
 
         data = {
@@ -61,49 +76,61 @@ def register():
             json=data
         )
 
-        print("STATUS REGISTER:", res.status_code)
-        print("RESPONSE REGISTER:", res.text)
+        # 🔍 debug utile
+        print("REGISTER STATUS:", res.status_code)
+        print("REGISTER RESPONSE:", res.text)
 
         if res.status_code not in [200, 201]:
-            return f"Errore registrazione: {res.text}"
+            return "Errore registrazione"
 
         return """
         <h3>Registrazione completata ✅</h3>
-        <p>Ora puoi effettuare il login.</p>
-        
-        <a href="/" style="
-            display:inline-block;
-            margin-top:10px;
-            padding:8px 12px;
-            background:#3b82f6;
-            color:white;
-            text-decoration:none;
-            border-radius:6px;
-        ">
-            Torna al login
-        </a>
+        <a href="/">Torna al login</a>
         """
 
-    return """
-    <h2>Registrazione</h2>
-    <form method="post">
-        Username: <input name="username"><br>
-        Email: <input name="email"><br>
-        Password: <input name="password" type="password"><br>
+    # ================= GET (MOSTRA FORM) =================
 
-        Settore:
-        <select name="sector">
-            <option>Dogane</option>
-            <option>Syllabus</option>
-            <option>Unica</option>
-            <option>Accise</option>
-            <option>Fabbisogni</option>
-            <option>Bonus</option>
+    res = requests.get(
+        f"{SUPABASE_URL}/rest/v1/users_available?select=username",
+        headers=HEADERS
+    )
+
+    users = res.json()
+
+    return render_template_string("""
+    <h2>Registrazione</h2>
+
+    <form method="post">
+
+        Username:
+        <select name="username" required>
+            <option value="">Seleziona utente</option>
+            {% for u in users %}
+                <option value="{{ u['username'] }}">{{ u['username'] }}</option>
+            {% endfor %}
+        </select><br><br>
+
+        Email:
+        <input name="email" type="email" required><br><br>
+
+        Password:
+        <input name="password" type="password" required><br><br>
+
+        Sector:
+        <select name="sector" required>
+            <option value="">Seleziona settore</option>
+            <option value="Dogane">Dogane</option>
+            <option value="Syllabus">Syllabus</option>
+            <option value="Unica">Unica</option>
+            <option value="Accise">Accise</option>
+            <option value="Fabbisogni">Fabbisogni</option>
+            <option value="Bonus">Bonus</option>
         </select><br><br>
 
         <button type="submit">Registrati</button>
+
     </form>
-    """
+    """, users=users)
 def send_email(to, link):
 
     msg = MIMEText(f"Clicca qui per reimpostare la password:\n{link}")
@@ -124,18 +151,31 @@ def forgot():
         token = secrets.token_urlsafe(32)
         expires = (datetime.utcnow() + timedelta(minutes=15)).isoformat()
 
-        # 1. salvo token su USERS (NON password_resets)
-        res = requests.patch(
-            f"{SUPABASE_URL}/rest/v1/users?email=eq.{email}",
-            headers=HEADERS,
-            json={
-                "reset_token": token
-            }
-        )
-
-        # debug utile
-        print("FORGOT STATUS:", res.status_code)
-        print("FORGOT RESPONSE:", res.text)
+            # 1. controllo che email esista
+    check = requests.get(
+        f"{SUPABASE_URL}/rest/v1/users?email=eq.{email}",
+        headers=HEADERS
+    )
+    
+    user_data = check.json()
+    
+    if not user_data:
+        return "Email non registrata"
+    
+    # 2. genera token
+    token = secrets.token_urlsafe(32)
+    
+    # 3. salva token
+    res = requests.patch(
+        f"{SUPABASE_URL}/rest/v1/users?email=eq.{email}",
+        headers=HEADERS,
+        json={
+            "reset_token": token
+        }
+    )
+    
+    print("RESET PATCH STATUS:", res.status_code)
+    print("RESET PATCH RESPONSE:", res.text)
 
         # 2. link reset
         reset_link = f"https://attendance-app-9ozz.onrender.com/reset/{token}"
