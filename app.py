@@ -394,17 +394,25 @@ function update(btn){
     let payload = {
         id: card.querySelector(".id").value,
         type: type,
-        start_time: card.querySelector(".start").value,
-        end_time: card.querySelector(".end").value,
+        start_time: card.querySelector(".start")?.value || null,
+        end_time: card.querySelector(".end")?.value || null,
         status: "pending"
     };
 
     if (type === "ferie") {
-        payload.date_from = card.querySelector(".date_from").value;
-        payload.date_to = card.querySelector(".date_to").value;
+
+        let fromEl = card.querySelector(".date_from");
+        let toEl = card.querySelector(".date_to");
+
+        payload.date_from = fromEl ? fromEl.value : null;
+        payload.date_to = toEl ? toEl.value : null;
+
     } else {
-        payload.date_from = card.querySelector(".date").value;
-        payload.date_to = card.querySelector(".date").value;
+
+        let dateEl = card.querySelector(".date");
+
+        payload.date_from = dateEl ? dateEl.value : null;
+        payload.date_to = dateEl ? dateEl.value : null;
     }
 
     fetch("/update_absence", {
