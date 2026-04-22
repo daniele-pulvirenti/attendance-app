@@ -90,7 +90,7 @@ def register():
     # ================= GET (MOSTRA FORM) =================
 
     res = requests.get(
-        f"{SUPABASE_URL}/rest/v1/users_available_free?select=username,sector"
+        f"{SUPABASE_URL}/rest/v1/users_available_free?select=username,sector",
         headers=HEADERS
     )
 
