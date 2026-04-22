@@ -152,10 +152,18 @@ def dashboard():
     else:
 
         res = requests.get(
-            f"{SUPABASE_URL}/rest/v1/absences?worker_name=eq.{user['username']}",
-            headers=HEADERS
-        )
+        f"{SUPABASE_URL}/rest/v1/absences?worker_name=eq.{user['username']}",
+        headers=HEADERS
+    )
+    
+    print("STATUS:", res.status_code)
+    print("RESPONSE:", res.text)
+    
+    try:
         data = res.json()
+    except Exception as e:
+        print("🔥 JSON ERROR:", e)
+        data = []
 
         html = f"""
         <h2 style="color:#38bdf8">Benvenuto {user['username']}</h2>
