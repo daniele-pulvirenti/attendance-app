@@ -97,27 +97,27 @@ with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
 @app.route("/forgot", methods=["GET", "POST"])
 def forgot():
 
- if request.method == "POST":
+    if request.method == "POST":
 
-    email = request.form["email"]
-    token = secrets.token_urlsafe(32)
-    expires = (datetime.utcnow() + timedelta(minutes=15)).isoformat()
+        email = request.form["email"]
+        token = secrets.token_urlsafe(32)
+        expires = (datetime.utcnow() + timedelta(minutes=15)).isoformat()
 
-    data = {
-        "email": email,
-        "token": token,
-        "expires_at": expires
-    }
+        data = {
+            "email": email,
+            "token": token,
+            "expires_at": expires
+        }
 
-    requests.post(
-        f"{SUPABASE_URL}/rest/v1/password_resets",
-        headers=HEADERS,
-        json=data
-    )
+        requests.post(
+            f"{SUPABASE_URL}/rest/v1/password_resets",
+            headers=HEADERS,
+            json=data
+        )
 
-    reset_link = f"https://attendance-app-9ozz.onrender.com/reset/{token}"
+        reset_link = f"https://attendance-app-9ozz.onrender.com/reset/{token}"
 
-    send_email(email, reset_link)
+        send_email(email, reset_link)
 
         return "Ti abbiamo inviato una mail per il reset."
 
@@ -128,8 +128,7 @@ def forgot():
         <input name="email">
         <button type="submit">Invia</button>
     </form>
-    """  
-
+    """
 @app.route("/reset/<token>", methods=["GET", "POST"])
 def reset_password(token):
     if request.method == "POST":
