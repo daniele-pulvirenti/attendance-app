@@ -124,27 +124,27 @@ def forgot():
         token = secrets.token_urlsafe(32)
         expires = (datetime.utcnow() + timedelta(minutes=15)).isoformat()
 
-        data = {
-            "email": email,
-            "token": token,
-            "expires_at": expires
-        }
-
-        requests.post(
-            f"{SUPABASE_URL}/rest/v1/password_resets",
+        # 1. salvo token su USERS (NON password_resets)
+        res = requests.patch(
+            f"{SUPABASE_URL}/rest/v1/users?email=eq.{email}",
             headers=HEADERS,
-            json=data
+            json={
+                "reset_token": token
+            }
         )
 
+        # debug utile
+        print("FORGOT STATUS:", res.status_code)
+        print("FORGOT RESPONSE:", res.text)
+
+        # 2. link reset
         reset_link = f"https://attendance-app-9ozz.onrender.com/reset/{token}"
 
         send_email(email, reset_link)
 
         return """
         <h3>Ti abbiamo inviato una mail 📩</h3>
-        
         <p>Controlla la tua casella e segui il link per reimpostare la password.</p>
-        
         <a href="/" style="
             display:inline-block;
             margin-top:10px;
@@ -162,7 +162,7 @@ def forgot():
     <h2>Password smarrita</h2>
     <form method="post">
         Inserisci la tua email:<br>
-        <input name="email">
+        <input name="email" required>
         <button type="submit">Invia</button>
     </form>
     """
