@@ -103,12 +103,15 @@ def register():
     <form method="post">
 
         Username:
-        <select name="username" required>
-            <option value="">Seleziona utente</option>
+        <select name="username" id="username" onchange="fillSector()">
             {% for u in users %}
-                <option value="{{ u['username'] }}">{{ u['username'] }}</option>
+                <option value="{{ u.username }}" data-sector="{{ u.sector }}">
+                    {{ u.username }}
+                </option>
             {% endfor %}
-        </select><br><br>
+        </select>
+        
+        <input type="hidden" name="sector" id="sector">
 
         Email:
         <input name="email" type="email" required><br><br>
@@ -130,6 +133,15 @@ def register():
         <button type="submit">Registrati</button>
 
     </form>
+
+    <script>
+    function fillSector() {
+        let select = document.getElementById("username");
+        let sector = select.options[select.selectedIndex].dataset.sector;
+    
+        document.getElementById("sector").value = sector;
+    }
+    </script>
     """, users=users)
 def send_email(to, link):
 
