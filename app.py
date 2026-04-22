@@ -86,8 +86,6 @@ def dashboard():
 
         html = f"""
         <h2 style="color:#38bdf8">Dashboard Capo - {user['username']}</h2>
-        html = f"""
-        <h2>Dashboard Capo - {user['username']}</h2>
         
         <div style="margin-bottom:15px; display:flex; gap:8px; flex-wrap:wrap;">
             <a href="/dashboard?sector=all"><button>Tutti</button></a>
@@ -98,8 +96,9 @@ def dashboard():
             <a href="/dashboard?sector=Fabbisogni"><button>Fabbisogni</button></a>
             <a href="/dashboard?sector=Bonus"><button>Bonus</button></a>
         </div>
-        """
-        <a href='/logout'>Logout</a><hr>
+        
+        <a href='/logout'>Logout</a>
+        <hr>
         """
 
         for d in data:
