@@ -38,7 +38,7 @@ def login():
         password = request.form["password"]
 
         res = requests.get(
-            f"{SUPABASE_URL}/rest/v1/users?username=eq.{username}",
+            f"{SUPABASE_URL}/rest/v1/absences?worker_name=eq.{user['username']}&sector=eq.{user['sector']}",
             headers=HEADERS
         )
 
@@ -71,16 +71,34 @@ def dashboard():
     user = session["user"]
 
     # ================= CAPO =================
+    sector = request.args.get("sector")
     if user["role"] == "manager":
 
-        res = requests.get(
-            f"{SUPABASE_URL}/rest/v1/absences?select=*",
-            headers=HEADERS
-        )
+        sector = request.args.get("sector")
+
+        url = f"{SUPABASE_URL}/rest/v1/absences?select=*"
+        
+        if sector and sector != "all":
+            url += f"&sector=eq.{sector}"
+        
+        res = requests.get(url, headers=HEADERS)
         data = res.json()
 
         html = f"""
         <h2 style="color:#38bdf8">Dashboard Capo - {user['username']}</h2>
+        html = f"""
+        <h2>Dashboard Capo - {user['username']}</h2>
+        
+        <div style="margin-bottom:15px; display:flex; gap:8px; flex-wrap:wrap;">
+            <a href="/dashboard?sector=all"><button>Tutti</button></a>
+            <a href="/dashboard?sector=Dogane"><button>Dogane</button></a>
+            <a href="/dashboard?sector=Syllabus"><button>Syllabus</button></a>
+            <a href="/dashboard?sector=Unica"><button>Unica</button></a>
+            <a href="/dashboard?sector=Accise"><button>Accise</button></a>
+            <a href="/dashboard?sector=Fabbisogni"><button>Fabbisogni</button></a>
+            <a href="/dashboard?sector=Bonus"><button>Bonus</button></a>
+        </div>
+        """
         <a href='/logout'>Logout</a><hr>
         """
 
