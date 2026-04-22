@@ -37,20 +37,21 @@ def login():
         username = request.form["username"]
         password = request.form["password"]
 
+        # 🔥 QUERY CORRETTA: USERS (NON ABSENCES)
         res = requests.get(
-            f"{SUPABASE_URL}/rest/v1/absences?worker_name=eq.{user['username']}&sector=eq.{user['sector']}",
+            f"{SUPABASE_URL}/rest/v1/users?username=eq.{username}",
             headers=HEADERS
         )
 
         try:
-            user = res.json()
+            user_data = res.json()
         except:
             return "Errore server"
 
-        if not user:
+        if not user_data:
             return "Utente non trovato"
 
-        db_user = user[0]
+        db_user = user_data[0]
 
         if bcrypt.checkpw(password.encode(), db_user["password"].encode()):
             session["user"] = db_user
