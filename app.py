@@ -87,12 +87,12 @@ def send_email(to, link):
 
     msg = MIMEText(f"Clicca qui per reimpostare la password:\n{link}")
     msg["Subject"] = "Reset Password"
-msg["From"] = "noreply.team104@gmail.com"
-msg["To"] = to
+    msg["From"] = "noreply.team104@gmail.com"
+    msg["To"] = to
 
-with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
-    server.login("noreply.team104@gmail.com", "turf tlus ngor onwr")
-    server.send_message(msg)
+    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+        server.login("noreply.team104@gmail.com", "turf tlus ngor onwr")
+        server.send_message(msg)
 
 @app.route("/forgot", methods=["GET", "POST"])
 def forgot():
