@@ -83,6 +83,17 @@ def dashboard():
         <h2 style="color:#38bdf8">Dashboard Capo - {user['username']}</h2>
         <a href='/logout'>Logout</a><hr>
         """
+        <div style="margin-bottom:15px; display:flex; gap:8px; flex-wrap:wrap;">
+
+            <button onclick="filterSector('all')" style="padding:6px 10px;">Tutti</button>
+            <button onclick="filterSector('Dogane')">Dogane</button>
+            <button onclick="filterSector('Syllabus')">Syllabus</button>
+            <button onclick="filterSector('Unica')">Unica</button>
+            <button onclick="filterSector('Accise')">Accise</button>
+            <button onclick="filterSector('Fabbisogni')">Fabbisogni</button>
+            <button onclick="filterSector('Bonus')">Bonus</button>
+        
+        </div>
 
         for d in data:
 
@@ -132,6 +143,23 @@ def dashboard():
         <a href='/logout'>Logout</a>
         <hr>
 
+        <div class="card" data-sector="{d.get('sector','')}" style="
+            background:#0f172a;
+            padding:12px;
+            border-radius:10px;
+            margin-bottom:10px;
+            color:white;
+        ">
+            <b>{d["worker_name"]}</b>
+            <span style="opacity:0.6">({d.get("sector","")})</span><br>
+            📅 {date_display}<br>
+            ⏰ {time_display}<br>
+            Stato: <span style="color:{color}">{d["status"]}</span><br><br>
+        
+            <a href="/approve/{d["id"]}">✔ Approva</a> |
+            <a href="/reject/{d["id"]}">✖ Rifiuta</a>
+        </div>
+
         <h3>➕ Inserisci assenza</h3>
 
         <form method="post" action="/add_absence" style="
@@ -167,6 +195,23 @@ def dashboard():
         </form>
 
         <script>
+
+        function filterSector(sector){
+
+            document.querySelectorAll(".card").forEach(card => {
+        
+                if(sector === "all"){
+                    card.style.display = "block";
+                    return;
+                }
+        
+                if(card.dataset.sector === sector){
+                    card.style.display = "block";
+                } else {
+                    card.style.display = "none";
+                }
+            });
+        }
         function toggleAddForm(){{
 
             let type = document.getElementById("type").value;
