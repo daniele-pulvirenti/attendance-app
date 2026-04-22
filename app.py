@@ -559,6 +559,7 @@ def add_absence():
 
     data = {
         "worker_name": user["username"],
+        "sector": user["sector"],
         "date_from": date_from,
         "date_to": date_to,
         "type": absence_type,
