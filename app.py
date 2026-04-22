@@ -41,10 +41,10 @@ def register():
     # ================= POST (SALVATAGGIO UTENTE) =================
     if request.method == "POST":
 
-        username = request.form["username"]
-        email = request.form["email"]
-        password = request.form["password"]
-        sector = request.form["sector"]
+        username = request.form.get("username")
+        email = request.form.get("email")
+        password = request.form.get("password")
+        sector = request.form.get("sector")
 
         # 🔒 controllo base
         if not username or not email or not password or not sector:
@@ -76,7 +76,6 @@ def register():
             json=data
         )
 
-        # 🔍 debug utile
         print("REGISTER STATUS:", res.status_code)
         print("REGISTER RESPONSE:", res.text)
 
@@ -91,7 +90,7 @@ def register():
     # ================= GET (MOSTRA FORM) =================
 
     res = requests.get(
-        f"{SUPABASE_URL}/rest/v1/users_available?select=username",
+        f"{SUPABASE_URL}/rest/v1/users_available?select=username,sector",
         headers=HEADERS
     )
 
@@ -103,32 +102,24 @@ def register():
     <form method="post">
 
         Username:
-        <select name="username" id="username" onchange="fillSector()">
+        <select name="username" id="username" onchange="fillSector()" required>
+            <option value="">Seleziona username</option>
             {% for u in users %}
                 <option value="{{ u.username }}" data-sector="{{ u.sector }}">
                     {{ u.username }}
                 </option>
             {% endfor %}
         </select>
-        
+
         <input type="hidden" name="sector" id="sector">
+
+        <br><br>
 
         Email:
         <input name="email" type="email" required><br><br>
 
         Password:
         <input name="password" type="password" required><br><br>
-
-        Sector:
-        <select name="sector" required>
-            <option value="">Seleziona settore</option>
-            <option value="Dogane">Dogane</option>
-            <option value="Syllabus">Syllabus</option>
-            <option value="Unica">Unica</option>
-            <option value="Accise">Accise</option>
-            <option value="Fabbisogni">Fabbisogni</option>
-            <option value="Bonus">Bonus</option>
-        </select><br><br>
 
         <button type="submit">Registrati</button>
 
@@ -138,7 +129,6 @@ def register():
     function fillSector() {
         let select = document.getElementById("username");
         let sector = select.options[select.selectedIndex].dataset.sector;
-    
         document.getElementById("sector").value = sector;
     }
     </script>
