@@ -388,17 +388,19 @@ window.addEventListener("DOMContentLoaded", function() {
 
 function update(btn){
 
-    let card = btn.parentElement;
+    let card = btn.closest(".card");
+
     let type = card.querySelector(".type").value;
 
     let payload = {
         id: card.querySelector(".id").value,
         type: type,
         start_time: card.querySelector(".start").value,
-        end_time: card.querySelector(".end").value
+        end_time: card.querySelector(".end").value,
+        status: "pending"
     };
 
-    if(type === "ferie"){
+    if (type === "ferie") {
         payload.date_from = card.querySelector(".date_from").value;
         payload.date_to = card.querySelector(".date_to").value;
     } else {
@@ -407,10 +409,11 @@ function update(btn){
     }
 
     fetch("/update_absence", {
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
         body: JSON.stringify(payload)
-    }).then(()=>location.reload());
+    })
+    .then(() => location.reload());
 }
 
 function remove(btn){
@@ -437,6 +440,7 @@ document.addEventListener("DOMContentLoaded", function () {
         initialView: "dayGridMonth",
         locale: "it",
         firstDay: 1,
+        
 
         weekends: true,
 
@@ -454,7 +458,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 return {
                     title: "Ferie",
                     start: d.date_from,
-                    end: d.date_to,
+                    end: new Date(new Date(d.date_to).getTime() + 86400000).toISOString().split("T")[0],
                     color: d.status === "approved" ? "#22c55e"
                           : d.status === "rejected" ? "#ef4444"
                           : "#f59e0b"
@@ -476,6 +480,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
 </script>
 """
+        
 
         return render_template_string(html, data=data)
 
