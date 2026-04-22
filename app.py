@@ -389,7 +389,6 @@ window.addEventListener("DOMContentLoaded", function() {
 function update(btn){
 
     let card = btn.closest(".card");
-
     let type = card.querySelector(".type").value;
 
     let payload = {
@@ -413,6 +412,7 @@ function update(btn){
         headers: {"Content-Type": "application/json"},
         body: JSON.stringify(payload)
     })
+    .then(res => res.json())
     .then(() => location.reload());
 }
 
@@ -563,14 +563,20 @@ def update_absence():
 
     payload = {
         "type": data["type"],
-        "date_from": data.get("date_from"),
-        "date_to": data.get("date_to"),
         "start_time": data.get("start_time"),
         "end_time": data.get("end_time"),
-
-        # 🔥 FORZA RESET STATO
         "status": "pending"
     }
+
+    # ferie
+    if data["type"] == "ferie":
+        payload["date_from"] = data.get("date_from")
+        payload["date_to"] = data.get("date_to")
+
+    # permesso
+    else:
+        payload["date_from"] = data.get("date_from")
+        payload["date_to"] = data.get("date_to")
 
     requests.patch(
         f"{SUPABASE_URL}/rest/v1/absences?id=eq.{data['id']}",
