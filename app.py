@@ -75,7 +75,8 @@ def dashboard():
     if user["role"] == "manager":
 
         sector = request.args.get("sector")
-    
+        print("SECTOR SELEZIONATO:", sector)
+
         params = {"select": "*"}
     
         if sector and sector != "all":
@@ -88,7 +89,9 @@ def dashboard():
         )
     
         data = res.json()
-
+        print("PRIME RIGHE:", data[:3])
+        for d in data:
+            print("SECTOR DB:", d.get("sector"))
         html = f"""
         <h2 style="color:#38bdf8">Dashboard Capo - {user['username']}</h2>
         
