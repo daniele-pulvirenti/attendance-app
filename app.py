@@ -75,9 +75,10 @@ def dashboard():
     if user["role"] == "manager":
 
         sector = request.args.get("sector")
-        print("SECTOR SELEZIONATO:", sector)
-
-        params = {"select": "*"}
+    
+        params = {
+            "select": "*"
+        }
     
         if sector and sector != "all":
             params["sector"] = f"eq.{sector}"
@@ -88,8 +89,17 @@ def dashboard():
             params=params
         )
     
-        data = res.json()
-        print("PRIME RIGHE:", data[:3])
+        print("STATUS:", res.status_code)
+        print("URL:", res.url)
+        print("RESPONSE:", res.text)
+    
+        try:
+            data = res.json()
+        except Exception as e:
+            print("JSON ERROR:", e)
+            data = []
+        print("TIPO DATA:", type(data))
+        print("DATA RAW:", data)
         for d in data:
             print("SECTOR DB:", d.get("sector"))
         html = f"""
