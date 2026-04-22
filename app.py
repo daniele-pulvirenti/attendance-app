@@ -67,7 +67,22 @@ def register():
         if res.status_code not in [200, 201]:
             return f"Errore registrazione: {res.text}"
 
-        return "Registrazione completata. Puoi fare login."
+        return """
+        <h3>Registrazione completata ✅</h3>
+        <p>Ora puoi effettuare il login.</p>
+        
+        <a href="/" style="
+            display:inline-block;
+            margin-top:10px;
+            padding:8px 12px;
+            background:#3b82f6;
+            color:white;
+            text-decoration:none;
+            border-radius:6px;
+        ">
+            Torna al login
+        </a>
+        """
 
     return """
     <h2>Registrazione</h2>
