@@ -90,11 +90,11 @@ def dashboard():
         
             # ----- FIX VISUALIZZAZIONE FERIE / PERMESSI -----
             if d.get("type") == "ferie":
-                date_display = f'{d.get("date_from","")} → {d.get("date_to","")}'
-                time_display = "09:00 - 18:00"   # orario automatico ferie
+                date_display = f'{d.get("date_from")} → {d.get("date_to")}'
+                time_display = "09:00 - 18:00"
             else:
-                date_display = d.get("date_from","")
-                time_display = f'{d.get("start_time","")} - {d.get("end_time","")}'
+                date_display = d.get("date_from")
+                time_display = f'{d.get("start_time")} - {d.get("end_time")}'
         
             html += f"""
             <div style="
@@ -197,6 +197,20 @@ def dashboard():
             validateForm();
         }}
 
+        function blockWeekendDates() {{
+    document.querySelectorAll("input[type='date']").forEach(input => {{
+        input.addEventListener("input", function () {{
+            const day = new Date(this.value).getDay();
+            if (day === 0 || day === 6) {{
+                alert("Weekend non selezionabile");
+                this.value = "";
+            }}
+        }});
+    }});
+}}
+
+window.addEventListener("DOMContentLoaded", blockWeekendDates);
+
         function validateForm(){{
 
             let type = document.getElementById("type").value;
@@ -274,7 +288,8 @@ def dashboard():
             ">▶</button>
         
         </div>
-        
+        <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet">
+        <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
         <div id="calendar"></div>
         """
 
@@ -409,60 +424,62 @@ const data = {{ data | tojson }};
 
 let currentDate = new Date();
 
-function renderCalendar(){
+document.addEventListener('DOMContentLoaded', function () {
 
-    const calendar = document.getElementById("calendar");
-    const monthLabel = document.getElementById("monthLabel");
+    const calendarEl = document.getElementById('calendar');
 
-    const year = currentDate.getFullYear();
-    const month = currentDate.getMonth();
+    const calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        locale: 'it',
+        firstDay: 1, // lunedì
+        weekends: true, // li vediamo ma li blocchiamo
+        height: 650,
 
-    const monthNames = [
-        "Gennaio","Febbraio","Marzo","Aprile","Maggio","Giugno",
-        "Luglio","Agosto","Settembre","Ottobre","Novembre","Dicembre"
-    ];
+        validRange: function(nowDate) {
+            return {
+                start: nowDate
+            };
+        },
 
-    monthLabel.innerHTML = `
-        <span style="color:#38bdf8">${monthNames[month]}</span>
-        <span style="opacity:0.7">${year}</span>
-    `;
-
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-    let html = '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:5px;">';
-
-    for(let i=1;i<=daysInMonth;i++){
-
-        let dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
-
-        let entry = data.find(d => {
-            if(d.type === "ferie"){
-                return dateStr >= d.date_from && dateStr <= d.date_to;
+        dayCellDidMount: function(info) {
+            const day = info.date.getDay();
+            if (day === 0 || day === 6) {
+                info.el.style.backgroundColor = '#111827';
+                info.el.style.opacity = '0.4';
             }
-            return d.date_from === dateStr;
-        });
+        },
 
-        let bg = "#1e293b";
+        dateClick: function(info) {
+            const day = new Date(info.dateStr).getDay();
+            if (day === 0 || day === 6) {
+                alert("Non puoi inserire ferie o permessi nel weekend");
+            }
+        },
 
-        if(entry){
-            if(entry.status === "approved") bg = "#22c55e";
-            else if(entry.status === "rejected") bg = "#ef4444";
-            else bg = "#f59e0b";
-        }
+        events: data.map(d => {
 
-        html += `
-        <div style="
-            background:${bg};
-            color:white;
-            padding:8px;
-            border-radius:6px;
-            text-align:center;
-            font-size:12px;
-        ">
-            ${i}
-        </div>
-        `;
-    }
+            if (d.type === "ferie") {
+                return {
+                    title: "Ferie",
+                    start: d.date_from,
+                    end: new Date(new Date(d.date_to).getTime() + 86400000),
+                    color: d.status === "approved" ? "#22c55e" :
+                           d.status === "rejected" ? "#ef4444" : "#f59e0b"
+                };
+            } else {
+                return {
+                    title: "Permesso",
+                    start: d.date_from,
+                    color: d.status === "approved" ? "#22c55e" :
+                           d.status === "rejected" ? "#ef4444" : "#f59e0b"
+                };
+            }
+
+        })
+    });
+
+    calendar.render();
+});
 
     html += '</div>';
 
@@ -559,12 +576,13 @@ def update_absence():
     data = request.json
 
     payload = {
-        "type": data["type"],
-        "date_from": data["date_from"],
-        "date_to": data["date_to"],
-        "start_time": data["start_time"],
-        "end_time": data["end_time"]
-    }
+    "type": data["type"],
+    "date_from": data["date_from"],
+    "date_to": data["date_to"],
+    "start_time": data["start_time"],
+    "end_time": data["end_time"],
+    "status": "pending"   # ← QUESTA È LA CHIAVE
+}
 
     if data["type"] == "ferie":
         payload["start_time"] = None
