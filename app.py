@@ -119,16 +119,16 @@ def forgot():
 
     send_email(email, reset_link)
 
-    return "Ti abbiamo inviato una mail per il reset."
+        return "Ti abbiamo inviato una mail per il reset."
 
-return """
-<h2>Password smarrita</h2>
-<form method="post">
-    Inserisci la tua email:<br>
-    <input name="email">
-    <button type="submit">Invia</button>
-</form>
-    """   
+    return """
+    <h2>Password smarrita</h2>
+    <form method="post">
+        Inserisci la tua email:<br>
+        <input name="email">
+        <button type="submit">Invia</button>
+    </form>
+    """  
 
 @app.route("/reset/<token>", methods=["GET", "POST"])
 def reset_password(token):
