@@ -477,26 +477,26 @@ document.addEventListener('DOMContentLoaded', function() {
         { title: "Santo Stefano", start: "2026-12-26", display: "background", color: "#ef4444" }
     ];
 
-    var calendar = new FullCalendar.Calendar(calendarEl, {
+    var calendar = new FullCalendar.Calendar(calendarEl, {{
 
         initialView: "dayGridMonth",
         locale: "it",
         firstDay: 1,
         weekends: true,
 
-        dayCellDidMount: function(info) {
+        dayCellDidMount: function(info) {{
             const day = info.date.getDay();
-            if (day === 0 || day === 6) {
+            if (day === 0 || day === 6) {{
                 info.el.style.backgroundColor = "#111827";
                 info.el.style.opacity = "0.6";
                 info.el.style.color = "#ef4444";
-            }
-        },
+            }}
+        }},
 
-        events: (window.data || []).map(d => {
+        events: (window.data || []).map(d => {{
 
-            if (d.type === "ferie") {
-                return {
+            if (d.type === "ferie") {{
+                return {{
                     title: "Ferie",
                     start: d.date_from,
                     end: new Date(new Date(d.date_to).getTime() + 86400000)
@@ -505,19 +505,19 @@ document.addEventListener('DOMContentLoaded', function() {
                     color: d.status === "approved" ? "#22c55e"
                           : d.status === "rejected" ? "#ef4444"
                           : "#f59e0b"
-                };
-            }
+                }};
+            }}
 
-            return {
+            return {{
                 title: "Permesso",
                 start: d.date_from,
                 color: d.status === "approved" ? "#22c55e"
                       : d.status === "rejected" ? "#ef4444"
                       : "#f59e0b"
-            };
+            }};
 
-        }).concat(italianHolidays)
-    });
+        }}).concat(italianHolidays)
+    }});
 
     calendar.render();
 
