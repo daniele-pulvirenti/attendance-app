@@ -462,7 +462,7 @@ def dashboard():
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function() {{
 
     var calendarEl = document.getElementById('calendar');
 
@@ -521,7 +521,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     calendar.render();
 
-});
+}});
 </script>
 
 <script>
