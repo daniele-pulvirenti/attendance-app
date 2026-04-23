@@ -487,7 +487,7 @@ document.addEventListener('DOMContentLoaded', function() {{
         // ================= 📅 EVENTI =================
         events: (window.data || []).concat(
             getItalianHolidays(new Date().getFullYear()),
-            {{events_json}}
+            JSON.parse('{{ events_json | tojson | safe }}')
         ),
 
         // ================= CLICK EVENTO =================
