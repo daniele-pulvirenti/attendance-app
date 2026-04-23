@@ -292,30 +292,44 @@ def login():
         username = request.form["username"]
         password = request.form["password"]
 
-        # 🔥 QUERY CORRETTA: USERS (NON ABSENCES)
+        # 1️⃣ LOGIN (tabella users)
         res = requests.get(
             f"{SUPABASE_URL}/rest/v1/users?username=eq.{username}",
             headers=HEADERS
         )
 
-        try:
-            user_data = res.json()
-        except:
-            return "Errore server"
+        user_data = res.json()
 
         if not user_data:
             return "Utente non trovato"
 
         db_user = user_data[0]
 
-        if bcrypt.checkpw(password.encode(), db_user["password"].encode()):
-            session["user"] = db_user
-            return redirect("/dashboard")
+        # controllo password
+        if not bcrypt.checkpw(password.encode(), db_user["password"].encode()):
+            return "Login errato"
 
-        return "Login errato"
+        # 2️⃣ RECUPERO DATI ANAGRAFICI (users_available)
+        profile_res = requests.get(
+            f"{SUPABASE_URL}/rest/v1/users_available?username=eq.{username}",
+            headers=HEADERS
+        )
+
+        profile_data = profile_res.json()
+        profile = profile_data[0] if profile_data else {}
+
+        # 3️⃣ SESSION COMPLETA
+        session["user"] = {
+            "username": username,
+            "role": db_user["role"],
+            "sector": profile.get("sector"),
+            "first_name": profile.get("first_name"),
+            "last_name": profile.get("last_name")
+        }
+
+        return redirect("/dashboard")
 
     return render_template_string(LOGIN_HTML)
-
 
 # ---------------- DASHBOARD ----------------
 @app.route("/dashboard")
@@ -325,6 +339,10 @@ def dashboard():
         return redirect("/")
 
     user = session["user"]
+
+    full_name = f"{user.get('first_name','')} {user.get('last_name','')}".strip()
+
+    return render_template_string(html, user=user, full_name=full_name)
 
     # ================= CAPO =================
     if user["role"] == "manager":
