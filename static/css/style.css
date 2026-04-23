@@ -1,0 +1,86 @@
+/* ========== RESET BASE ========== */
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+/* ========== BODY MOBILE FIRST ========== */
+body{
+    background:#f1f5f9;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    min-height:100vh;
+    padding:20px;
+}
+
+/* ========== CARD PRINCIPALE ========== */
+.card{
+    background:white;
+    width:100%;
+    max-width:420px;
+    padding:30px 25px;
+    border-radius:12px;
+    box-shadow:0 10px 25px rgba(0,0,0,0.08);
+}
+
+/* ========== TITOLI ========== */
+h1, h2{
+    text-align:center;
+    margin-bottom:20px;
+    color:#0f172a;
+}
+
+/* ========== INPUT ========== */
+input, select{
+    width:100%;
+    padding:14px;
+    margin-top:8px;
+    margin-bottom:18px;
+    border-radius:8px;
+    border:1px solid #cbd5e1;
+    font-size:16px;
+}
+
+/* ========== BOTTONI ========== */
+button{
+    width:100%;
+    padding:14px;
+    border:none;
+    border-radius:8px;
+    background:#0ea5e9;
+    color:white;
+    font-size:16px;
+    font-weight:bold;
+    cursor:pointer;
+}
+
+/* ========== LINK ========== */
+.links{
+    margin-top:15px;
+    text-align:center;
+}
+
+.links a{
+    display:block;
+    margin-top:8px;
+    text-decoration:none;
+    color:#0ea5e9;
+    font-weight:bold;
+}
+
+/* ========== LOGO ========== */
+.logo{
+    display:block;
+    margin:0 auto 15px auto;
+    width:120px;
+}
+
+/* ========== DESKTOP MIGLIORA SOLO ========== */
+@media(min-width:768px){
+    .card{
+        max-width:500px;
+    }
+}
