@@ -217,11 +217,94 @@ def register():
     users = res.json()
 
     return render_template_string("""
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: url('/static/images/login-bg.jpg') no-repeat center center fixed;
+            background-size: cover;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .card {
+            background: rgba(15, 23, 42, 0.92);
+            padding: 25px;
+            border-radius: 14px;
+            width: 90%;
+            max-width: 420px;
+            color: white;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        h2 {
+            text-align: center;
+            color: #38bdf8;
+            margin-bottom: 20px;
+        }
+
+        label {
+            font-size: 14px;
+            display: block;
+            margin-top: 10px;
+            margin-bottom: 5px;
+            color: #cbd5e1;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border-radius: 8px;
+            border: none;
+            margin-bottom: 10px;
+            outline: none;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            margin-top: 10px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #2563eb;
+        }
+
+        .link {
+            text-align: center;
+            margin-top: 12px;
+        }
+
+        .link a {
+            color: #38bdf8;
+            text-decoration: none;
+            font-size: 13px;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="card">
+
     <h2>Registrazione</h2>
 
     <form method="post">
 
-        Username:
+        <label>Username</label>
         <select name="username" id="username" onchange="fillSector()" required>
             <option value="">Seleziona username</option>
             {% for u in users %}
@@ -238,35 +321,37 @@ def register():
         <input type="hidden" name="first_name" id="first_name">
         <input type="hidden" name="last_name" id="last_name">
 
-        <br><br>
+        <label>Email</label>
+        <input name="email" type="email" required>
 
-        Email:
-        <input name="email" type="email" required><br><br>
-
-        Password:
-        <input name="password" type="password" required><br><br>
+        <label>Password</label>
+        <input name="password" type="password" required>
 
         <button type="submit">Registrati</button>
 
     </form>
 
-    <script>
-    function fillSector() {
-    
-        let select = document.getElementById("username");
-        let option = select.options[select.selectedIndex];
-    
-        document.getElementById("sector").value =
-            option.dataset.sector || "";
-    
-        document.getElementById("first_name").value =
-            option.dataset.first || "";
-    
-        document.getElementById("last_name").value =
-            option.dataset.last || "";
-    }
-    </script>
-    """, users=users)
+    <div class="link">
+        <a href="/">← Torna al login</a>
+    </div>
+
+</div>
+
+<script>
+function fillSector() {
+
+    let select = document.getElementById("username");
+    let option = select.options[select.selectedIndex];
+
+    document.getElementById("sector").value = option.dataset.sector || "";
+    document.getElementById("first_name").value = option.dataset.first || "";
+    document.getElementById("last_name").value = option.dataset.last || "";
+}
+</script>
+
+</body>
+</html>
+""", users=users)
 def send_email(to, link):
 
     msg = MIMEText(f"Clicca qui per reimpostare la password:\n{link}")
