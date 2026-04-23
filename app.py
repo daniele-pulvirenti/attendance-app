@@ -292,44 +292,30 @@ def login():
         username = request.form["username"]
         password = request.form["password"]
 
-        # 1️⃣ LOGIN (tabella users)
+        # 🔥 QUERY CORRETTA: USERS (NON ABSENCES)
         res = requests.get(
             f"{SUPABASE_URL}/rest/v1/users?username=eq.{username}",
             headers=HEADERS
         )
 
-        user_data = res.json()
+        try:
+            user_data = res.json()
+        except:
+            return "Errore server"
 
         if not user_data:
             return "Utente non trovato"
 
         db_user = user_data[0]
 
-        # controllo password
-        if not bcrypt.checkpw(password.encode(), db_user["password"].encode()):
-            return "Login errato"
+        if bcrypt.checkpw(password.encode(), db_user["password"].encode()):
+            session["user"] = db_user
+            return redirect("/dashboard")
 
-        # 2️⃣ RECUPERO DATI ANAGRAFICI (users_available)
-        profile_res = requests.get(
-            f"{SUPABASE_URL}/rest/v1/users_available?username=eq.{username}",
-            headers=HEADERS
-        )
-
-        profile_data = profile_res.json()
-        profile = profile_data[0] if profile_data else {}
-
-        # 3️⃣ SESSION COMPLETA
-        session["user"] = {
-            "username": username,
-            "role": db_user["role"],
-            "sector": profile.get("sector"),
-            "first_name": profile.get("first_name"),
-            "last_name": profile.get("last_name")
-        }
-
-        return redirect("/dashboard")
+        return "Login errato"
 
     return render_template_string(LOGIN_HTML)
+
 
 # ---------------- DASHBOARD ----------------
 @app.route("/dashboard")
@@ -340,84 +326,30 @@ def dashboard():
 
     user = session["user"]
 
-    full_name = f"{user.get('first_name','')} {user.get('last_name','')}".strip()
-
     # ================= CAPO =================
     if user["role"] == "manager":
 
         import json
 
         sector = request.args.get("sector")
-
+    
         params = {
             "select": "*"
         }
-
+    
         if sector and sector != "all":
             params["sector"] = f"eq.{sector}"
-
+    
         res = requests.get(
             f"{SUPABASE_URL}/rest/v1/absences",
             headers=HEADERS,
             params=params
         )
-
+    
         try:
             data = res.json()
         except:
             data = []
-
-        events = []
-
-        for d in data:
-            if d.get("type") == "ferie":
-                end_date = datetime.strptime(d["date_to"], "%Y-%m-%d") + timedelta(days=1)
-                end_date = end_date.strftime("%Y-%m-%d")
-            else:
-                end_date = d["date_from"]
-
-            events.append({
-                "id": d["id"],
-                "title": f"{d['worker_name']} - {d['type'].capitalize()}",
-                "start": d["date_from"],
-                "end": end_date,
-                "color":
-                    "#f59e0b" if d["status"] == "pending"
-                    else "#22c55e" if d["status"] == "approved"
-                    else "#ef4444",
-                "extendedProps": {
-                    "worker": d["worker_name"],
-                    "type": d["type"],
-                    "date_from": d["date_from"],
-                    "date_to": d.get("date_to"),
-                    "start_time": d.get("start_time"),
-                    "end_time": d.get("end_time"),
-                    "status": d["status"]
-                }
-            })
-
-        events_json = json.dumps(events)
-
-        html = """ ... QUI IL TUO HTML CAPO ... """
-
-        return render_template_string(
-            html,
-            user=user,
-            full_name=full_name,
-            events_json=events_json
-        )
-
-    # ================= LAVORATORE =================
-
-    else:
-
-        html = """ ... QUI IL TUO HTML LAVORATORE ... """
-
-        return render_template_string(
-            html,
-            user=user,
-            full_name=full_name
-        )
 
         # ================= PREPARAZIONE EVENTI CALENDARIO =================
         events = []
@@ -614,7 +546,7 @@ function handleAction(url) {{
         return html
 
     # ================= LAVORATORE =================
-    
+    else:
 
         res = requests.get(
             f"{SUPABASE_URL}/rest/v1/absences?worker_name=eq.{user['username']}",
