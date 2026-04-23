@@ -45,6 +45,8 @@ def register():
         email = request.form.get("email")
         password = request.form.get("password")
         sector = request.form.get("sector")
+        first_name = request.form.get("first_name")
+        last_name = request.form.get("last_name")
 
         # 🔒 controllo base
         if not username or not email or not password or not sector:
@@ -67,7 +69,9 @@ def register():
             "email": email,
             "password": hashed,
             "role": "worker",
-            "sector": sector
+            "sector": sector,
+            "first_name": first_name,
+            "last_name": last_name
         }
 
         res = requests.post(
@@ -90,7 +94,7 @@ def register():
     # ================= GET (MOSTRA FORM) =================
 
     res = requests.get(
-        f"{SUPABASE_URL}/rest/v1/users_available_free?select=username,sector",
+        f"{SUPABASE_URL}/rest/v1/users_available_free?select=username,sector,first_name,last_name",
         headers=HEADERS
     )
 
