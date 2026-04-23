@@ -333,12 +333,26 @@ def dashboard():
 
     user = session["user"]
 
+    # 🔒 SICUREZZA: evita KeyError + normalizza
+    role = user.get("role", "").lower()
+
     full_name = f"{user.get('first_name','')} {user.get('last_name','')}".strip()
 
     # ================= CAPO =================
-    if user["role"] == "manager":
+    if role == "manager":
 
         html = """... dashboard capo ..."""
+
+        return render_template_string(
+            html,
+            user=user,
+            full_name=full_name
+        )
+
+    # ================= LAVORATORE =================
+    else:
+
+        html = """... dashboard lavoratore ..."""
 
         return render_template_string(
             html,
