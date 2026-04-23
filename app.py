@@ -342,32 +342,82 @@ def dashboard():
 
     full_name = f"{user.get('first_name','')} {user.get('last_name','')}".strip()
 
-    return render_template_string(html, user=user, full_name=full_name)
-
     # ================= CAPO =================
     if user["role"] == "manager":
 
         import json
 
         sector = request.args.get("sector")
-    
+
         params = {
             "select": "*"
         }
-    
+
         if sector and sector != "all":
             params["sector"] = f"eq.{sector}"
-    
+
         res = requests.get(
             f"{SUPABASE_URL}/rest/v1/absences",
             headers=HEADERS,
             params=params
         )
-    
+
         try:
             data = res.json()
         except:
             data = []
+
+        events = []
+
+        for d in data:
+            if d.get("type") == "ferie":
+                end_date = datetime.strptime(d["date_to"], "%Y-%m-%d") + timedelta(days=1)
+                end_date = end_date.strftime("%Y-%m-%d")
+            else:
+                end_date = d["date_from"]
+
+            events.append({
+                "id": d["id"],
+                "title": f"{d['worker_name']} - {d['type'].capitalize()}",
+                "start": d["date_from"],
+                "end": end_date,
+                "color":
+                    "#f59e0b" if d["status"] == "pending"
+                    else "#22c55e" if d["status"] == "approved"
+                    else "#ef4444",
+                "extendedProps": {
+                    "worker": d["worker_name"],
+                    "type": d["type"],
+                    "date_from": d["date_from"],
+                    "date_to": d.get("date_to"),
+                    "start_time": d.get("start_time"),
+                    "end_time": d.get("end_time"),
+                    "status": d["status"]
+                }
+            })
+
+        events_json = json.dumps(events)
+
+        html = """ ... QUI IL TUO HTML CAPO ... """
+
+        return render_template_string(
+            html,
+            user=user,
+            full_name=full_name,
+            events_json=events_json
+        )
+
+    # ================= LAVORATORE =================
+
+    else:
+
+        html = """ ... QUI IL TUO HTML LAVORATORE ... """
+
+        return render_template_string(
+            html,
+            user=user,
+            full_name=full_name
+        )
 
         # ================= PREPARAZIONE EVENTI CALENDARIO =================
         events = []
