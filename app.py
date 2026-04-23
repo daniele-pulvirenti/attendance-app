@@ -385,7 +385,7 @@ def dashboard():
 
         events_json = json.dumps(events)
 
-        html = f"""
+        html = """
         <h2 style="color:#38bdf8">Dashboard Capo - {user['username']}</h2>
         
         <div style="margin-bottom:15px; display:flex; gap:8px; flex-wrap:wrap;">
