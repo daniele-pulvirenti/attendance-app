@@ -447,6 +447,14 @@ document.addEventListener('DOMContentLoaded', function() {{
         firstDay: 1,
 
         weekends: true,
+        
+        dayCellDidMount: function(info) {
+            const day = info.date.getDay();
+            if (day === 0 || day === 6) {
+                info.el.style.backgroundColor = "#0b1220";
+                info.el.style.opacity = "0.5";
+            }
+        },
 
         headerToolbar: {{
             left: 'prev,next today',
@@ -615,7 +623,7 @@ function handleAction(url) {{
         
             validateForm();
         }}
-
+        
         function blockWeekendDates() {{
     document.querySelectorAll("input[type='date']").forEach(input => {{
         input.addEventListener("input", function () {{
