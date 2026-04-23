@@ -459,7 +459,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // ================= EVENTS DAL BACKEND =================
-    const eventsData = {{ events_json | safe }};
+    const eventsData = {{ events_json | tojson | safe }};
 
     const calendar = new FullCalendar.Calendar(calendarEl, {
 
