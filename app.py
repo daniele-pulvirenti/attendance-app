@@ -368,7 +368,10 @@ def dashboard():
                 "title": f"{d['worker_name']} - {d['type'].capitalize()}",
                 "start": d["date_from"],
                 "end": end_date,
-                "color": "#16a34a" if d["type"] == "ferie" else "#2563eb",
+                "color":
+                    "#f59e0b" if d["status"] == "pending"
+                    else "#22c55e" if d["status"] == "approved"
+                    else "#ef4444",
                 "extendedProps": {
                     "worker": d["worker_name"],
                     "type": d["type"],
