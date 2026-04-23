@@ -879,13 +879,13 @@ document.addEventListener("DOMContentLoaded", function () {
 
         weekends: true,
 
-        dayCellDidMount: function(info) {
+        dayCellDidMount: function(info) {{
             const day = info.date.getDay();
-            if (day === 0 || day === 6) {
+            if (day === 0 || day === 6) {{
                 info.el.style.backgroundColor = "#0b1220";
                 info.el.style.opacity = "0.5";
-            }
-        },
+            }}
+        }},
 
         events: (typeof data !== "undefined" ? data : []).map(d => {
 
