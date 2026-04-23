@@ -454,6 +454,14 @@ document.addEventListener('DOMContentLoaded', function() {{
             right: 'timeGridDay,timeGridWeek'
         }},
 
+        dayCellDidMount: function(info) {{
+            const day = info.date.getDay();
+            if (day === 0 || day === 6) {{
+                info.el.style.backgroundColor = "#111827";
+                info.el.style.opacity = "0.6";
+            }}
+        }},
+
         locale: 'it',
         slotMinTime: "08:00:00",
         slotMaxTime: "19:00:00",
