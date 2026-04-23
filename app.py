@@ -116,6 +116,8 @@ def register():
         </select>
 
         <input type="hidden" name="sector" id="sector">
+        <input type="hidden" name="first_name" id="first_name">
+        <input type="hidden" name="last_name" id="last_name">
 
         <br><br>
 
@@ -132,8 +134,11 @@ def register():
     <script>
     function fillSector() {
         let select = document.getElementById("username");
-        let sector = select.options[select.selectedIndex].dataset.sector;
-        document.getElementById("sector").value = sector;
+        let option = select.options[select.selectedIndex];
+    
+        document.getElementById("sector").value = option.dataset.sector;
+        document.getElementById("first_name").value = option.dataset.first;
+        document.getElementById("last_name").value = option.dataset.last;
     }
     </script>
     """, users=users)
