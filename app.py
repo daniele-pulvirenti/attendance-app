@@ -333,10 +333,30 @@ def dashboard():
 
     user = session["user"]
 
-    # 👇 QUI LO METTI
     full_name = f"{user.get('first_name','')} {user.get('last_name','')}".strip()
 
-    return render_template_string(html, user=user, full_name=full_name)
+    # ================= CAPO =================
+    if user["role"] == "manager":
+
+        html = """... dashboard capo ..."""
+
+        return render_template_string(
+            html,
+            user=user,
+            full_name=full_name
+        )
+
+    # ================= LAVORATORE =================
+
+    else:
+
+        html = """... dashboard lavoratore ..."""
+
+        return render_template_string(
+            html,
+            user=user,
+            full_name=full_name
+        )
 
     # ================= CAPO =================
     if user["role"] == "manager":
