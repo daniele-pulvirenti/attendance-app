@@ -403,6 +403,34 @@ def dashboard():
 <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js'></script>
 
 <div id='calendar'></div>
+<div id="eventModal" style="
+    display:none;
+    position:fixed;
+    top:0; left:0;
+    width:100%; height:100%;
+    background:rgba(0,0,0,0.6);
+    justify-content:center;
+    align-items:center;
+    z-index:9999;
+">
+    <div id="modalContent" style="
+        background:white;
+        padding:20px;
+        border-radius:10px;
+        width:350px;
+        font-family:Arial;
+        position:relative;
+    ">
+        <span onclick="closeModal()" style="
+            position:absolute;
+            top:10px;
+            right:15px;
+            cursor:pointer;
+            font-weight:bold;
+        ">✖</span>
+        <div id="modalBody"></div>
+    </div>
+</div>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {{
@@ -434,36 +462,34 @@ document.addEventListener('DOMContentLoaded', function() {{
         eventClick: function(info) {{
 
             let e = info.event;
-
+        
             let html = `
-                <div style="font-family:Arial">
-                    <h3>${{e.extendedProps.worker}}</h3>
-                    <p><b>Tipo:</b> ${{e.extendedProps.type}}</p>
-                    <p><b>Data:</b> ${{e.extendedProps.date_from}} ${{e.extendedProps.date_to ? '→ ' + e.extendedProps.date_to : ''}}</p>
-                    <p><b>Orario:</b> ${{e.extendedProps.start_time ?? '09:00'}} - ${{e.extendedProps.end_time ?? '18:00'}}</p>
-                    <p><b>Stato:</b> ${{e.extendedProps.status}}</p>
-                    <br>
-                    <a href="/approve/${{e.id}}" style="
-                        padding:8px 12px;
-                        background:#22c55e;
-                        color:white;
-                        text-decoration:none;
-                        border-radius:6px;
-                        margin-right:8px;
-                    ">✔ Approva</a>
-
-                    <a href="/reject/${{e.id}}" style="
-                        padding:8px 12px;
-                        background:#ef4444;
-                        color:white;
-                        text-decoration:none;
-                        border-radius:6px;
-                    ">✖ Rifiuta</a>
-                </div>
+                <h3>${{e.extendedProps.worker}}</h3>
+                <p><b>Tipo:</b> ${{e.extendedProps.type}}</p>
+                <p><b>Data:</b> ${{e.extendedProps.date_from}} ${{e.extendedProps.date_to ? '→ ' + e.extendedProps.date_to : ''}}</p>
+                <p><b>Orario:</b> ${{e.extendedProps.start_time ?? '09:00'}} - ${{e.extendedProps.end_time ?? '18:00'}}</p>
+                <p><b>Stato:</b> ${{e.extendedProps.status}}</p>
+                <br>
+                <button onclick="handleAction('/approve/${{e.id}}')" style="
+                    padding:8px 12px;
+                    background:#22c55e;
+                    color:white;
+                    border:none;
+                    border-radius:6px;
+                    margin-right:8px;
+                ">✔ Approva</button>
+        
+                <button onclick="handleAction('/reject/${{e.id}}')" style="
+                    padding:8px 12px;
+                    background:#ef4444;
+                    color:white;
+                    border:none;
+                    border-radius:6px;
+                ">✖ Rifiuta</button>
             `;
-
-            let w = window.open("", "Dettaglio richiesta", "width=400,height=420");
-            w.document.write(html);
+        
+            document.getElementById("modalBody").innerHTML = html;
+            document.getElementById("eventModal").style.display = "flex";
         }},
 
         eventDisplay: 'block',
@@ -472,6 +498,19 @@ document.addEventListener('DOMContentLoaded', function() {{
 
     calendar.render();
 }});
+</script>
+<script>
+function closeModal() {
+    document.getElementById("eventModal").style.display = "none";
+}
+
+function handleAction(url) {
+    fetch(url)
+        .then(() => {
+            closeModal();
+            location.reload();  // 🔥 aggiorna la dashboard
+        });
+}
 </script>
 
 <hr>
