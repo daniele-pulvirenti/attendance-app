@@ -93,38 +93,39 @@ def register():
         f"{SUPABASE_URL}/rest/v1/users_available_free?select=username,sector",
         headers=HEADERS
     )
-
+    
     users = res.json()
-
+    
     return render_template_string("""
     <h2>Registrazione</h2>
-
+    
     <form method="post">
-
+    
         Username:
         <select name="username" id="username" onchange="fillSector()" required>
             <option value="">Seleziona username</option>
             {% for u in users %}
-                <option value="{{ u.username }}" data-sector="{{ u.sector }}">
-                    {{ u.username }}
+                <option value="{{ u['username'] }}" data-sector="{{ u['sector'] }}">
+                    {{ u['username'] }}
                 </option>
             {% endfor %}
         </select>
-
+    
         <input type="hidden" name="sector" id="sector">
-
+    
         <br><br>
-
+    
         Email:
         <input name="email" type="email" required><br><br>
-
+    
         Password:
         <input name="password" type="password" required><br><br>
-
+    
         <button type="submit">Registrati</button>
-
+    
     </form>
-
+    
+    {% raw %}
     <script>
     function fillSector() {
         let select = document.getElementById("username");
@@ -132,6 +133,7 @@ def register():
         document.getElementById("sector").value = sector;
     }
     </script>
+    {% endraw %}
     """, users=users)
 def send_email(to, link):
 
