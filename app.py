@@ -292,7 +292,7 @@ def login():
         username = request.form["username"]
         password = request.form["password"]
 
-        # 🔥 QUERY CORRETTA: USERS (NON ABSENCES)
+        # 🔥 QUERY UTENTE
         res = requests.get(
             f"{SUPABASE_URL}/rest/v1/users?username=eq.{username}",
             headers=HEADERS
@@ -308,14 +308,39 @@ def login():
 
         db_user = user_data[0]
 
-        if bcrypt.checkpw(password.encode(), db_user["password"].encode()):
-            session["user"] = db_user
-            return redirect("/dashboard")
+        # 🔐 controllo password
+        if not bcrypt.checkpw(password.encode(), db_user["password"].encode()):
+            return "Login errato"
 
-        return "Login errato"
+        # 👤 RECUPERO NOME + COGNOME DA users_available
+        res_info = requests.get(
+            f"{SUPABASE_URL}/rest/v1/users_available?username=eq.{username}&select=first_name,last_name,sector,username",
+            headers=HEADERS
+        )
+
+        try:
+            info = res_info.json()
+        except:
+            info = []
+
+        if info:
+            user_profile = info[0]
+            full_name = f"{user_profile.get('first_name','')} {user_profile.get('last_name','')}".strip()
+        else:
+            full_name = username
+
+        # 💾 SESSIONE UTENTE (ARRICCHITA)
+        session["user"] = {
+            "id": db_user.get("id"),
+            "username": username,
+            "role": db_user.get("role"),
+            "sector": db_user.get("sector"),
+            "full_name": full_name
+        }
+
+        return redirect("/dashboard")
 
     return render_template_string(LOGIN_HTML)
-
 
 # ---------------- DASHBOARD ----------------
 @app.route("/dashboard")
@@ -441,6 +466,17 @@ document.addEventListener('DOMContentLoaded', function() {{
 
     var calendarEl = document.getElementById('calendar');
 
+    const italianHolidays = [
+        {{ title: "Capodanno", start: "2026-01-01", display: "background", color: "#ef4444" }},
+        {{ title: "Epifania", start: "2026-01-06", display: "background", color: "#ef4444" }},
+        {{ title: "Liberazione", start: "2026-04-25", display: "background", color: "#ef4444" }},
+        {{ title: "Festa Lavoro", start: "2026-05-01", display: "background", color: "#ef4444" }},
+        {{ title: "Repubblica", start: "2026-06-02", display: "background", color: "#ef4444" }},
+        {{ title: "Ferragosto", start: "2026-08-15", display: "background", color: "#ef4444" }},
+        {{ title: "Natale", start: "2026-12-25", display: "background", color: "#ef4444" }},
+        {{ title: "Santo Stefano", start: "2026-12-26", display: "background", color: "#ef4444" }}
+    ];
+
     var calendar = new FullCalendar.Calendar(calendarEl, {{
         initialView: 'timeGridWeek',
 
@@ -454,7 +490,10 @@ document.addEventListener('DOMContentLoaded', function() {{
         slotMinTime: "08:00:00",
         slotMaxTime: "19:00:00",
 
-        events: {events_json},
+        events: [
+            ...{events_json},
+            ...italianHolidays
+        ],
 
         eventClick: function(info) {{
 
@@ -881,13 +920,15 @@ document.addEventListener("DOMContentLoaded", function () {
                 return {
                     title: "Ferie",
                     start: d.date_from,
-                    end: new Date(new Date(d.date_to).getTime() + 86400000).toISOString().split("T")[0],
+                    end: new Date(new Date(d.date_to).getTime() + 86400000)
+                        .toISOString()
+                        .split("T")[0],
                     color: d.status === "approved" ? "#22c55e"
                           : d.status === "rejected" ? "#ef4444"
                           : "#f59e0b"
                 };
             }
-
+        
             return {
                 title: "Permesso",
                 start: d.date_from,
@@ -895,7 +936,8 @@ document.addEventListener("DOMContentLoaded", function () {
                       : d.status === "rejected" ? "#ef4444"
                       : "#f59e0b"
             };
-        })
+        
+        }).concat(italianHolidays)
     });
 
     calendar.render();
