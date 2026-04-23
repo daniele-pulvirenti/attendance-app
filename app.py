@@ -498,19 +498,18 @@ document.addEventListener('DOMContentLoaded', function() {{
 
     calendar.render();
 }});
-</script>
 <script>
-function closeModal() {
+function closeModal() {{
     document.getElementById("eventModal").style.display = "none";
-}
+}}
 
-function handleAction(url) {
+function handleAction(url) {{
     fetch(url)
-        .then(() => {
+        .then(() => {{
             closeModal();
-            location.reload();  // 🔥 aggiorna la dashboard
-        });
-}
+            location.reload();
+        }});
+}}
 </script>
 
 <hr>
