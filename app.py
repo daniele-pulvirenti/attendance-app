@@ -25,39 +25,127 @@ HEADERS = {
 
 LOGIN_HTML = """
 <!DOCTYPE html>
-<html>
+<html lang="it">
 <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="/static/css/style.css">
+    <meta charset="UTF-8">
+    <title>Login Sistema Presenze</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: url('https://images.unsplash.com/photo-1497366754035-f200968a6e72') no-repeat center center/cover;
+        }
+
+        .login-card {
+            backdrop-filter: blur(12px);
+            background: rgba(0, 0, 0, 0.65);
+            padding: 40px;
+            border-radius: 18px;
+            width: 360px;
+            color: white;
+            box-shadow: 0 0 30px rgba(0,0,0,0.6);
+            text-align: center;
+        }
+
+        .login-card h2 {
+            margin-bottom: 10px;
+            font-size: 28px;
+            letter-spacing: 1px;
+            color: #38bdf8;
+        }
+
+        .logo {
+            width: 100px;
+            margin-bottom: 20px;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 18px;
+            border: none;
+            border-radius: 8px;
+            outline: none;
+            font-size: 14px;
+        }
+
+        input[type="text"],
+        input[type="password"] {
+            background: #f1f5f9;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            background-color: #38bdf8;
+            color: black;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        button:hover {
+            background-color: #0ea5e9;
+        }
+
+        .links {
+            margin-top: 15px;
+            font-size: 14px;
+            color: #94a3b8;
+        }
+
+        .links a {
+            color: #38bdf8;
+            text-decoration: none;
+        }
+
+        .footer {
+            margin-top: 25px;
+            font-size: 12px;
+            color: #94a3b8;
+        }
+
+        .team {
+            color: #38bdf8;
+            font-weight: bold;
+        }
+    </style>
 </head>
 <body>
 
-<div class="card">
+    <form method="post" class="login-card">
+        <!-- Logo -->
+        <img src="{{ url_for('static', filename='images/logo.jpeg') }}" alt="Logo" class="logo">
+        
+        <h2>Login Sistema Ferie e Permessi</h2>
 
-    <img src="/static/images/logo.png" class="logo">
+        <!-- Username -->
+        Username:
+        <input name="username" required><br>
 
-    <h2>Login Sistema Presenze</h2>
+        <!-- Password -->
+        Password:
+        <input name="password" type="password" required><br>
 
-    <form method="post">
-      Username:
-      <input name="username">
+        <!-- Submit Button -->
+        <button type="submit">Login</button>
 
-      Password:
-      <input name="password" type="password">
+        <!-- Links for Register & Password Recovery -->
+        <div class="links">
+            <a href="/register">Registrati</a> | 
+            <a href="/forgot">Password smarrita?</a>
+        </div>
 
-      <button type="submit">Login</button>
-
-      <div class="links">
-        <a href="/register">Registrati</a>
-        <a href="/forgot">Password smarrita?</a>
-      </div>
+        <div class="footer">
+            Powered by <span class="team">Team104</span>
+        </div>
     </form>
-
-    <p style="text-align:center;margin-top:15px;font-size:13px;color:gray;">
-        Powered by Team104
-    </p>
-
-</div>
 
 </body>
 </html>
@@ -115,7 +203,7 @@ def register():
             return "Errore registrazione"
 
         return """
-        <h3>Registrazione completata!</h3>
+        <h3>Registrazione completata ✅</h3>
         <a href="/">Torna al login</a>
         """
 
@@ -129,29 +217,18 @@ def register():
     users = res.json()
 
     return render_template_string("""
-<!DOCTYPE html>
-<html>
-<head>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="/static/css/style.css">
-</head>
-
-<body>
-
-<div class="card">
-
     <h2>Registrazione</h2>
 
     <form method="post">
 
         Username:
-        <select name="username" id="username" onchange="fillUserData()" required>
+        <select name="username" id="username" onchange="fillSector()" required>
             <option value="">Seleziona username</option>
             {% for u in users %}
                 <option value="{{ u.username }}"
-                        data-sector="{{ u.sector or '' }}"
-                        data-first="{{ u.first_name or '' }}"
-                        data-last="{{ u.last_name or '' }}">
+                        data-sector="{{ u.sector }}"
+                        data-first="{{ u.first_name }}"
+                        data-last="{{ u.last_name }}">
                     {{ u.username }}
                 </option>
             {% endfor %}
@@ -161,37 +238,35 @@ def register():
         <input type="hidden" name="first_name" id="first_name">
         <input type="hidden" name="last_name" id="last_name">
 
+        <br><br>
+
         Email:
-        <input name="email" type="email" required>
+        <input name="email" type="email" required><br><br>
 
         Password:
-        <input name="password" type="password" required>
+        <input name="password" type="password" required><br><br>
 
         <button type="submit">Registrati</button>
 
     </form>
 
-    <div class="links">
-        <a href="/">Torna al login</a>
-    </div>
-
-</div>
-
-<script>
-function fillUserData() {
-
-    const select = document.getElementById("username");
-    const option = select.options[select.selectedIndex];
-
-    document.getElementById("sector").value = option.dataset.sector || "";
-    document.getElementById("first_name").value = option.dataset.first || "";
-    document.getElementById("last_name").value = option.dataset.last || "";
-}
-</script>
-
-</body>
-</html>
-""", users=users)
+    <script>
+    function fillSector() {
+    
+        let select = document.getElementById("username");
+        let option = select.options[select.selectedIndex];
+    
+        document.getElementById("sector").value =
+            option.dataset.sector || "";
+    
+        document.getElementById("first_name").value =
+            option.dataset.first || "";
+    
+        document.getElementById("last_name").value =
+            option.dataset.last || "";
+    }
+    </script>
+    """, users=users)
 def send_email(to, link):
 
     msg = MIMEText(f"Clicca qui per reimpostare la password:\n{link}")
@@ -243,7 +318,7 @@ def forgot():
         send_email(email, reset_link)
 
         return """
-        <h3>Se l'e-mail che hai indicato è quella indicata in fase di registrazione, ne riceverai una a breve.</h3>
+        <h3>Ti abbiamo inviato una mail 📩</h3>
         <p>Controlla la tua casella e segui il link per reimpostare la password.</p>
 
         <a href="/" style="
@@ -260,36 +335,13 @@ def forgot():
         """
 
     return """
-    return render_template_string("""
-    <!DOCTYPE html>
-    <html lang="it">
-    <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <link rel="stylesheet" href="/static/css/style.css">
-        <title>Password Smarrita</title>
-    </head>
-    
-    <body>
-    
-    <div class="card">
-    
-        <h2>Password smarrita</h2>
-    
-        <form method="post">
-            <label for="email">Inserisci la tua email:</label><br>
-            <input name="email" type="email" id="email" required placeholder="esempio@mail.com" class="input-field">
-            <button type="submit" class="btn-primary">Invia</button>
-        </form>
-    
-        <div class="links">
-            <a href="/">Torna al login</a>
-        </div>
-    
-    </div>
-    
-    </body>
-    </html>
-    """)
+    <h2>Password smarrita</h2>
+    <form method="post">
+        Inserisci la tua email:<br>
+        <input name="email" required>
+        <button type="submit">Invia</button>
+    </form>
+    """
 @app.route("/reset/<token>", methods=["GET", "POST"])
 def reset_password(token):
 
@@ -343,9 +395,8 @@ def reset_password(token):
             return f"Errore aggiornamento password: {update.text}"
 
         return """
-       return render_template_string("""
-        <h3>Password aggiornata con successo!</h3>
-        
+        <h3>Password aggiornata con successo ✅</h3>
+
         <a href="/" style="
             display:inline-block;
             margin-top:10px;
@@ -357,7 +408,7 @@ def reset_password(token):
         ">
             Torna al login
         </a>
-        """)
+        """
 
     return """
     <form method="POST">
