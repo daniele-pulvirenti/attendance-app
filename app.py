@@ -93,39 +93,38 @@ def register():
         f"{SUPABASE_URL}/rest/v1/users_available_free?select=username,sector",
         headers=HEADERS
     )
-    
+
     users = res.json()
-    
+
     return render_template_string("""
     <h2>Registrazione</h2>
-    
+
     <form method="post">
-    
+
         Username:
         <select name="username" id="username" onchange="fillSector()" required>
             <option value="">Seleziona username</option>
             {% for u in users %}
-                <option value="{{ u['username'] }}" data-sector="{{ u['sector'] }}">
-                    {{ u['username'] }}
+                <option value="{{ u.username }}" data-sector="{{ u.sector }}">
+                    {{ u.username }}
                 </option>
             {% endfor %}
         </select>
-    
+
         <input type="hidden" name="sector" id="sector">
-    
+
         <br><br>
-    
+
         Email:
         <input name="email" type="email" required><br><br>
-    
+
         Password:
         <input name="password" type="password" required><br><br>
-    
+
         <button type="submit">Registrati</button>
-    
+
     </form>
-    
-    {% raw %}
+
     <script>
     function fillSector() {
         let select = document.getElementById("username");
@@ -133,7 +132,6 @@ def register():
         document.getElementById("sector").value = sector;
     }
     </script>
-    {% endraw %}
     """, users=users)
 def send_email(to, link):
 
@@ -387,8 +385,8 @@ def dashboard():
 
         events_json = json.dumps(events)
 
-        html = """
-        <h2 style="color:#38bdf8">Dashboard Capo - {{ user['username'] }}</h2>
+        html = f"""
+        <h2 style="color:#38bdf8">Dashboard Capo - {user['username']}</h2>
         
         <div style="margin-bottom:15px; display:flex; gap:8px; flex-wrap:wrap;">
             <a href="/dashboard?sector=all"><button>Tutti</button></a>
@@ -437,81 +435,52 @@ def dashboard():
         <div id="modalBody"></div>
     </div>
 </div>
+
 <script>
-var data = {{ events_json | safe }};
-</script>
+document.addEventListener('DOMContentLoaded', function() {{
 
-{% raw %}
-<script>
-document.addEventListener("DOMContentLoaded", function () {
+    var calendarEl = document.getElementById('calendar');
 
-    if (!window.FullCalendar) return;
+    var calendar = new FullCalendar.Calendar(calendarEl, {{
+        initialView: 'timeGridWeek',
 
-    const calendarEl = document.getElementById("calendar");
+        headerToolbar: {{
+            left: 'prev,next today',
+            center: 'title',
+            right: 'timeGridDay,timeGridWeek'
+        }},
 
-    const calendar = new FullCalendar.Calendar(calendarEl, {
-        initialView: "dayGridMonth",
-        locale: "it",
-        firstDay: 1,
-        weekends: true,
+        locale: 'it',
+        slotMinTime: "08:00:00",
+        slotMaxTime: "19:00:00",
 
-        dayCellDidMount: function(info) {
-            const day = info.date.getDay();
-            if (day === 0 || day === 6) {
-                info.el.style.backgroundColor = "#0b1220";
-                info.el.style.opacity = "0.5";
-            }
-        },
-        
-        events: (typeof data !== "undefined" ? data : []).map(d => {
+        events: {events_json},
 
-            if (d.type === "ferie") {
-                return {
-                    title: d.worker + " - Ferie",
-                    start: d.date_from,
-                    end: new Date(new Date(d.date_to).getTime() + 86400000).toISOString().split("T")[0],
-                    color: d.status === "approved" ? "#22c55e"
-                          : d.status === "rejected" ? "#ef4444"
-                          : "#f59e0b"
-                };
-            }
-        
-            return {
-                title: d.worker + " - Permesso",
-                start: d.date_from,
-                color: d.status === "approved" ? "#22c55e"
-                      : d.status === "rejected" ? "#ef4444"
-                      : "#f59e0b"
-            };
-        }),
+        eventClick: function(info) {{
 
-        eventClick: function(info) {
-            const e = info.event.extendedProps;
+            let e = info.event;
 
-            const html = `
-                <h3>${e.worker}</h3>
-                <p><b>Tipo:</b> ${e.type}</p>
-                <p><b>Dal:</b> ${e.date_from} ${e.date_to ? "→ " + e.date_to : ""}</p>
-                <p><b>Stato:</b> ${e.status}</p>
+            let html = `
+                <h3>${{e.extendedProps.worker}}</h3>
+                <p><b>Tipo:</b> ${{e.extendedProps.type}}</p>
+                <p><b>Data:</b> ${{e.extendedProps.date_from}} ${{e.extendedProps.date_to ? '→ ' + e.extendedProps.date_to : ''}}</p>
+                <p><b>Orario:</b> ${{e.extendedProps.start_time ?? '09:00'}} - ${{e.extendedProps.end_time ?? '18:00'}}</p>
+                <p><b>Stato:</b> ${{e.extendedProps.status}}</p>
                 <br>
-                <button onclick="handleAction('/approve/${e.id}')" style="padding:8px 12px;background:#22c55e;color:white;border:none;border-radius:6px;">
-                    ✔ Approva
-                </button>
-                <button onclick="handleAction('/reject/${e.id}')" style="padding:8px 12px;background:#ef4444;color:white;border:none;border-radius:6px;margin-left:8px;">
-                    ✖ Rifiuta
-                </button>
+                <button onclick="handleAction('/approve/${{e.id}}')" style="padding:8px 12px;background:#22c55e;color:white;border:none;border-radius:6px;margin-right:8px;">✔ Approva</button>
+                <button onclick="handleAction('/reject/${{e.id}}')" style="padding:8px 12px;background:#ef4444;color:white;border:none;border-radius:6px;">✖ Rifiuta</button>
             `;
 
             document.getElementById("modalBody").innerHTML = html;
             document.getElementById("eventModal").style.display = "flex";
-        }
+        }},
 
-    });
+        height: "auto"
+    }});
 
     calendar.render();
-});
+}});
 </script>
-{% endraw %}
 
 <script>
 function closeModal() {{
@@ -562,13 +531,7 @@ function handleAction(url) {{
             </div>
         """
             
-        from flask import render_template_string
-
-        return render_template_string(
-            html,
-            user=user,
-            events_json=locals().get("events_json", "[]")
-        )
+        return html
 
     # ================= LAVORATORE =================
     else:
