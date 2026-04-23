@@ -329,6 +329,8 @@ def dashboard():
     # ================= CAPO =================
     if user["role"] == "manager":
 
+        import json
+
         sector = request.args.get("sector")
     
         params = {
@@ -344,19 +346,32 @@ def dashboard():
             params=params
         )
     
-        print("STATUS:", res.status_code)
-        print("URL:", res.url)
-        print("RESPONSE:", res.text)
-    
         try:
             data = res.json()
-        except Exception as e:
-            print("JSON ERROR:", e)
+        except:
             data = []
-        print("TIPO DATA:", type(data))
-        print("DATA RAW:", data)
+
+        # ================= PREPARAZIONE EVENTI CALENDARIO =================
+        events = []
+
         for d in data:
-            print("SECTOR DB:", d.get("sector"))
+
+            # FullCalendar usa END ESCLUSIVO → aggiungiamo 1 giorno per ferie
+            if d.get("type") == "ferie":
+                end_date = datetime.strptime(d["date_to"], "%Y-%m-%d") + timedelta(days=1)
+                end_date = end_date.strftime("%Y-%m-%d")
+            else:
+                end_date = d["date_from"]
+
+            events.append({
+                "title": f"{d['worker_name']} - {d['type'].capitalize()}",
+                "start": d["date_from"],
+                "end": end_date,
+                "color": "#16a34a" if d["type"] == "ferie" else "#2563eb"
+            })
+
+        events_json = json.dumps(events)
+
         html = f"""
         <h2 style="color:#38bdf8">Dashboard Capo - {user['username']}</h2>
         
@@ -372,13 +387,57 @@ def dashboard():
         
         <a href='/logout'>Logout</a>
         <hr>
+
+        <!-- ================= FULLCALENDAR ================= -->
+        <link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css' rel='stylesheet' />
+        <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js'></script>
+
+        <div id='calendar'></div>
+
+        <script>
+        document.addEventListener('DOMContentLoaded', function() {{
+
+            var calendarEl = document.getElementById('calendar');
+
+            var calendar = new FullCalendar.Calendar(calendarEl, {{
+                initialView: 'timeGridWeek',
+
+                headerToolbar: {{
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'timeGridDay,timeGridWeek'
+                }},
+
+                buttonText: {{
+                    today: 'Oggi',
+                    week: 'Settimana',
+                    day: 'Giorno'
+                }},
+
+                locale: 'it',
+
+                slotMinTime: "08:00:00",
+                slotMaxTime: "19:00:00",
+
+                events: {events_json},
+
+                eventDisplay: 'block',
+                height: "auto"
+            }});
+
+            calendar.render();
+        }});
+        </script>
+
+        <hr>
+        <h3 style="color:white">Lista richieste</h3>
         """
 
+        # ================= LA TUA LISTA ORIGINALE =================
         for d in data:
 
             color = "#f59e0b" if d["status"] == "pending" else "#22c55e" if d["status"] == "approved" else "#ef4444"
         
-            # ----- FIX VISUALIZZAZIONE FERIE / PERMESSI -----
             if d.get("type") == "ferie":
                 date_display = f'{d.get("date_from")} → {d.get("date_to")}'
                 time_display = "09:00 - 18:00"
