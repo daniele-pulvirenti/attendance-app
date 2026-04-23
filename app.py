@@ -901,24 +901,31 @@ document.addEventListener("DOMContentLoaded", function () {
 
     const calendarEl = document.getElementById("calendar");
 
+    const italianHolidays = (typeof window.italianHolidays !== "undefined")
+        ? window.italianHolidays
+        : [];
+
+    const rawData = (typeof data !== "undefined" && Array.isArray(data))
+        ? data
+        : [];
+
     const calendar = new FullCalendar.Calendar(calendarEl, {
+
         initialView: "dayGridMonth",
         locale: "it",
         firstDay: 1,
-        
-
         weekends: true,
 
         dayCellDidMount: function(info) {
             const day = info.date.getDay();
             if (day === 0 || day === 6) {
-                info.el.style.backgroundColor = "#1f2937"; // scuro
-                info.el.style.color = "#ef4444";            // testo rosso
+                info.el.style.backgroundColor = "#1f2937";
+                info.el.style.color = "#ef4444";
                 info.el.style.opacity = "0.8";
-                    }
-                },
+            }
+        },
 
-        events: (typeof data !== "undefined" ? data : []).map(d => {
+        events: rawData.map(d => {
 
             if (d.type === "ferie") {
                 return {
@@ -932,7 +939,7 @@ document.addEventListener("DOMContentLoaded", function () {
                           : "#f59e0b"
                 };
             }
-        
+
             return {
                 title: "Permesso",
                 start: d.date_from,
@@ -940,13 +947,14 @@ document.addEventListener("DOMContentLoaded", function () {
                       : d.status === "rejected" ? "#ef4444"
                       : "#f59e0b"
             };
-        
+
         }).concat(italianHolidays)
+
     });
 
     calendar.render();
-});
 
+});
 </script>
 """
         
