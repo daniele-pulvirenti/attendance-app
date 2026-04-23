@@ -109,7 +109,10 @@ def register():
         <select name="username" id="username" onchange="fillSector()" required>
             <option value="">Seleziona username</option>
             {% for u in users %}
-                <option value="{{ u.username }}" data-sector="{{ u.sector }}">
+                <option value="{{ u.username }}"
+                        data-sector="{{ u.sector }}"
+                        data-first="{{ u.first_name }}"
+                        data-last="{{ u.last_name }}">
                     {{ u.username }}
                 </option>
             {% endfor %}
@@ -133,12 +136,18 @@ def register():
 
     <script>
     function fillSector() {
+    
         let select = document.getElementById("username");
         let option = select.options[select.selectedIndex];
     
-        document.getElementById("sector").value = option.dataset.sector;
-        document.getElementById("first_name").value = option.dataset.first;
-        document.getElementById("last_name").value = option.dataset.last;
+        document.getElementById("sector").value =
+            option.dataset.sector || "";
+    
+        document.getElementById("first_name").value =
+            option.dataset.first || "";
+    
+        document.getElementById("last_name").value =
+            option.dataset.last || "";
     }
     </script>
     """, users=users)
