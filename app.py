@@ -28,7 +28,7 @@ LOGIN_HTML = """
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>Login Sistema Presenze</title>
+    <title>Ferie & Permessi Team104</title>
     <style>
         body {
             margin: 0;
@@ -123,7 +123,7 @@ LOGIN_HTML = """
         <!-- Logo -->
         <img src="{{ url_for('static', filename='images/logo.jpeg') }}" alt="Logo" class="logo">
         
-        <h2>Login Sistema Ferie e Permessi</h2>
+        <h3>Login Ferie&Permessi</h3>
 
         <!-- Username -->
         Username:
