@@ -403,6 +403,7 @@ def dashboard():
 <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js'></script>
 
 <div id='calendar'></div>
+
 <div id="eventModal" style="
     display:none;
     position:fixed;
@@ -413,7 +414,7 @@ def dashboard():
     align-items:center;
     z-index:9999;
 ">
-    <div id="modalContent" style="
+    <div style="
         background:white;
         padding:20px;
         border-radius:10px;
@@ -446,14 +447,7 @@ document.addEventListener('DOMContentLoaded', function() {{
             right: 'timeGridDay,timeGridWeek'
         }},
 
-        buttonText: {{
-            today: 'Oggi',
-            week: 'Settimana',
-            day: 'Giorno'
-        }},
-
         locale: 'it',
-
         slotMinTime: "08:00:00",
         slotMaxTime: "19:00:00",
 
@@ -462,7 +456,7 @@ document.addEventListener('DOMContentLoaded', function() {{
         eventClick: function(info) {{
 
             let e = info.event;
-        
+
             let html = `
                 <h3>${{e.extendedProps.worker}}</h3>
                 <p><b>Tipo:</b> ${{e.extendedProps.type}}</p>
@@ -470,45 +464,31 @@ document.addEventListener('DOMContentLoaded', function() {{
                 <p><b>Orario:</b> ${{e.extendedProps.start_time ?? '09:00'}} - ${{e.extendedProps.end_time ?? '18:00'}}</p>
                 <p><b>Stato:</b> ${{e.extendedProps.status}}</p>
                 <br>
-                <button onclick="handleAction('/approve/${{e.id}}')" style="
-                    padding:8px 12px;
-                    background:#22c55e;
-                    color:white;
-                    border:none;
-                    border-radius:6px;
-                    margin-right:8px;
-                ">✔ Approva</button>
-        
-                <button onclick="handleAction('/reject/${{e.id}}')" style="
-                    padding:8px 12px;
-                    background:#ef4444;
-                    color:white;
-                    border:none;
-                    border-radius:6px;
-                ">✖ Rifiuta</button>
+                <button onclick="handleAction('/approve/${{e.id}}')" style="padding:8px 12px;background:#22c55e;color:white;border:none;border-radius:6px;margin-right:8px;">✔ Approva</button>
+                <button onclick="handleAction('/reject/${{e.id}}')" style="padding:8px 12px;background:#ef4444;color:white;border:none;border-radius:6px;">✖ Rifiuta</button>
             `;
-        
+
             document.getElementById("modalBody").innerHTML = html;
             document.getElementById("eventModal").style.display = "flex";
         }},
 
-        eventDisplay: 'block',
         height: "auto"
     }});
 
     calendar.render();
 }});
+</script>
+
 <script>
 function closeModal() {{
     document.getElementById("eventModal").style.display = "none";
 }}
 
 function handleAction(url) {{
-    fetch(url)
-        .then(() => {{
-            closeModal();
-            location.reload();
-        }});
+    fetch(url).then(() => {{
+        closeModal();
+        location.reload();
+    }});
 }}
 </script>
 
