@@ -226,7 +226,7 @@ def register():
         body {
             margin: 0;
             font-family: Arial, sans-serif;
-            background: url('/static/images/login-bg.jpg') no-repeat center center fixed;
+            background: url('https://images.unsplash.com/photo-1497366754035-f200968a6e72') no-repeat center center/cover;
             background-size: cover;
             display: flex;
             justify-content: center;
@@ -420,13 +420,109 @@ def forgot():
         """
 
     return """
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: url('https://images.unsplash.com/photo-1497366754035-f200968a6e72') no-repeat center center/cover;
+            background-size: cover;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .card {
+            background: rgba(15, 23, 42, 0.92);
+            padding: 25px;
+            border-radius: 14px;
+            width: 90%;
+            max-width: 420px;
+            color: white;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        h2 {
+            text-align: center;
+            color: #38bdf8;
+            margin-bottom: 20px;
+        }
+
+        label {
+            font-size: 14px;
+            display: block;
+            margin-top: 10px;
+            margin-bottom: 5px;
+            color: #cbd5e1;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            border-radius: 8px;
+            border: none;
+            margin-bottom: 10px;
+            outline: none;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            margin-top: 10px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #2563eb;
+        }
+
+        .link {
+            text-align: center;
+            margin-top: 12px;
+        }
+
+        .link a {
+            color: #38bdf8;
+            text-decoration: none;
+            font-size: 13px;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="card">
+
     <h2>Password smarrita</h2>
+
     <form method="post">
-        Inserisci la tua email:<br>
-        <input name="email" required>
+
+        <label>Inserisci la tua email</label>
+        <input name="email" type="email" required>
+
         <button type="submit">Invia</button>
+
     </form>
-    """
+
+    <div class="link">
+        <a href="/">← Torna al login</a>
+    </div>
+
+</div>
+
+</body>
+</html>
+"""
 @app.route("/reset/<token>", methods=["GET", "POST"])
 def reset_password(token):
 
@@ -480,28 +576,149 @@ def reset_password(token):
             return f"Errore aggiornamento password: {update.text}"
 
         return """
-        <h3>Password aggiornata con successo ✅</h3>
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-        <a href="/" style="
-            display:inline-block;
-            margin-top:10px;
-            padding:8px 12px;
-            background:#3b82f6;
-            color:white;
-            text-decoration:none;
-            border-radius:6px;
-        ">
-            Torna al login
-        </a>
-        """
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: url('https://images.unsplash.com/photo-1497366754035-f200968a6e72') no-repeat center center/cover;
+            background-size: cover;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .card {
+            background: rgba(15, 23, 42, 0.92);
+            padding: 25px;
+            border-radius: 14px;
+            width: 90%;
+            max-width: 420px;
+            color: white;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            text-align: center;
+        }
+
+        h3 {
+            color: #22c55e;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        a {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 8px 12px;
+            background: #3b82f6;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: bold;
+        }
+
+        a:hover {
+            background: #2563eb;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="card">
+
+    <h3>Password aggiornata con successo ✅</h3>
+
+    <a href="/">Torna al login</a>
+
+</div>
+
+</body>
+</html>
+"""
 
     return """
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: url('https://images.unsplash.com/photo-1497366754035-f200968a6e72') no-repeat center center/cover;
+            background-size: cover;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .card {
+            background: rgba(15, 23, 42, 0.92);
+            padding: 25px;
+            border-radius: 14px;
+            width: 90%;
+            max-width: 420px;
+            color: white;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            text-align: center;
+        }
+
+        h3 {
+            color: #22c55e;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        input[type="password"] {
+            width: 100%;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            margin-bottom: 20px;
+            background-color: #1f2937;
+            color: white;
+        }
+
+        button {
+            padding: 10px 15px;
+            background: #22c55e;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            width: 100%;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #16a34a;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="card">
+
+    <h3>Inserisci nuova password</h3>
+
     <form method="POST">
-        <h3>Inserisci nuova password</h3>
-        <input type="password" name="password" required>
+        <input type="password" name="password" required placeholder="Nuova password">
         <button type="submit">Reset Password</button>
     </form>
-    """
+
+</div>
+
+</body>
+</html>
+"""
 # ---------------- LOGIN ----------------
 @app.route("/", methods=["GET", "POST"])
 def login():
