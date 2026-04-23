@@ -309,14 +309,7 @@ def login():
         db_user = user_data[0]
 
         if bcrypt.checkpw(password.encode(), db_user["password"].encode()):
-            session["user"] = {
-                "id": db_user["id"],
-                "username": db_user["username"],
-                "role": db_user["role"],
-                "sector": db_user.get("sector"),
-                "first_name": db_user.get("first_name"),
-                "last_name": db_user.get("last_name")
-            }
+            session["user"] = db_user
             return redirect("/dashboard")
 
         return "Login errato"
@@ -332,45 +325,6 @@ def dashboard():
         return redirect("/")
 
     user = session["user"]
-
-    # 🔒 SICUREZZA: evita KeyError + normalizza
-    role = user.get("role", "").lower()
-
-    full_name = f"{user.get('first_name','')} {user.get('last_name','')}".strip()
-
-    # ================= CAPO =================
-    if role == "manager":
-
-        html = """... dashboard capo ..."""
-
-        return render_template_string(
-            html,
-            user=user,
-            full_name=full_name
-        )
-
-    # ================= LAVORATORE =================
-    else:
-
-        html = """... dashboard lavoratore ..."""
-
-        return render_template_string(
-            html,
-            user=user,
-            full_name=full_name
-        )
-
-    # ================= LAVORATORE =================
-
-    else:
-
-        html = """... dashboard lavoratore ..."""
-
-        return render_template_string(
-            html,
-            user=user,
-            full_name=full_name
-        )
 
     # ================= CAPO =================
     if user["role"] == "manager":
@@ -432,7 +386,7 @@ def dashboard():
         events_json = json.dumps(events)
 
         html = f"""
-        <h2 style="color:#38bdf8">Benvenuta {{ full_name }}</h2>
+        <h2 style="color:#38bdf8">Dashboard Capo - {user['username']}</h2>
         
         <div style="margin-bottom:15px; display:flex; gap:8px; flex-wrap:wrap;">
             <a href="/dashboard?sector=all"><button>Tutti</button></a>
@@ -601,7 +555,7 @@ function handleAction(url) {{
         data = res.json()
 
         html = f"""
-        <h2 style="color:#38bdf8">Benvenuto {{ full_name }}</h2>
+        <h2 style="color:#38bdf8">Benvenuto {user['username']}</h2>
         <a href='/logout'>Logout</a>
         <hr>
 
