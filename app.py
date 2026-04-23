@@ -358,9 +358,6 @@ def reset_password(token):
             Torna al login
         </a>
         """)
-            Torna al login
-        </a>
-        """
 
     return """
     <form method="POST">
