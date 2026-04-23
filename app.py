@@ -562,7 +562,11 @@ function handleAction(url) {{
             
         from flask import render_template_string
 
-        return render_template_string(html, user=user, events_json=events_json)
+        return render_template_string(
+            html,
+            user=user,
+            events_json=locals().get("events_json", "[]")
+        )
 
     # ================= LAVORATORE =================
     else:
