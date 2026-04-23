@@ -343,8 +343,9 @@ def reset_password(token):
             return f"Errore aggiornamento password: {update.text}"
 
         return """
+       return render_template_string("""
         <h3>Password aggiornata con successo!</h3>
-
+        
         <a href="/" style="
             display:inline-block;
             margin-top:10px;
@@ -354,6 +355,9 @@ def reset_password(token):
             text-decoration:none;
             border-radius:6px;
         ">
+            Torna al login
+        </a>
+        """)
             Torna al login
         </a>
         """
