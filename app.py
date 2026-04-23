@@ -462,69 +462,66 @@ def dashboard():
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {{
+document.addEventListener('DOMContentLoaded', function() {
 
     var calendarEl = document.getElementById('calendar');
 
     const italianHolidays = [
-        {{ title: "Capodanno", start: "2026-01-01", display: "background", color: "#ef4444" }},
-        {{ title: "Epifania", start: "2026-01-06", display: "background", color: "#ef4444" }},
-        {{ title: "Liberazione", start: "2026-04-25", display: "background", color: "#ef4444" }},
-        {{ title: "Festa Lavoro", start: "2026-05-01", display: "background", color: "#ef4444" }},
-        {{ title: "Repubblica", start: "2026-06-02", display: "background", color: "#ef4444" }},
-        {{ title: "Ferragosto", start: "2026-08-15", display: "background", color: "#ef4444" }},
-        {{ title: "Natale", start: "2026-12-25", display: "background", color: "#ef4444" }},
-        {{ title: "Santo Stefano", start: "2026-12-26", display: "background", color: "#ef4444" }}
+        { title: "Capodanno", start: "2026-01-01", display: "background", color: "#ef4444" },
+        { title: "Epifania", start: "2026-01-06", display: "background", color: "#ef4444" },
+        { title: "Liberazione", start: "2026-04-25", display: "background", color: "#ef4444" },
+        { title: "Festa Lavoro", start: "2026-05-01", display: "background", color: "#ef4444" },
+        { title: "Repubblica", start: "2026-06-02", display: "background", color: "#ef4444" },
+        { title: "Ferragosto", start: "2026-08-15", display: "background", color: "#ef4444" },
+        { title: "Natale", start: "2026-12-25", display: "background", color: "#ef4444" },
+        { title: "Santo Stefano", start: "2026-12-26", display: "background", color: "#ef4444" }
     ];
 
-    var calendar = new FullCalendar.Calendar(calendarEl, {{
+    var calendar = new FullCalendar.Calendar(calendarEl, {
 
         initialView: "dayGridMonth",
         locale: "it",
         firstDay: 1,
-
         weekends: true,
 
-        dayCellDidMount: function(info) {{
+        dayCellDidMount: function(info) {
             const day = info.date.getDay();
-            if (day === 0 || day === 6) {{
+            if (day === 0 || day === 6) {
                 info.el.style.backgroundColor = "#111827";
                 info.el.style.opacity = "0.6";
                 info.el.style.color = "#ef4444";
-            }}
-        }},
+            }
+        },
 
-        events: [
-            ...(typeof data !== "undefined" ? data : []).map(d => {{
+        events: (window.data || []).map(d => {
 
-                if (d.type === "ferie") {{
-                    return {{
-                        title: "Ferie",
-                        start: d.date_from,
-                        end: new Date(new Date(d.date_to).getTime() + 86400000)
-                            .toISOString()
-                            .split("T")[0],
-                        color: d.status === "approved" ? "#22c55e"
-                              : d.status === "rejected" ? "#ef4444"
-                              : "#f59e0b"
-                    }};
-                }}
-
-                return {{
-                    title: "Permesso",
+            if (d.type === "ferie") {
+                return {
+                    title: "Ferie",
                     start: d.date_from,
+                    end: new Date(new Date(d.date_to).getTime() + 86400000)
+                        .toISOString()
+                        .split("T")[0],
                     color: d.status === "approved" ? "#22c55e"
                           : d.status === "rejected" ? "#ef4444"
                           : "#f59e0b"
-                }};
+                };
+            }
 
-            }}),
-            ...italianHolidays
-        ]
-    }});
+            return {
+                title: "Permesso",
+                start: d.date_from,
+                color: d.status === "approved" ? "#22c55e"
+                      : d.status === "rejected" ? "#ef4444"
+                      : "#f59e0b"
+            };
+
+        }).concat(italianHolidays)
+    });
 
     calendar.render();
-}});
+
+});
 </script>
 
 <script>
