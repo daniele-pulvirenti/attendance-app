@@ -292,7 +292,7 @@ def login():
         username = request.form["username"]
         password = request.form["password"]
 
-        # 🔥 QUERY USERS
+        # 🔥 QUERY CORRETTA: USERS (NON ABSENCES)
         res = requests.get(
             f"{SUPABASE_URL}/rest/v1/users?username=eq.{username}",
             headers=HEADERS
@@ -308,30 +308,11 @@ def login():
 
         db_user = user_data[0]
 
-        # 🔐 controllo password
-        if not bcrypt.checkpw(password.encode(), db_user["password"].encode()):
-            return "Login errato"
+        if bcrypt.checkpw(password.encode(), db_user["password"].encode()):
+            session["user"] = db_user
+            return redirect("/dashboard")
 
-        # 👇 AGGIUNTA: prendo nome e cognome dalla tabella profili
-        available_res = requests.get(
-            f"{SUPABASE_URL}/rest/v1/users_available?username=eq.{username}",
-            headers=HEADERS
-        )
-
-        profile_data = profile_res.json()
-        profile = profile_data[0] if profile_data else {}
-
-        # 👇 session pulita e completa
-        session["user"] = {
-            "id": db_user["id"],
-            "username": db_user["username"],
-            "role": db_user["role"],
-            "sector": db_user["sector"],
-            "first_name": available.get("first_name"),
-            "last_name": available.get("last_name")
-        }
-
-        return redirect("/dashboard")
+        return "Login errato"
 
     return render_template_string(LOGIN_HTML)
 
@@ -405,9 +386,7 @@ def dashboard():
         events_json = json.dumps(events)
 
         html = f"""
-        <h2 style="color:#38bdf8">
-        Benvenuta {{ user.first_name }} {{ user.last_name }}
-        </h2>
+        <h2 style="color:#38bdf8">Dashboard Capo - {user['username']}</h2>
         
         <div style="margin-bottom:15px; display:flex; gap:8px; flex-wrap:wrap;">
             <a href="/dashboard?sector=all"><button>Tutti</button></a>
@@ -576,9 +555,8 @@ function handleAction(url) {{
         data = res.json()
 
         html = f"""
-        <h2 style="color:#38bdf8">
-        Benvenuto/a {{ user.first_name }} {{ user.last_name }}
-        </h2>        <a href='/logout'>Logout</a>
+        <h2 style="color:#38bdf8">Benvenuto {user['username']}</h2>
+        <a href='/logout'>Logout</a>
         <hr>
 
         <h3>➕ Inserisci assenza</h3>
