@@ -478,43 +478,49 @@ document.addEventListener('DOMContentLoaded', function() {{
     ];
 
     var calendar = new FullCalendar.Calendar(calendarEl, {{
-        initialView: 'timeGridWeek',
 
-        headerToolbar: {{
-            left: 'prev,next today',
-            center: 'title',
-            right: 'timeGridDay,timeGridWeek'
+        initialView: "dayGridMonth",
+        locale: "it",
+        firstDay: 1,
+
+        weekends: true,
+
+        dayCellDidMount: function(info) {{
+            const day = info.date.getDay();
+            if (day === 0 || day === 6) {{
+                info.el.style.backgroundColor = "#111827";
+                info.el.style.opacity = "0.6";
+                info.el.style.color = "#ef4444";
+            }}
         }},
-
-        locale: 'it',
-        slotMinTime: "08:00:00",
-        slotMaxTime: "19:00:00",
 
         events: [
-            ...{events_json},
+            ...(typeof data !== "undefined" ? data : []).map(d => {{
+
+                if (d.type === "ferie") {{
+                    return {{
+                        title: "Ferie",
+                        start: d.date_from,
+                        end: new Date(new Date(d.date_to).getTime() + 86400000)
+                            .toISOString()
+                            .split("T")[0],
+                        color: d.status === "approved" ? "#22c55e"
+                              : d.status === "rejected" ? "#ef4444"
+                              : "#f59e0b"
+                    }};
+                }}
+
+                return {{
+                    title: "Permesso",
+                    start: d.date_from,
+                    color: d.status === "approved" ? "#22c55e"
+                          : d.status === "rejected" ? "#ef4444"
+                          : "#f59e0b"
+                }};
+
+            }}),
             ...italianHolidays
-        ],
-
-        eventClick: function(info) {{
-
-            let e = info.event;
-
-            let html = `
-                <h3>${{e.extendedProps.worker}}</h3>
-                <p><b>Tipo:</b> ${{e.extendedProps.type}}</p>
-                <p><b>Data:</b> ${{e.extendedProps.date_from}} ${{e.extendedProps.date_to ? '→ ' + e.extendedProps.date_to : ''}}</p>
-                <p><b>Orario:</b> ${{e.extendedProps.start_time ?? '09:00'}} - ${{e.extendedProps.end_time ?? '18:00'}}</p>
-                <p><b>Stato:</b> ${{e.extendedProps.status}}</p>
-                <br>
-                <button onclick="handleAction('/approve/${{e.id}}')" style="padding:8px 12px;background:#22c55e;color:white;border:none;border-radius:6px;margin-right:8px;">✔ Approva</button>
-                <button onclick="handleAction('/reject/${{e.id}}')" style="padding:8px 12px;background:#ef4444;color:white;border:none;border-radius:6px;">✖ Rifiuta</button>
-            `;
-
-            document.getElementById("modalBody").innerHTML = html;
-            document.getElementById("eventModal").style.display = "flex";
-        }},
-
-        height: "auto"
+        ]
     }});
 
     calendar.render();
@@ -909,10 +915,11 @@ document.addEventListener("DOMContentLoaded", function () {
         dayCellDidMount: function(info) {
             const day = info.date.getDay();
             if (day === 0 || day === 6) {
-                info.el.style.backgroundColor = "#0b1220";
-                info.el.style.opacity = "0.5";
-            }
-        },
+                info.el.style.backgroundColor = "#1f2937"; // scuro
+                info.el.style.color = "#ef4444";            // testo rosso
+                info.el.style.opacity = "0.8";
+                    }
+                },
 
         events: (typeof data !== "undefined" ? data : []).map(d => {
 
