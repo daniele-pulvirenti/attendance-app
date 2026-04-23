@@ -560,7 +560,9 @@ function handleAction(url) {{
             </div>
         """
             
-        return html
+        from flask import render_template_string
+
+        return render_template_string(html, user=user, events_json=events_json)
 
     # ================= LAVORATORE =================
     else:
