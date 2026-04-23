@@ -1090,6 +1090,11 @@ def logout():
     session.clear()
     return redirect("/")
 
+# ---------------- KEEP SERVER AWAKE ----------------
+@app.route("/health")
+def health():
+    return "OK", 200
+
 
 # ---------------- RUN ----------------
 if __name__ == "__main__":
