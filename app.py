@@ -438,15 +438,14 @@ def dashboard():
     </div>
 </div>
 <script>
-    const data = {{ events_json | safe }};
+var data = {{ events_json | safe }};
 </script>
+
+{% raw %}
 <script>
 document.addEventListener("DOMContentLoaded", function () {
 
-    if (!window.FullCalendar) {
-        console.error("FullCalendar non caricato");
-        return;
-    }
+    if (!window.FullCalendar) return;
 
     const calendarEl = document.getElementById("calendar");
 
@@ -463,7 +462,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 info.el.style.opacity = "0.5";
             }
         },
-
+        
         events: (typeof data !== "undefined" ? data : []).map(d => {
 
             if (d.type === "ferie") {
@@ -512,6 +511,7 @@ document.addEventListener("DOMContentLoaded", function () {
     calendar.render();
 });
 </script>
+{% endraw %}
 
 <script>
 function closeModal() {{
