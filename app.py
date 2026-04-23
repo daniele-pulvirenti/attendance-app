@@ -435,95 +435,84 @@ def dashboard():
         <div id="modalBody"></div>
     </div>
 </div>
-
 <script>
-document.addEventListener('DOMContentLoaded', function () {{
+    const data = {{ events_json | safe }};
+</script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
 
-    const calendarEl = document.getElementById('calendar');
+    if (!window.FullCalendar) {
+        console.error("FullCalendar non caricato");
+        return;
+    }
 
-    function getItalianHolidays(year) {{
-        return [
-            {{ title: "Capodanno", start: year + "-01-01", display: "background", color: "#ef4444" }},
-            {{ title: "Epifania", start: year + "-01-06", display: "background", color: "#ef4444" }},
-            {{ title: "Liberazione", start: year + "-04-25", display: "background", color: "#ef4444" }},
-            {{ title: "Festa Lavoro", start: year + "-05-01", display: "background", color: "#ef4444" }},
-            {{ title: "Repubblica", start: year + "-06-02", display: "background", color: "#ef4444" }},
-            {{ title: "Ferragosto", start: year + "-08-15", display: "background", color: "#ef4444" }},
-            {{ title: "Ognissanti", start: year + "-11-01", display: "background", color: "#ef4444" }},
-            {{ title: "Immacolata", start: year + "-12-08", display: "background", color: "#ef4444" }},
-            {{ title: "Natale", start: year + "-12-25", display: "background", color: "#ef4444" }},
-            {{ title: "Santo Stefano", start: year + "-12-26", display: "background", color: "#ef4444" }}
-        ];
-    }}
+    const calendarEl = document.getElementById("calendar");
 
-    const calendar = new FullCalendar.Calendar(calendarEl, {{
-
-        initialView: "timeGridWeek",
+    const calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: "dayGridMonth",
         locale: "it",
         firstDay: 1,
-
-        headerToolbar: {{
-            left: "prev,next today",
-            center: "title",
-            right: "timeGridDay,timeGridWeek"
-        }},
-
-        slotMinTime: "08:00:00",
-        slotMaxTime: "19:00:00",
-
         weekends: true,
 
-        dayCellDidMount: function (info) {{
+        dayCellDidMount: function(info) {
             const day = info.date.getDay();
-            if (day === 0 || day === 6) {{
+            if (day === 0 || day === 6) {
                 info.el.style.backgroundColor = "#0b1220";
                 info.el.style.opacity = "0.5";
-            }}
-        }},
+            }
+        },
 
-        events: eventsData.concat(getItalianHolidays(new Date().getFullYear())),
+        events: (typeof data !== "undefined" ? data : []).map(d => {
 
-        eventClick: function (info) {{
+            if (d.type === "ferie") {
+                return {
+                    id: d.id,
+                    title: d.worker + " - Ferie",
+                    start: d.date_from,
+                    end: new Date(new Date(d.date_to).getTime() + 86400000).toISOString().split("T")[0],
+                    color: d.status === "approved" ? "#22c55e"
+                          : d.status === "rejected" ? "#ef4444"
+                          : "#f59e0b",
+                    extendedProps: d
+                };
+            }
 
-            const e = info.event;
+            return {
+                id: d.id,
+                title: d.worker + " - Permesso",
+                start: d.date_from,
+                color: d.status === "approved" ? "#22c55e"
+                      : d.status === "rejected" ? "#ef4444"
+                      : "#f59e0b",
+                extendedProps: d
+            };
+        }),
+
+        eventClick: function(info) {
+            const e = info.event.extendedProps;
 
             const html = `
-                <h3>${{e.extendedProps.worker}}</h3>
-                <p><b>Tipo:</b> ${{e.extendedProps.type}}</p>
-                <p><b>Data:</b> ${{e.extendedProps.date_from}} → ${{e.extendedProps.date_to ?? ""}}</p>
-                <p><b>Orario:</b> ${{e.extendedProps.start_time ?? "09:00"}} - ${{e.extendedProps.end_time ?? "18:00"}}</p>
-                <p><b>Stato:</b> ${{e.extendedProps.status}}</p>
+                <h3>${e.worker}</h3>
+                <p><b>Tipo:</b> ${e.type}</p>
+                <p><b>Dal:</b> ${e.date_from} ${e.date_to ? "→ " + e.date_to : ""}</p>
+                <p><b>Stato:</b> ${e.status}</p>
                 <br>
-
-                <button onclick="handleAction('/approve/${{e.id}}')"
-                    style="padding:8px 12px;background:#22c55e;color:white;border:none;border-radius:6px;">
+                <button onclick="handleAction('/approve/${e.id}')" style="padding:8px 12px;background:#22c55e;color:white;border:none;border-radius:6px;">
                     ✔ Approva
                 </button>
-
-                <button onclick="handleAction('/reject/${{e.id}}')"
-                    style="padding:8px 12px;background:#ef4444;color:white;border:none;border-radius:6px;margin-left:8px;">
+                <button onclick="handleAction('/reject/${e.id}')" style="padding:8px 12px;background:#ef4444;color:white;border:none;border-radius:6px;margin-left:8px;">
                     ✖ Rifiuta
                 </button>
             `;
 
             document.getElementById("modalBody").innerHTML = html;
             document.getElementById("eventModal").style.display = "flex";
-        }}
-    }});
+        }
+
+    });
 
     calendar.render();
-}});
-
-function closeModal() {{
-    document.getElementById("eventModal").style.display = "none";
-}}
-
-function handleAction(url) {{
-    fetch(url).then(() => {{
-        closeModal();
-        location.reload();
-    }});
-}}
+});
 </script>
 
 <script>
