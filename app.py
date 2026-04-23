@@ -442,7 +442,11 @@ document.addEventListener('DOMContentLoaded', function() {{
     var calendarEl = document.getElementById('calendar');
 
     var calendar = new FullCalendar.Calendar(calendarEl, {{
-        initialView: 'timeGridWeek',
+        initialView: "dayGridMonth",
+        locale: "it",
+        firstDay: 1,
+
+        weekends: true,
 
         headerToolbar: {{
             left: 'prev,next today',
