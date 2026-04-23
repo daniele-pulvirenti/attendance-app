@@ -437,24 +437,24 @@ def dashboard():
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', function () {{
 
     const calendarEl = document.getElementById('calendar');
 
-    function getItalianHolidays(year) {
+    function getItalianHolidays(year) {{
         return [
-            { title: "Capodanno", start: year + "-01-01", display: "background", color: "#ef4444" },
-            { title: "Epifania", start: year + "-01-06", display: "background", color: "#ef4444" },
-            { title: "Liberazione", start: year + "-04-25", display: "background", color: "#ef4444" },
-            { title: "Festa Lavoro", start: year + "-05-01", display: "background", color: "#ef4444" },
-            { title: "Repubblica", start: year + "-06-02", display: "background", color: "#ef4444" },
-            { title: "Ferragosto", start: year + "-08-15", display: "background", color: "#ef4444" },
-            { title: "Ognissanti", start: year + "-11-01", display: "background", color: "#ef4444" },
-            { title: "Immacolata", start: year + "-12-08", display: "background", color: "#ef4444" },
-            { title: "Natale", start: year + "-12-25", display: "background", color: "#ef4444" },
-            { title: "Santo Stefano", start: year + "-12-26", display: "background", color: "#ef4444" }
+            {{ title: "Capodanno", start: year + "-01-01", display: "background", color: "#ef4444" }},
+            {{ title: "Epifania", start: year + "-01-06", display: "background", color: "#ef4444" }},
+            {{ title: "Liberazione", start: year + "-04-25", display: "background", color: "#ef4444" }},
+            {{ title: "Festa Lavoro", start: year + "-05-01", display: "background", color: "#ef4444" }},
+            {{ title: "Repubblica", start: year + "-06-02", display: "background", color: "#ef4444" }},
+            {{ title: "Ferragosto", start: year + "-08-15", display: "background", color: "#ef4444" }},
+            {{ title: "Ognissanti", start: year + "-11-01", display: "background", color: "#ef4444" }},
+            {{ title: "Immacolata", start: year + "-12-08", display: "background", color: "#ef4444" }},
+            {{ title: "Natale", start: year + "-12-25", display: "background", color: "#ef4444" }},
+            {{ title: "Santo Stefano", start: year + "-12-26", display: "background", color: "#ef4444" }}
         ];
-    }
+    }}
 
     const calendar = new FullCalendar.Calendar(calendarEl, {{
 
@@ -512,7 +512,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }});
 
     calendar.render();
-}});
+}}});
 
 function closeModal() {{
     document.getElementById("eventModal").style.display = "none";
