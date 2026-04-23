@@ -375,40 +375,47 @@ def dashboard():
             data = res.json()
         except:
             data = []
+# ================= PREPARAZIONE EVENTI CALENDARIO =================
+events = []
 
-        # ================= PREPARAZIONE EVENTI CALENDARIO =================
-        events = []
+for d in data:
 
-        for d in data:
+    # SAFE FERIE END DATE (evita 500 se date_to mancante o errata)
+    if d.get("type") == "ferie" and d.get("date_to"):
+        try:
+            end_date = datetime.strptime(d["date_to"], "%Y-%m-%d") + timedelta(days=1)
+            end_date = end_date.strftime("%Y-%m-%d")
+        except:
+            end_date = d.get("date_from")
+    else:
+        end_date = d.get("date_from")
 
-            # FullCalendar usa END ESCLUSIVO → aggiungiamo 1 giorno per ferie
-            if d.get("type") == "ferie":
-                end_date = datetime.strptime(d["date_to"], "%Y-%m-%d") + timedelta(days=1)
-                end_date = end_date.strftime("%Y-%m-%d")
-            else:
-                end_date = d["date_from"]
+    events.append({
+        "id": d.get("id"),
 
-            events.append({
-                "id": d["id"],
-                "title": f"{d['worker_name']} - {d['type'].capitalize()}",
-                "start": d["date_from"],
-                "end": end_date,
-                "color":
-                    "#f59e0b" if d["status"] == "pending"
-                    else "#22c55e" if d["status"] == "approved"
-                    else "#ef4444",
-                "extendedProps": {
-                    "worker": d["worker_name"],
-                    "type": d["type"],
-                    "date_from": d["date_from"],
-                    "date_to": d.get("date_to"),
-                    "start_time": d.get("start_time"),
-                    "end_time": d.get("end_time"),
-                    "status": d["status"]
-                }
-            })
+        "title": f"{d.get('worker_name','Sconosciuto')} - {d.get('type','').capitalize()}",
 
-        events_json = json.dumps(events)
+        "start": d.get("date_from"),
+        "end": end_date,
+
+        # SAFE STATUS (evita KeyError)
+        "color":
+            "#f59e0b" if d.get("status") == "pending"
+            else "#22c55e" if d.get("status") == "approved"
+            else "#ef4444",
+
+        "extendedProps": {
+            "worker": d.get("worker_name"),
+            "type": d.get("type"),
+            "date_from": d.get("date_from"),
+            "date_to": d.get("date_to"),
+            "start_time": d.get("start_time"),
+            "end_time": d.get("end_time"),
+            "status": d.get("status")
+        }
+    })
+
+events_json = json.dumps(events)
 
         html = f"""
         <h2 style="color:#38bdf8">Dashboard Capo - {user['username']}</h2>
