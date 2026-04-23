@@ -364,10 +364,20 @@ def dashboard():
                 end_date = d["date_from"]
 
             events.append({
+                "id": d["id"],
                 "title": f"{d['worker_name']} - {d['type'].capitalize()}",
                 "start": d["date_from"],
                 "end": end_date,
-                "color": "#16a34a" if d["type"] == "ferie" else "#2563eb"
+                "color": "#16a34a" if d["type"] == "ferie" else "#2563eb",
+                "extendedProps": {
+                    "worker": d["worker_name"],
+                    "type": d["type"],
+                    "date_from": d["date_from"],
+                    "date_to": d.get("date_to"),
+                    "start_time": d.get("start_time"),
+                    "end_time": d.get("end_time"),
+                    "status": d["status"]
+                }
             })
 
         events_json = json.dumps(events)
@@ -395,38 +405,73 @@ def dashboard():
         <div id='calendar'></div>
 
         <script>
-        document.addEventListener('DOMContentLoaded', function() {{
-
+        document.addEventListener('DOMContentLoaded', function() {
+        
             var calendarEl = document.getElementById('calendar');
-
-            var calendar = new FullCalendar.Calendar(calendarEl, {{
+        
+            var calendar = new FullCalendar.Calendar(calendarEl, {
                 initialView: 'timeGridWeek',
-
-                headerToolbar: {{
+        
+                headerToolbar: {
                     left: 'prev,next today',
                     center: 'title',
                     right: 'timeGridDay,timeGridWeek'
-                }},
-
-                buttonText: {{
+                },
+        
+                buttonText: {
                     today: 'Oggi',
                     week: 'Settimana',
                     day: 'Giorno'
-                }},
-
+                },
+        
                 locale: 'it',
-
+        
                 slotMinTime: "08:00:00",
                 slotMaxTime: "19:00:00",
-
+        
                 events: {events_json},
-
+                
+                eventClick: function(info) {
+        
+                    let e = info.event;
+        
+                    let html = `
+                        <div style="font-family:Arial">
+                            <h3>${e.extendedProps.worker}</h3>
+                            <p><b>Tipo:</b> ${e.extendedProps.type}</p>
+                            <p><b>Data:</b> ${e.extendedProps.date_from} ${e.extendedProps.date_to ? '→ ' + e.extendedProps.date_to : ''}</p>
+                            <p><b>Orario:</b> ${e.extendedProps.start_time ?? '09:00'} - ${e.extendedProps.end_time ?? '18:00'}</p>
+                            <p><b>Stato:</b> ${e.extendedProps.status}</p>
+                            <br>
+                            <a href="/approve/${e.id}" style="
+                                padding:8px 12px;
+                                background:#22c55e;
+                                color:white;
+                                text-decoration:none;
+                                border-radius:6px;
+                                margin-right:8px;
+                            ">✔ Approva</a>
+        
+                            <a href="/reject/${e.id}" style="
+                                padding:8px 12px;
+                                background:#ef4444;
+                                color:white;
+                                text-decoration:none;
+                                border-radius:6px;
+                            ">✖ Rifiuta</a>
+                        </div>
+                    `;
+        
+                    let w = window.open("", "Dettaglio richiesta", "width=400,height=420");
+                    w.document.write(html);
+                },
+        
                 eventDisplay: 'block',
                 height: "auto"
-            }});
-
+            });
+        
             calendar.render();
-        }});
+        });
         </script>
 
         <hr>
