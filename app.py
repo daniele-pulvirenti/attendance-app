@@ -386,7 +386,7 @@ def dashboard():
         events_json = json.dumps(events)
 
         html = """
-        <h2 style="color:#38bdf8">Dashboard Capo - {user['username']}</h2>
+        <h2 style="color:#38bdf8">Dashboard Capo - {{ user['username'] }}</h2>
         
         <div style="margin-bottom:15px; display:flex; gap:8px; flex-wrap:wrap;">
             <a href="/dashboard?sector=all"><button>Tutti</button></a>
@@ -466,25 +466,21 @@ document.addEventListener("DOMContentLoaded", function () {
 
             if (d.type === "ferie") {
                 return {
-                    id: d.id,
                     title: d.worker + " - Ferie",
                     start: d.date_from,
                     end: new Date(new Date(d.date_to).getTime() + 86400000).toISOString().split("T")[0],
                     color: d.status === "approved" ? "#22c55e"
                           : d.status === "rejected" ? "#ef4444"
-                          : "#f59e0b",
-                    extendedProps: d
+                          : "#f59e0b"
                 };
             }
-
+        
             return {
-                id: d.id,
                 title: d.worker + " - Permesso",
                 start: d.date_from,
                 color: d.status === "approved" ? "#22c55e"
                       : d.status === "rejected" ? "#ef4444"
-                      : "#f59e0b",
-                extendedProps: d
+                      : "#f59e0b"
             };
         }),
 
