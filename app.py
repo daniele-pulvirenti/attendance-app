@@ -351,70 +351,67 @@ def dashboard():
 
     user = session["user"]
 
-    # ================= CAPO =================
-    if user["role"] == "manager":
+# ================= CAPO =================
+if user["role"] == "manager":
 
-        import json
+    import json
 
-        sector = request.args.get("sector")
-    
-        params = {
-            "select": "*"
-        }
-    
-        if sector and sector != "all":
-            params["sector"] = f"eq.{sector}"
-    
-        res = requests.get(
-            f"{SUPABASE_URL}/rest/v1/absences",
-            headers=HEADERS,
-            params=params
-        )
-    
-        try:
-            data = res.json()
-        except:
-            data = []
-# ================= PREPARAZIONE EVENTI CALENDARIO =================
-events = []
+    sector = request.args.get("sector")
 
-for d in data:
+    params = {
+        "select": "*"
+    }
 
-    # SAFE FERIE END DATE (evita crash se date_to mancante o errata)
-    if d.get("type") == "ferie" and d.get("date_to"):
-        try:
-            end_date = datetime.strptime(d["date_to"], "%Y-%m-%d") + timedelta(days=1)
-            end_date = end_date.strftime("%Y-%m-%d")
-        except:
+    if sector and sector != "all":
+        params["sector"] = f"eq.{sector}"
+
+    res = requests.get(
+        f"{SUPABASE_URL}/rest/v1/absences",
+        headers=HEADERS,
+        params=params
+    )
+
+    try:
+        data = res.json()
+    except:
+        data = []
+
+    # ================= PREPARAZIONE EVENTI CALENDARIO =================
+    events = []
+
+    for d in data:
+
+        # SAFE FERIE END DATE (evita crash se date_to mancante o errata)
+        if d.get("type") == "ferie" and d.get("date_to"):
+            try:
+                end_date = datetime.strptime(d["date_to"], "%Y-%m-%d") + timedelta(days=1)
+                end_date = end_date.strftime("%Y-%m-%d")
+            except:
+                end_date = d.get("date_from")
+        else:
             end_date = d.get("date_from")
-    else:
-        end_date = d.get("date_from")
 
-    events.append({
-        "id": d.get("id"),
+        events.append({
+            "id": d.get("id"),
+            "title": f"{d.get('worker_name','Sconosciuto')} - {d.get('type','').capitalize()}",
+            "start": d.get("date_from"),
+            "end": end_date,
+            "color":
+                "#f59e0b" if d.get("status") == "pending"
+                else "#22c55e" if d.get("status") == "approved"
+                else "#ef4444",
+            "extendedProps": {
+                "worker": d.get("worker_name"),
+                "type": d.get("type"),
+                "date_from": d.get("date_from"),
+                "date_to": d.get("date_to"),
+                "start_time": d.get("start_time"),
+                "end_time": d.get("end_time"),
+                "status": d.get("status")
+            }
+        })
 
-        "title": f"{d.get('worker_name','Sconosciuto')} - {d.get('type','').capitalize()}",
-
-        "start": d.get("date_from"),
-        "end": end_date,
-
-        "color":
-            "#f59e0b" if d.get("status") == "pending"
-            else "#22c55e" if d.get("status") == "approved"
-            else "#ef4444",
-
-        "extendedProps": {
-            "worker": d.get("worker_name"),
-            "type": d.get("type"),
-            "date_from": d.get("date_from"),
-            "date_to": d.get("date_to"),
-            "start_time": d.get("start_time"),
-            "end_time": d.get("end_time"),
-            "status": d.get("status")
-        }
-    })
-
-events_json = json.dumps(events)
+    events_json = json.dumps(events)
 
 # ================= HTML =================
 html = f"""
