@@ -437,49 +437,99 @@ def dashboard():
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {{
+document.addEventListener('DOMContentLoaded', function() {
 
     var calendarEl = document.getElementById('calendar');
 
-    var calendar = new FullCalendar.Calendar(calendarEl, {{
-        initialView: 'timeGridWeek',
+    // ================= 🇮🇹 FESTIVITÀ DINAMICHE =================
+    function getItalianHolidays(year) {
+        return [
+            { title: "Capodanno", start: `${year}-01-01`, display: "background", color: "#ef4444" },
+            { title: "Epifania", start: `${year}-01-06`, display: "background", color: "#ef4444" },
+            { title: "Liberazione", start: `${year}-04-25`, display: "background", color: "#ef4444" },
+            { title: "Festa del Lavoro", start: `${year}-05-01`, display: "background", color: "#ef4444" },
+            { title: "Repubblica", start: `${year}-06-02`, display: "background", color: "#ef4444" },
+            { title: "Ferragosto", start: `${year}-08-15`, display: "background", color: "#ef4444" },
+            { title: "Ognissanti", start: `${year}-11-01`, display: "background", color: "#ef4444" },
+            { title: "Immacolata", start: `${year}-12-08`, display: "background", color: "#ef4444" },
+            { title: "Natale", start: `${year}-12-25`, display: "background", color: "#ef4444" },
+            { title: "Santo Stefano", start: `${year}-12-26`, display: "background", color: "#ef4444" }
+        ];
+    }
 
-        headerToolbar: {{
+    var calendar = new FullCalendar.Calendar(calendarEl, {
+
+        initialView: 'timeGridWeek',
+        locale: 'it',
+
+        // ✅ settimana da lunedì
+        firstDay: 1,
+
+        headerToolbar: {
             left: 'prev,next today',
             center: 'title',
             right: 'timeGridDay,timeGridWeek'
-        }},
+        },
 
-        locale: 'it',
         slotMinTime: "08:00:00",
         slotMaxTime: "19:00:00",
 
-        events: {events_json},
+        // ================= 🔴 WEEKEND ROSSI =================
+        dayCellDidMount: function(info) {
+            const day = info.date.getDay(); // 0 dom, 6 sab
+            if (day === 0 || day === 6) {
+                info.el.style.backgroundColor = "#1f2937";
+                info.el.style.opacity = "0.8";
+                info.el.style.color = "#ef4444";
+            }
+        },
 
-        eventClick: function(info) {{
+        // ================= 📅 EVENTI =================
+        events: (window.data || []).concat(
+            getItalianHolidays(new Date().getFullYear()),
+            {events_json}
+        ),
+
+        // ================= CLICK EVENTO =================
+        eventClick: function(info) {
 
             let e = info.event;
 
             let html = `
-                <h3>${{e.extendedProps.worker}}</h3>
-                <p><b>Tipo:</b> ${{e.extendedProps.type}}</p>
-                <p><b>Data:</b> ${{e.extendedProps.date_from}} ${{e.extendedProps.date_to ? '→ ' + e.extendedProps.date_to : ''}}</p>
-                <p><b>Orario:</b> ${{e.extendedProps.start_time ?? '09:00'}} - ${{e.extendedProps.end_time ?? '18:00'}}</p>
-                <p><b>Stato:</b> ${{e.extendedProps.status}}</p>
+                <h3>${e.extendedProps.worker}</h3>
+                <p><b>Tipo:</b> ${e.extendedProps.type}</p>
+                <p><b>Data:</b> ${e.extendedProps.date_from} ${e.extendedProps.date_to ? '→ ' + e.extendedProps.date_to : ''}</p>
+                <p><b>Orario:</b> ${e.extendedProps.start_time ?? '09:00'} - ${e.extendedProps.end_time ?? '18:00'}</p>
+                <p><b>Stato:</b> ${e.extendedProps.status}</p>
                 <br>
-                <button onclick="handleAction('/approve/${{e.id}}')" style="padding:8px 12px;background:#22c55e;color:white;border:none;border-radius:6px;margin-right:8px;">✔ Approva</button>
-                <button onclick="handleAction('/reject/${{e.id}}')" style="padding:8px 12px;background:#ef4444;color:white;border:none;border-radius:6px;">✖ Rifiuta</button>
+
+                <button onclick="handleAction('/approve/${e.id}')" style="
+                    padding:8px 12px;
+                    background:#22c55e;
+                    color:white;
+                    border:none;
+                    border-radius:6px;
+                    margin-right:8px;
+                ">✔ Approva</button>
+
+                <button onclick="handleAction('/reject/${e.id}')" style="
+                    padding:8px 12px;
+                    background:#ef4444;
+                    color:white;
+                    border:none;
+                    border-radius:6px;
+                ">✖ Rifiuta</button>
             `;
 
             document.getElementById("modalBody").innerHTML = html;
             document.getElementById("eventModal").style.display = "flex";
-        }},
+        },
 
         height: "auto"
-    }});
+    });
 
     calendar.render();
-}});
+});
 </script>
 
 <script>
