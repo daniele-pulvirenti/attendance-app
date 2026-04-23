@@ -115,7 +115,7 @@ def register():
             return "Errore registrazione"
 
         return """
-        <h3>Registrazione completata ✅</h3>
+        <h3>Registrazione completata!</h3>
         <a href="/">Torna al login</a>
         """
 
@@ -243,7 +243,7 @@ def forgot():
         send_email(email, reset_link)
 
         return """
-        <h3>Ti abbiamo inviato una mail 📩</h3>
+        <h3>Se l'e-mail che hai indicato è quella indicata in fase di registrazione, ne riceverai una a breve.</h3>
         <p>Controlla la tua casella e segui il link per reimpostare la password.</p>
 
         <a href="/" style="
@@ -343,7 +343,7 @@ def reset_password(token):
             return f"Errore aggiornamento password: {update.text}"
 
         return """
-        <h3>Password aggiornata con successo ✅</h3>
+        <h3>Password aggiornata con successo!</h3>
 
         <a href="/" style="
             display:inline-block;
