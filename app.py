@@ -24,15 +24,123 @@ HEADERS = {
 }
 
 LOGIN_HTML = """
-<h2>Login Sistema Presenze</h2>
-<form method="post">
-  Username: <input name="username"><br>
-  Password: <input name="password" type="password"><br>
-  <button type="submit">Login</button>
-  <br>
-    <a href="/register">Registrati</a><br>
-    <a href="/forgot">Password smarrita?</a>
-</form>
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>Login Sistema Presenze</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: url('https://images.unsplash.com/photo-1497366754035-f200968a6e72') no-repeat center center/cover;
+        }
+
+        .login-card {
+            backdrop-filter: blur(12px);
+            background: rgba(0, 0, 0, 0.65);
+            padding: 40px;
+            border-radius: 18px;
+            width: 360px;
+            color: white;
+            box-shadow: 0 0 30px rgba(0,0,0,0.6);
+            text-align: center;
+        }
+
+        .login-card h2 {
+            margin-bottom: 10px;
+            font-size: 28px;
+            letter-spacing: 1px;
+            color: #38bdf8;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 18px;
+            border: none;
+            border-radius: 8px;
+            outline: none;
+            font-size: 14px;
+        }
+
+        input[type="text"],
+        input[type="password"] {
+            background: #f1f5f9;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            background-color: #38bdf8;
+            color: black;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        button:hover {
+            background-color: #0ea5e9;
+        }
+
+        .links {
+            margin-top: 15px;
+            font-size: 14px;
+            color: #94a3b8;
+        }
+
+        .links a {
+            color: #38bdf8;
+            text-decoration: none;
+        }
+
+        .footer {
+            margin-top: 25px;
+            font-size: 12px;
+            color: #94a3b8;
+        }
+
+        .team {
+            color: #38bdf8;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <form method="post" class="login-card">
+        <h2>Login Sistema Presenze</h2>
+
+        <!-- Username -->
+        Username:
+        <input name="username" required><br>
+
+        <!-- Password -->
+        Password:
+        <input name="password" type="password" required><br>
+
+        <!-- Submit Button -->
+        <button type="submit">Login</button>
+
+        <!-- Links for Register & Password Recovery -->
+        <div class="links">
+            <a href="/register">Registrati</a> | 
+            <a href="/forgot">Password smarrita?</a>
+        </div>
+
+        <div class="footer">
+            Powered by <span class="team">Team104</span>
+        </div>
+    </form>
+
+</body>
+</html>
 """
 
 @app.route("/register", methods=["GET", "POST"])
