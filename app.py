@@ -58,6 +58,11 @@ LOGIN_HTML = """
             color: #38bdf8;
         }
 
+        .logo {
+            width: 100px;
+            margin-bottom: 20px;
+        }
+
         input {
             width: 100%;
             padding: 12px;
@@ -115,7 +120,10 @@ LOGIN_HTML = """
 <body>
 
     <form method="post" class="login-card">
-        <h2>Login Sistema Presenze</h2>
+        <!-- Logo -->
+        <img src="{{ url_for('static', filename='images/logo.jpeg') }}" alt="Logo" class="logo">
+        
+        <h2>Login Sistema Ferie e Permessi</h2>
 
         <!-- Username -->
         Username:
