@@ -461,8 +461,6 @@ document.addEventListener('DOMContentLoaded', function() {{
 
         initialView: 'timeGridWeek',
         locale: 'it',
-
-        // ✅ settimana da LUNEDÌ
         firstDay: 1,
 
         headerToolbar: {{
@@ -487,7 +485,7 @@ document.addEventListener('DOMContentLoaded', function() {{
         // ================= 📅 EVENTI =================
         events: (window.data || []).concat(
             getItalianHolidays(new Date().getFullYear()),
-            JSON.parse('{{ events_json | tojson | safe }}')
+            {{ events_json }}
         ),
 
         // ================= CLICK EVENTO =================
