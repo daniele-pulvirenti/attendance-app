@@ -386,7 +386,7 @@ def dashboard():
         events_json = json.dumps(events)
 
         html = f"""
-        <h2 style="color:#38bdf8">Dashboard Capo - {user['username']}</h2>
+        <h2 style="color:#38bdf8">Benvenuta {user['first_name']}</h2>
         
         <div style="margin-bottom:15px; display:flex; gap:8px; flex-wrap:wrap;">
             <a href="/dashboard?sector=all"><button>Tutti</button></a>
