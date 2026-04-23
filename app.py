@@ -292,7 +292,7 @@ def login():
         username = request.form["username"]
         password = request.form["password"]
 
-        # 🔥 QUERY UTENTE
+        # 🔥 QUERY CORRETTA: USERS (NON ABSENCES)
         res = requests.get(
             f"{SUPABASE_URL}/rest/v1/users?username=eq.{username}",
             headers=HEADERS
@@ -308,39 +308,14 @@ def login():
 
         db_user = user_data[0]
 
-        # 🔐 controllo password
-        if not bcrypt.checkpw(password.encode(), db_user["password"].encode()):
-            return "Login errato"
+        if bcrypt.checkpw(password.encode(), db_user["password"].encode()):
+            session["user"] = db_user
+            return redirect("/dashboard")
 
-        # 👤 RECUPERO NOME + COGNOME DA users_available
-        res_info = requests.get(
-            f"{SUPABASE_URL}/rest/v1/users_available?username=eq.{username}&select=first_name,last_name,sector,username",
-            headers=HEADERS
-        )
-
-        try:
-            info = res_info.json()
-        except:
-            info = []
-
-        if info:
-            user_profile = info[0]
-            full_name = f"{user_profile.get('first_name','')} {user_profile.get('last_name','')}".strip()
-        else:
-            full_name = username
-
-        # 💾 SESSIONE UTENTE (ARRICCHITA)
-        session["user"] = {
-            "id": db_user.get("id"),
-            "username": username,
-            "role": db_user.get("role"),
-            "sector": db_user.get("sector"),
-            "full_name": full_name
-        }
-
-        return redirect("/dashboard")
+        return "Login errato"
 
     return render_template_string(LOGIN_HTML)
+
 
 # ---------------- DASHBOARD ----------------
 @app.route("/dashboard")
@@ -351,84 +326,80 @@ def dashboard():
 
     user = session["user"]
 
-# ================= CAPO =================
-if user["role"] == "manager":
+    # ================= CAPO =================
+    if user["role"] == "manager":
 
-    import json
+        import json
 
-    sector = request.args.get("sector")
+        sector = request.args.get("sector")
+    
+        params = {
+            "select": "*"
+        }
+    
+        if sector and sector != "all":
+            params["sector"] = f"eq.{sector}"
+    
+        res = requests.get(
+            f"{SUPABASE_URL}/rest/v1/absences",
+            headers=HEADERS,
+            params=params
+        )
+    
+        try:
+            data = res.json()
+        except:
+            data = []
 
-    params = {
-        "select": "*"
-    }
+        # ================= PREPARAZIONE EVENTI CALENDARIO =================
+        events = []
 
-    if sector and sector != "all":
-        params["sector"] = f"eq.{sector}"
+        for d in data:
 
-    res = requests.get(
-        f"{SUPABASE_URL}/rest/v1/absences",
-        headers=HEADERS,
-        params=params
-    )
-
-    try:
-        data = res.json()
-    except:
-        data = []
-
-    # ================= PREPARAZIONE EVENTI CALENDARIO =================
-    events = []
-
-    for d in data:
-
-        # SAFE FERIE END DATE (evita crash se date_to mancante o errata)
-        if d.get("type") == "ferie" and d.get("date_to"):
-            try:
+            # FullCalendar usa END ESCLUSIVO → aggiungiamo 1 giorno per ferie
+            if d.get("type") == "ferie":
                 end_date = datetime.strptime(d["date_to"], "%Y-%m-%d") + timedelta(days=1)
                 end_date = end_date.strftime("%Y-%m-%d")
-            except:
-                end_date = d.get("date_from")
-        else:
-            end_date = d.get("date_from")
+            else:
+                end_date = d["date_from"]
 
-        events.append({
-            "id": d.get("id"),
-            "title": f"{d.get('worker_name','Sconosciuto')} - {d.get('type','').capitalize()}",
-            "start": d.get("date_from"),
-            "end": end_date,
-            "color":
-                "#f59e0b" if d.get("status") == "pending"
-                else "#22c55e" if d.get("status") == "approved"
-                else "#ef4444",
-            "extendedProps": {
-                "worker": d.get("worker_name"),
-                "type": d.get("type"),
-                "date_from": d.get("date_from"),
-                "date_to": d.get("date_to"),
-                "start_time": d.get("start_time"),
-                "end_time": d.get("end_time"),
-                "status": d.get("status")
-            }
-        })
+            events.append({
+                "id": d["id"],
+                "title": f"{d['worker_name']} - {d['type'].capitalize()}",
+                "start": d["date_from"],
+                "end": end_date,
+                "color":
+                    "#f59e0b" if d["status"] == "pending"
+                    else "#22c55e" if d["status"] == "approved"
+                    else "#ef4444",
+                "extendedProps": {
+                    "worker": d["worker_name"],
+                    "type": d["type"],
+                    "date_from": d["date_from"],
+                    "date_to": d.get("date_to"),
+                    "start_time": d.get("start_time"),
+                    "end_time": d.get("end_time"),
+                    "status": d["status"]
+                }
+            })
 
-    events_json = json.dumps(events)
+        events_json = json.dumps(events)
 
-# ================= HTML =================
-html = f"""
-<h2 style="color:#38bdf8">Dashboard Capo - {user['username']}</h2>
-
-<div style="margin-bottom:15px; display:flex; gap:8px; flex-wrap:wrap;">
-    <a href="/dashboard?sector=all"><button>Tutti</button></a>
-    <a href="/dashboard?sector=Dogane"><button>Dogane</button></a>
-    <a href="/dashboard?sector=Syllabus"><button>Syllabus</button></a>
-    <a href="/dashboard?sector=Unica"><button>Unica</button></a>
-    <a href="/dashboard?sector=Accise"><button>Accise</button></a>
-    <a href="/dashboard?sector=Fabbisogni"><button>Fabbisogni</button></a>
-    <a href="/dashboard?sector=Bonus"><button>Bonus</button></a>
-</div>
-
-<a href='/logout'>Logout</a>
-<hr>
+        html = f"""
+        <h2 style="color:#38bdf8">Dashboard Capo - {user['username']}</h2>
+        
+        <div style="margin-bottom:15px; display:flex; gap:8px; flex-wrap:wrap;">
+            <a href="/dashboard?sector=all"><button>Tutti</button></a>
+            <a href="/dashboard?sector=Dogane"><button>Dogane</button></a>
+            <a href="/dashboard?sector=Syllabus"><button>Syllabus</button></a>
+            <a href="/dashboard?sector=Unica"><button>Unica</button></a>
+            <a href="/dashboard?sector=Accise"><button>Accise</button></a>
+            <a href="/dashboard?sector=Fabbisogni"><button>Fabbisogni</button></a>
+            <a href="/dashboard?sector=Bonus"><button>Bonus</button></a>
+        </div>
+        
+        <a href='/logout'>Logout</a>
+        <hr>
 
         <!-- ================= FULLCALENDAR ================= -->
 <link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css' rel='stylesheet' />
@@ -470,61 +441,44 @@ document.addEventListener('DOMContentLoaded', function() {{
 
     var calendarEl = document.getElementById('calendar');
 
-    const italianHolidays = [
-        { title: "Capodanno", start: "2026-01-01", display: "background", color: "#ef4444" },
-        { title: "Epifania", start: "2026-01-06", display: "background", color: "#ef4444" },
-        { title: "Liberazione", start: "2026-04-25", display: "background", color: "#ef4444" },
-        { title: "Festa Lavoro", start: "2026-05-01", display: "background", color: "#ef4444" },
-        { title: "Repubblica", start: "2026-06-02", display: "background", color: "#ef4444" },
-        { title: "Ferragosto", start: "2026-08-15", display: "background", color: "#ef4444" },
-        { title: "Natale", start: "2026-12-25", display: "background", color: "#ef4444" },
-        { title: "Santo Stefano", start: "2026-12-26", display: "background", color: "#ef4444" }
-    ];
-
     var calendar = new FullCalendar.Calendar(calendarEl, {{
+        initialView: 'timeGridWeek',
 
-        initialView: "dayGridMonth",
-        locale: "it",
-        firstDay: 1,
-        weekends: true,
-
-        dayCellDidMount: function(info) {{
-            const day = info.date.getDay();
-            if (day === 0 || day === 6) {{
-                info.el.style.backgroundColor = "#111827";
-                info.el.style.opacity = "0.6";
-                info.el.style.color = "#ef4444";
-            }}
+        headerToolbar: {{
+            left: 'prev,next today',
+            center: 'title',
+            right: 'timeGridDay,timeGridWeek'
         }},
 
-        events: (window.data || []).map(d => {{
+        locale: 'it',
+        slotMinTime: "08:00:00",
+        slotMaxTime: "19:00:00",
 
-            if (d.type === "ferie") {{
-                return {{
-                    title: "Ferie",
-                    start: d.date_from,
-                    end: new Date(new Date(d.date_to).getTime() + 86400000)
-                        .toISOString()
-                        .split("T")[0],
-                    color: d.status === "approved" ? "#22c55e"
-                          : d.status === "rejected" ? "#ef4444"
-                          : "#f59e0b"
-                }};
-            }}
+        events: {events_json},
 
-            return {{
-                title: "Permesso",
-                start: d.date_from,
-                color: d.status === "approved" ? "#22c55e"
-                      : d.status === "rejected" ? "#ef4444"
-                      : "#f59e0b"
-            }};
+        eventClick: function(info) {{
 
-        }}).concat(italianHolidays)
+            let e = info.event;
+
+            let html = `
+                <h3>${{e.extendedProps.worker}}</h3>
+                <p><b>Tipo:</b> ${{e.extendedProps.type}}</p>
+                <p><b>Data:</b> ${{e.extendedProps.date_from}} ${{e.extendedProps.date_to ? '→ ' + e.extendedProps.date_to : ''}}</p>
+                <p><b>Orario:</b> ${{e.extendedProps.start_time ?? '09:00'}} - ${{e.extendedProps.end_time ?? '18:00'}}</p>
+                <p><b>Stato:</b> ${{e.extendedProps.status}}</p>
+                <br>
+                <button onclick="handleAction('/approve/${{e.id}}')" style="padding:8px 12px;background:#22c55e;color:white;border:none;border-radius:6px;margin-right:8px;">✔ Approva</button>
+                <button onclick="handleAction('/reject/${{e.id}}')" style="padding:8px 12px;background:#ef4444;color:white;border:none;border-radius:6px;">✖ Rifiuta</button>
+            `;
+
+            document.getElementById("modalBody").innerHTML = html;
+            document.getElementById("eventModal").style.display = "flex";
+        }},
+
+        height: "auto"
     }});
 
     calendar.render();
-
 }});
 </script>
 
@@ -905,39 +859,29 @@ document.addEventListener("DOMContentLoaded", function () {
 
     const calendarEl = document.getElementById("calendar");
 
-    const italianHolidays = (typeof window.italianHolidays !== "undefined")
-        ? window.italianHolidays
-        : [];
-
-    const rawData = (typeof data !== "undefined" && Array.isArray(data))
-        ? data
-        : [];
-
     const calendar = new FullCalendar.Calendar(calendarEl, {
-
         initialView: "dayGridMonth",
         locale: "it",
         firstDay: 1,
+        
+
         weekends: true,
 
         dayCellDidMount: function(info) {
             const day = info.date.getDay();
             if (day === 0 || day === 6) {
-                info.el.style.backgroundColor = "#1f2937";
-                info.el.style.color = "#ef4444";
-                info.el.style.opacity = "0.8";
+                info.el.style.backgroundColor = "#0b1220";
+                info.el.style.opacity = "0.5";
             }
         },
 
-        events: rawData.map(d => {
+        events: (typeof data !== "undefined" ? data : []).map(d => {
 
             if (d.type === "ferie") {
                 return {
                     title: "Ferie",
                     start: d.date_from,
-                    end: new Date(new Date(d.date_to).getTime() + 86400000)
-                        .toISOString()
-                        .split("T")[0],
+                    end: new Date(new Date(d.date_to).getTime() + 86400000).toISOString().split("T")[0],
                     color: d.status === "approved" ? "#22c55e"
                           : d.status === "rejected" ? "#ef4444"
                           : "#f59e0b"
@@ -951,14 +895,12 @@ document.addEventListener("DOMContentLoaded", function () {
                       : d.status === "rejected" ? "#ef4444"
                       : "#f59e0b"
             };
-
-        }).concat(italianHolidays)
-
+        })
     });
 
     calendar.render();
-
 });
+
 </script>
 """
         
