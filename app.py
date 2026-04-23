@@ -123,7 +123,7 @@ LOGIN_HTML = """
         <!-- Logo -->
         <img src="{{ url_for('static', filename='images/logo.jpeg') }}" alt="Logo" class="logo">
         
-        <h3>Login Ferie&Permessi</h3>
+        <h2>Login Ferie&Permessi</h2>
 
         <!-- Username -->
         Username:
