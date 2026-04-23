@@ -380,7 +380,7 @@ events = []
 
 for d in data:
 
-    # SAFE FERIE END DATE (evita 500 se date_to mancante o errata)
+    # SAFE FERIE END DATE (evita crash se date_to mancante o errata)
     if d.get("type") == "ferie" and d.get("date_to"):
         try:
             end_date = datetime.strptime(d["date_to"], "%Y-%m-%d") + timedelta(days=1)
@@ -398,7 +398,6 @@ for d in data:
         "start": d.get("date_from"),
         "end": end_date,
 
-        # SAFE STATUS (evita KeyError)
         "color":
             "#f59e0b" if d.get("status") == "pending"
             else "#22c55e" if d.get("status") == "approved"
@@ -417,21 +416,22 @@ for d in data:
 
 events_json = json.dumps(events)
 
-        html = f"""
-        <h2 style="color:#38bdf8">Dashboard Capo - {user['username']}</h2>
-        
-        <div style="margin-bottom:15px; display:flex; gap:8px; flex-wrap:wrap;">
-            <a href="/dashboard?sector=all"><button>Tutti</button></a>
-            <a href="/dashboard?sector=Dogane"><button>Dogane</button></a>
-            <a href="/dashboard?sector=Syllabus"><button>Syllabus</button></a>
-            <a href="/dashboard?sector=Unica"><button>Unica</button></a>
-            <a href="/dashboard?sector=Accise"><button>Accise</button></a>
-            <a href="/dashboard?sector=Fabbisogni"><button>Fabbisogni</button></a>
-            <a href="/dashboard?sector=Bonus"><button>Bonus</button></a>
-        </div>
-        
-        <a href='/logout'>Logout</a>
-        <hr>
+# ================= HTML =================
+html = f"""
+<h2 style="color:#38bdf8">Dashboard Capo - {user['username']}</h2>
+
+<div style="margin-bottom:15px; display:flex; gap:8px; flex-wrap:wrap;">
+    <a href="/dashboard?sector=all"><button>Tutti</button></a>
+    <a href="/dashboard?sector=Dogane"><button>Dogane</button></a>
+    <a href="/dashboard?sector=Syllabus"><button>Syllabus</button></a>
+    <a href="/dashboard?sector=Unica"><button>Unica</button></a>
+    <a href="/dashboard?sector=Accise"><button>Accise</button></a>
+    <a href="/dashboard?sector=Fabbisogni"><button>Fabbisogni</button></a>
+    <a href="/dashboard?sector=Bonus"><button>Bonus</button></a>
+</div>
+
+<a href='/logout'>Logout</a>
+<hr>
 
         <!-- ================= FULLCALENDAR ================= -->
 <link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css' rel='stylesheet' />
