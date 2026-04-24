@@ -773,6 +773,10 @@ def login():
             session.permanent = True
             session["user"] = db_user
             session["last_activity"] = datetime.utcnow().isoformat()
+            if db_user["role"] == "manager":
+                session["view"] = "manager"
+            else:
+                session["view"] = "worker"      
             return redirect("/dashboard")
 
         return "Login errato"
@@ -781,6 +785,16 @@ def login():
 
 
 # ---------------- DASHBOARD ----------------
+@app.route("/switch_view/<view>")
+def switch_view(view):
+
+    if "user" not in session:
+        return redirect("/")
+
+    session["view"] = view
+
+    return redirect("/dashboard")
+
 @app.route("/dashboard")
 def dashboard():
 
@@ -807,7 +821,9 @@ def dashboard():
         pending_by_sector[s] = pending_by_sector.get(s, 0) + 1
 
     # ================= CAPO =================
-    if user["role"] == "manager":
+    view = session.get("view", "worker")
+
+    if view == "manager" and user["role"] == "manager":
 
         import json
 
@@ -870,6 +886,20 @@ def dashboard():
         pending_requests = [r for r in all_pending if r["sector"] == sector] if sector else []
         html = f"""
         <h2 style="color:#38bdf8">Benvenuta {user['first_name']}</h2>
+
+        <div style="margin-bottom:15px;">
+            <a href="/switch_view/manager">
+                <button style="padding:8px;background:#ef4444;color:white;">
+                    👔 Manager View
+                </button>
+            </a>
+    
+            <a href="/switch_view/worker">
+                <button style="padding:8px;background:#3b82f6;color:white;">
+                    👷 Worker View
+                </button>
+            </a>
+        </div>
         
         <style>
         .sector-btn {{
@@ -1470,8 +1500,10 @@ def add_absence():
         return redirect("/")
 
     user = session["user"]
-
     absence_type = request.form["type"]
+
+    # 👇 VIEW (manager/worker switch)
+    view = session.get("view", "worker")
 
     # ---------------- FERIE ----------------
     if absence_type == "ferie":
@@ -1499,29 +1531,9 @@ def add_absence():
         "type": absence_type,
         "start_time": start_time,
         "end_time": end_time,
-        "status": "pending"
-    }
 
-    requests.post(
-        f"{SUPABASE_URL}/rest/v1/absences",
-        headers=HEADERS,
-        json=data
-    )
-
-    return redirect("/dashboard")
-
-    if "user" not in session:
-        return redirect("/")
-
-    user = session["user"]
-
-    data = {
-        "worker_name": user["username"],
-        "date": request.form["date"],
-        "type": request.form["type"],
-        "start_time": request.form["start_time"] if request.form["type"] != "ferie" else None,
-        "end_time": request.form["end_time"] if request.form["type"] != "ferie" else None,
-        "status": "pending"
+        # 🔥 QUI LA LOGICA GIUSTA
+        "status": "approved" if view == "manager" else "pending"
     }
 
     requests.post(
@@ -1533,25 +1545,33 @@ def add_absence():
     return redirect("/dashboard")
 
 
-# ---------------- UPDATE ----------------
 @app.route("/update_absence", methods=["POST"])
 def update_absence():
 
+    if "user" not in session:
+        return {"ok": False}, 401
+
+    user = session["user"]
     data = request.json
+
+    # 👇 view attiva (manager / worker)
+    view = session.get("view", "worker")
 
     payload = {
         "type": data["type"],
         "start_time": data.get("start_time"),
         "end_time": data.get("end_time"),
-        "status": "pending"
+
+        # 🔥 logica coerente con add_absence
+        "status": "approved" if view == "manager" else "pending"
     }
 
-    # ferie
+    # ---------------- FERIE ----------------
     if data["type"] == "ferie":
         payload["date_from"] = data.get("date_from")
         payload["date_to"] = data.get("date_to")
 
-    # permesso
+    # ---------------- PERMESSO ----------------
     else:
         payload["date_from"] = data.get("date_from")
         payload["date_to"] = data.get("date_to")
@@ -1563,7 +1583,6 @@ def update_absence():
     )
 
     return {"ok": True}
-
 
 # ---------------- DELETE ----------------
 
