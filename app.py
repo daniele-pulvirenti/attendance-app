@@ -785,78 +785,54 @@ def login():
 
 
 # ---------------- DASHBOARD ----------------
-@app.route("/switch_view/<view>")
-def switch_view(view):
-
-    print("SWITCH CHIAMATO:", view)
-    print("USER PRIMA:", session.get("user"))
-    print("VIEW PRIMA:", session.get("view"))
-
-    session["view"] = view
-
-    print("VIEW DOPO:", session.get("view"))
-
-    return redirect("/dashboard")
-
 @app.route("/dashboard")
 def dashboard():
     if "user" not in session:
         return redirect("/")
     
     user = session["user"]
-    # Se la sessione non ha una 'view', impostiamo quella del ruolo reale
+    # Imposta la vista di default basata sul ruolo se non esiste in sessione
     if "view" not in session:
         session["view"] = user.get("role", "worker")
-    
+        
     current_view = session["view"]
-    sector = user["sector"]
+    html_output = ""
 
-    # 1. LOGICA DELLO SWITCH (Sempre calcolata se è un manager)
-    switch_html = ""
+    # --- 1. BARRA DI SWITCH (Sempre generata per il Manager) ---
     if user.get("role") == "manager":
-        switch_html = f"""
-        <div style="margin-bottom:20px; padding:12px; background:#0f172a; border-radius:10px; display:flex; gap:12px; align-items:center; border: 1px solid #1e293b;">
-            <b style="color:white; font-family:sans-serif; font-size:14px;">Cambia Vista:</b>
-            <a href="/switch_view/manager" style="text-decoration:none;">
-                <button style="padding:8px 16px; background:{'#22c55e' if current_view=='manager' else '#334155'}; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:600;">
-                    👔 Dashboard Manager
+        html_output += f"""
+        <div style="margin-bottom:20px; padding:12px; background:#0f172a; border-radius:10px; display:flex; gap:12px; align-items:center;">
+            <b style="color:white; font-family:sans-serif;">Cambia Vista:</b>
+            <a href="/switch_view/manager">
+                <button style="padding:8px 14px; background:{'#22c55e' if current_view=='manager' else '#334155'}; color:white; border:none; border-radius:6px; cursor:pointer;">
+                    👔 Manager
                 </button>
             </a>
-            <a href="/switch_view/worker" style="text-decoration:none;">
-                <button style="padding:8px 16px; background:{'#3b82f6' if current_view=='worker' else '#334155'}; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:600;">
-                    👷 Vista Lavoratore
+            <a href="/switch_view/worker">
+                <button style="padding:8px 14px; background:{'#3b82f6' if current_view=='worker' else '#334155'}; color:white; border:none; border-radius:6px; cursor:pointer;">
+                    👷 Worker
                 </button>
             </a>
         </div>
         """
 
-    # 2. RECUPERO DATI (Esempio pending richieste)
-    res = requests.get(
-        f"{SUPABASE_URL}/rest/v1/absences?status=eq.pending",
-        headers=HEADERS
-    )
-    all_pending = res.json() if res.status_code == 200 else []
-    
-    pending_by_sector = {}
-    for req in all_pending:
-        s = req.get("sector")
-        pending_by_sector[s] = pending_by_sector.get(s, 0) + 1
-
-    # 3. LOGICA DI RENDERING
-    # Passiamo 'switch_html' a render_template indipendentemente dalla vista
+    # --- 2. LOGICA CONTENUTO ---
     if current_view == "manager":
-        return render_template(
-            "dashboard_manager.html", 
-            user=user, 
-            switch_menu=switch_html, 
-            pending=pending_by_sector
-        )
+        # Logica recupero dati manager (quella che avevi con requests)
+        res = requests.get(f"{SUPABASE_URL}/rest/v1/absences?status=eq.pending", headers=HEADERS)
+        all_pending = res.json() if res.status_code == 200 else []
+        
+        html_output += "<h1>Dashboard Manager</h1>"
+        html_output += f"<p>Richieste in attesa: {len(all_pending)}</p>"
+        # ... aggiungi qui il resto dell'HTML per il manager ...
+
     else:
-        return render_template(
-            "dashboard_worker.html", 
-            user=user, 
-            switch_menu=switch_html
-        )
+        # Logica per il Worker
+        html_output += "<h1>Dashboard Lavoratore</h1>"
+        html_output += f"<p>Benvenuto {user['name']}, ecco i tuoi compiti.</p>"
+        # ... aggiungi qui il resto dell'HTML per il worker ...
+
+    return html_output
 
 
     # ================= CAPO =================
