@@ -889,29 +889,37 @@ def dashboard():
         pending_requests = [r for r in all_pending if r["sector"] == sector] if sector else []
         if user["role"] == "manager":
 
+            # Recuperiamo il ruolo reale e la visualizzazione attuale
+            user_role = user.get("role")
             current_view = session.get("view")
-
+            
+            # Se è la prima volta, impostiamo la vista predefinita in base al ruolo
             if not current_view:
-                current_view = "manager" if user.get("role") == "manager" else "worker"
+                current_view = user_role
                 session["view"] = current_view
-                
+            
             html = ""
-            html += f"""
-            <div style="margin-bottom:15px; padding:10px; background:#0f172a; border-radius:8px; display:flex; gap:10px; align-items:center;">
-                <b style="color:white;">Modalità:</b>
-        
-                <a href="/switch_view/manager">
-                    <button style="padding:6px 10px; background:{'#22c55e' if current_view=='manager' else '#334155'}; color:white; border:none; border-radius:6px;">
-                        👔 Manager
-                    </button>
-                </a>
-        
-                <a href="/switch_view/worker">
-                    <button style="padding:6px 10px; background:{'#3b82f6' if current_view=='worker' else '#334155'}; color:white; border:none; border-radius:6px;">
-                        👷 Worker
-                    </button>
-                </a>
-            </div>
+            
+            # Mostriamo lo switch SOLO se l'utente è un Manager (sia in modalità manager che worker)
+            if user_role == "manager":
+                html += f"""
+                <div style="margin-bottom:15px; padding:10px; background:#0f172a; border-radius:8px; display:flex; gap:10px; align-items:center;">
+                    <b style="color:white;">Vista Attuale:</b>
+            
+                    <a href="/switch_view/manager" style="text-decoration:none;">
+                        <button style="cursor:pointer; padding:6px 12px; background:{'#22c55e' if current_view=='manager' else '#334155'}; color:white; border:none; border-radius:6px; font-weight:bold;">
+                            👔 Manager
+                        </button>
+                    </a>
+            
+                    <a href="/switch_view/worker" style="text-decoration:none;">
+                        <button style="cursor:pointer; padding:6px 12px; background:{'#3b82f6' if current_view=='worker' else '#334155'}; color:white; border:none; border-radius:6px; font-weight:bold;">
+                            👷 Lavoratore
+                        </button>
+                    </a>
+                </div>
+                """
+
         
         <style>
         .sector-btn {{
