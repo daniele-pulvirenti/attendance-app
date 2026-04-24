@@ -37,8 +37,7 @@ SUPABASE_KEY = "sb_publishable_DZ69ih5L9IqvJmt44VUK4w_8uelJ5xU"
 HEADERS = {
     "apikey": SUPABASE_KEY,
     "Authorization": f"Bearer {SUPABASE_KEY}",
-    "Content-Type": "application/json",
-    "Prefer": "return=minimal"
+    "Content-Type": "application/json"
 }
 
 LOGIN_HTML = """
@@ -202,35 +201,33 @@ def login():
         username = request.form["username"]
         password = request.form["password"]
 
-        # Esattamente come nel PDF (Pagina 16)
-        res = requests.get(
-            f"{SUPABASE_URL}/rest/v1/users?username=eq.{username}",
-            headers=HEADERS
-        )
+        # Costruzione URL identica al PDF
+        url = f"{SUPABASE_URL}/rest/v1/users?username=eq.{username}"
+        res = requests.get(url, headers=HEADERS)
         
         try:
             user_data = res.json()
-        except:
-            return "Errore server (JSON non valido)"
+        except Exception as e:
+            # Se fallisce, stampiamo cosa risponde il server per capire il problema
+            return f"Errore risposta server. Dettaglio: {res.text[:100]}"
 
-        if not user_data:
+        if not user_data or len(user_data) == 0:
             return "Utente non trovato"
 
-        # user_data è una lista, prendiamo il primo elemento [0]
-        db_user = user_data[0]
+        db_user = user_data[0] # Prendo il primo utente della lista
 
+        # Controllo Password
         if bcrypt.checkpw(password.encode(), db_user["password"].encode()):
             session.permanent = True
             session["user"] = db_user
             session["last_activity"] = datetime.utcnow().isoformat()
             
-            # Impostazione ruolo e vista
             role = db_user.get("role", "worker")
             session["view"] = "manager" if role == "manager" else "worker"
             
             return redirect("/dashboard")
         
-        return "Login errato"
+        return "Login errato (password non corrispondente)"
         
     return render_template_string(LOGIN_HTML)
 
