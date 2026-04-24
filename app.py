@@ -1178,6 +1178,41 @@ function handleAction(url) {{
 
         html = f"""
         <h2 style="color:#38bdf8">Benvenuto {user['first_name']}</h2>
+        if user.get("role") == "manager":
+
+    current_view = session.get("view", "manager")
+    html = ""
+    html += f"""
+    <div style="margin-bottom:15px; padding:10px; background:#0f172a; border-radius:8px; display:flex; gap:10px; align-items:center;">
+        <b style="color:white;">Modalità:</b>
+
+        <a href="/switch_view/manager">
+            <button style="
+                padding:6px 10px;
+                background:{'#22c55e' if current_view=='manager' else '#334155'};
+                color:white;
+                border:none;
+                border-radius:6px;
+                cursor:pointer;
+            ">
+                👔 Manager
+            </button>
+        </a>
+
+        <a href="/switch_view/worker">
+            <button style="
+                padding:6px 10px;
+                background:{'#3b82f6' if current_view=='worker' else '#334155'};
+                color:white;
+                border:none;
+                border-radius:6px;
+                cursor:pointer;
+            ">
+                👷 Worker
+            </button>
+        </a>
+    </div>
+    """
         <a href='/logout'>Logout</a>
         <hr>
 
