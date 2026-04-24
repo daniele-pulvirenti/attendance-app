@@ -1470,24 +1470,22 @@ def add_absence():
         return redirect("/")
 
     user = session["user"]
-
     absence_type = request.form["type"]
+
+    # Se è manager → approvato subito
+    status = "approved" if user["role"] == "manager" else "pending"
 
     # ---------------- FERIE ----------------
     if absence_type == "ferie":
-
         date_from = request.form["date_from"]
         date_to = request.form["date_to"]
-
         start_time = None
         end_time = None
 
     # ---------------- PERMESSO ----------------
     else:
-
         date_from = request.form["date"]
         date_to = request.form["date"]
-
         start_time = request.form["start_time"]
         end_time = request.form["end_time"]
 
@@ -1499,7 +1497,7 @@ def add_absence():
         "type": absence_type,
         "start_time": start_time,
         "end_time": end_time,
-        "status": "pending"
+        "status": status
     }
 
     requests.post(
@@ -1509,52 +1507,28 @@ def add_absence():
     )
 
     return redirect("/dashboard")
-
-    if "user" not in session:
-        return redirect("/")
-
-    user = session["user"]
-
-    data = {
-        "worker_name": user["username"],
-        "date": request.form["date"],
-        "type": request.form["type"],
-        "start_time": request.form["start_time"] if request.form["type"] != "ferie" else None,
-        "end_time": request.form["end_time"] if request.form["type"] != "ferie" else None,
-        "status": "pending"
-    }
-
-    requests.post(
-        f"{SUPABASE_URL}/rest/v1/absences",
-        headers=HEADERS,
-        json=data
-    )
-
-    return redirect("/dashboard")
-
 
 # ---------------- UPDATE ----------------
 @app.route("/update_absence", methods=["POST"])
 def update_absence():
 
+    if "user" not in session:
+        return {"ok": False}, 401
+
+    user = session["user"]
     data = request.json
+
+    # Se modifica il capo → resta approved
+    status = "approved" if user["role"] == "manager" else "pending"
 
     payload = {
         "type": data["type"],
         "start_time": data.get("start_time"),
         "end_time": data.get("end_time"),
-        "status": "pending"
+        "date_from": data.get("date_from"),
+        "date_to": data.get("date_to"),
+        "status": status
     }
-
-    # ferie
-    if data["type"] == "ferie":
-        payload["date_from"] = data.get("date_from")
-        payload["date_to"] = data.get("date_to")
-
-    # permesso
-    else:
-        payload["date_from"] = data.get("date_from")
-        payload["date_to"] = data.get("date_to")
 
     requests.patch(
         f"{SUPABASE_URL}/rest/v1/absences?id=eq.{data['id']}",
@@ -1566,11 +1540,11 @@ def update_absence():
 
 
 # ---------------- DELETE ----------------
-
 @app.route("/delete/<int:id>")
 def delete_absence(id):
 
-    print("DELETE CHIAMATA CON ID:", id)
+    if "user" not in session:
+        return redirect("/")
 
     requests.delete(
         f"{SUPABASE_URL}/rest/v1/absences?id=eq.{id}",
