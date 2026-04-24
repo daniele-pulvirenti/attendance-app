@@ -1,5 +1,3 @@
-Sistemami tutto il codice per eventuali errori e restituiscimelo tutto intero senza tralasciare una virgola:
-
 from flask import Flask, request, session, redirect, render_template_string, url_for
 import requests
 import os
