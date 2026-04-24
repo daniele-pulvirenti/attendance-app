@@ -789,102 +789,6 @@ def dashboard():
 
     user = session["user"]
 
-    html = ""
-    
-    # ===== FORM FERIE/PERMESSI VISIBILE A TUTTI =====
-    html += """
-    <h3>➕ Inserisci assenza</h3>
-    
-    <form method="post" action="/add_absence" style="
-        background:#111827;
-        padding:15px;
-        border-radius:10px;
-        color:white;
-    ">
-    
-    Tipo:
-    <select name="type" id="type" onchange="toggleAddForm()">
-    <option value="ferie">Ferie</option>
-    <option value="permesso">Permesso</option>
-    </select><br><br>
-    
-    <div id="singleDate">
-    Data: <input type="date" name="date"><br><br>
-    </div>
-    
-    <div id="rangeDate" style="display:none;">
-    Dal: <input type="date" name="date_from"><br><br>
-    Al: <input type="date" name="date_to"><br><br>
-    </div>
-    
-    Dalle: <input type="time" name="start_time" id="start" min="09:00" max="18:00"><br><br>
-    Alle: <input type="time" name="end_time" id="end" min="09:00" max="18:00"><br><br>
-    
-    <button id="submitBtn" type="submit" disabled
-    style="background:#3b82f6;color:white;padding:6px;border:none;border-radius:6px;opacity:0.5;">
-    Invia
-    </button>
-    </form>
-    <script>
-    function toggleAddForm(){{
-    
-        let type = document.getElementById("type").value;
-    
-        let start = document.getElementById("start");
-        let end = document.getElementById("end");
-    
-        let singleDate = document.getElementById("singleDate");
-        let rangeDate = document.getElementById("rangeDate");
-    
-        if(type === "ferie"){{
-    
-            start.disabled = true;
-            end.disabled = true;
-            start.value = "";
-            end.value = "";
-    
-            singleDate.style.display = "none";
-            rangeDate.style.display = "block";
-    
-        }} else {{
-    
-            start.disabled = false;
-            end.disabled = false;
-    
-            singleDate.style.display = "block";
-            rangeDate.style.display = "none";
-        }}
-    
-        validateForm();
-    }}
-    
-    function validateForm(){{
-    
-        let btn = document.getElementById("submitBtn");
-        let type = document.getElementById("type").value;
-    
-        if(type === "ferie"){{
-    
-            let from = document.querySelector("[name='date_from']").value;
-            let to = document.querySelector("[name='date_to']").value;
-            btn.disabled = !(from && to);
-    
-        }} else {{
-    
-            let date = document.querySelector("[name='date']").value;
-            let start = document.getElementById("start").value;
-            let end = document.getElementById("end").value;
-            btn.disabled = !(date && start && end);
-        }}
-    
-        btn.style.opacity = btn.disabled ? "0.5" : "1";
-    }}
-    
-    document.addEventListener("input", validateForm);
-    </script>
-    """
-    return render_template_string(html)
-    
     sector = user["sector"]
 
     # ===== Recupero TUTTE le richieste pending =====
@@ -904,42 +808,6 @@ def dashboard():
 
     # ================= CAPO =================
     if user["role"] == "manager":
-
-        html = ""
-        form_html = """
-        <h3>➕ Inserisci assenza</h3>
-        
-        <form method="post" action="/add_absence" style="
-            background:#111827;
-            padding:15px;
-            border-radius:10px;
-            color:white;
-        ">
-        
-        Tipo:
-        <select name="type" id="type" onchange="toggleAddForm()">
-        <option value="ferie">Ferie</option>
-        <option value="permesso">Permesso</option>
-        </select><br><br>
-        
-        <div id="singleDate">
-        Data: <input type="date" name="date"><br><br>
-        </div>
-        
-        <div id="rangeDate" style="display:none;">
-        Dal: <input type="date" name="date_from"><br><br>
-        Al: <input type="date" name="date_to"><br><br>
-        </div>
-        
-        Dalle: <input type="time" name="start_time" id="start" min="09:00" max="18:00"><br><br>
-        Alle: <input type="time" name="end_time" id="end" min="09:00" max="18:00"><br><br>
-        
-        <button id="submitBtn" type="submit" disabled
-        style="background:#3b82f6;color:white;padding:6px;border:none;border-radius:6px;opacity:0.5;">
-        Invia
-        </button>
-        </form>
-        """
 
         import json
 
@@ -1260,42 +1128,6 @@ function handleAction(url) {{
     # ================= LAVORATORE =================
     else:
 
-        html = ""
-        form_html = """
-        <h3>➕ Inserisci assenza</h3>
-        
-        <form method="post" action="/add_absence" style="
-            background:#111827;
-            padding:15px;
-            border-radius:10px;
-            color:white;
-        ">
-        
-        Tipo:
-        <select name="type" id="type" onchange="toggleAddForm()">
-        <option value="ferie">Ferie</option>
-        <option value="permesso">Permesso</option>
-        </select><br><br>
-        
-        <div id="singleDate">
-        Data: <input type="date" name="date"><br><br>
-        </div>
-        
-        <div id="rangeDate" style="display:none;">
-        Dal: <input type="date" name="date_from"><br><br>
-        Al: <input type="date" name="date_to"><br><br>
-        </div>
-        
-        Dalle: <input type="time" name="start_time" id="start" min="09:00" max="18:00"><br><br>
-        Alle: <input type="time" name="end_time" id="end" min="09:00" max="18:00"><br><br>
-        
-        <button id="submitBtn" type="submit" disabled
-        style="background:#3b82f6;color:white;padding:6px;border:none;border-radius:6px;opacity:0.5;">
-        Invia
-        </button>
-        </form>
-        """
-
         res = requests.get(
             f"{SUPABASE_URL}/rest/v1/absences?worker_name=eq.{user['username']}",
             headers=HEADERS
@@ -1307,7 +1139,39 @@ function handleAction(url) {{
         <a href='/logout'>Logout</a>
         <hr>
 
+        <h3>➕ Inserisci assenza</h3>
+
+        <form method="post" action="/add_absence" style="
+            background:#111827;
+            padding:15px;
+            border-radius:10px;
+            color:white;
+        ">
+
+          Tipo:
+          <select name="type" id="type" onchange="toggleAddForm()">
+            <option value="ferie">Ferie</option>
+            <option value="permesso">Permesso</option>
+          </select><br><br>
+
+          <div id="singleDate">
+            Data: <input type="date" name="date"><br><br>
+        </div>
         
+        <div id="rangeDate" style="display:none;">
+            Dal: <input type="date" name="date_from"><br><br>
+            Al: <input type="date" name="date_to"><br><br>
+        </div>
+
+          Dalle: <input type="time" name="start_time" id="start" min="09:00" max="18:00"><br><br>
+          
+          Alle: <input type="time" name="end_time" id="end" min="09:00" max="18:00"><br><br>
+
+        <button id="submitBtn" type="submit" disabled
+        style="background:#3b82f6;color:white;padding:6px;border:none;border-radius:6px;opacity:0.5;">
+        Invia
+        </button>
+        </form>
 
         <script>
         function toggleAddForm(){{
@@ -1606,22 +1470,24 @@ def add_absence():
         return redirect("/")
 
     user = session["user"]
-    absence_type = request.form["type"]
 
-    # Se è manager → approvato subito
-    status = "approved" if user["role"] == "manager" else "pending"
+    absence_type = request.form["type"]
 
     # ---------------- FERIE ----------------
     if absence_type == "ferie":
+
         date_from = request.form["date_from"]
         date_to = request.form["date_to"]
+
         start_time = None
         end_time = None
 
     # ---------------- PERMESSO ----------------
     else:
+
         date_from = request.form["date"]
         date_to = request.form["date"]
+
         start_time = request.form["start_time"]
         end_time = request.form["end_time"]
 
@@ -1633,7 +1499,7 @@ def add_absence():
         "type": absence_type,
         "start_time": start_time,
         "end_time": end_time,
-        "status": status
+        "status": "pending"
     }
 
     requests.post(
@@ -1644,27 +1510,51 @@ def add_absence():
 
     return redirect("/dashboard")
 
+    if "user" not in session:
+        return redirect("/")
+
+    user = session["user"]
+
+    data = {
+        "worker_name": user["username"],
+        "date": request.form["date"],
+        "type": request.form["type"],
+        "start_time": request.form["start_time"] if request.form["type"] != "ferie" else None,
+        "end_time": request.form["end_time"] if request.form["type"] != "ferie" else None,
+        "status": "pending"
+    }
+
+    requests.post(
+        f"{SUPABASE_URL}/rest/v1/absences",
+        headers=HEADERS,
+        json=data
+    )
+
+    return redirect("/dashboard")
+
+
 # ---------------- UPDATE ----------------
 @app.route("/update_absence", methods=["POST"])
 def update_absence():
 
-    if "user" not in session:
-        return {"ok": False}, 401
-
-    user = session["user"]
     data = request.json
-
-    # Se modifica il capo → resta approved
-    status = "approved" if user["role"] == "manager" else "pending"
 
     payload = {
         "type": data["type"],
         "start_time": data.get("start_time"),
         "end_time": data.get("end_time"),
-        "date_from": data.get("date_from"),
-        "date_to": data.get("date_to"),
-        "status": status
+        "status": "pending"
     }
+
+    # ferie
+    if data["type"] == "ferie":
+        payload["date_from"] = data.get("date_from")
+        payload["date_to"] = data.get("date_to")
+
+    # permesso
+    else:
+        payload["date_from"] = data.get("date_from")
+        payload["date_to"] = data.get("date_to")
 
     requests.patch(
         f"{SUPABASE_URL}/rest/v1/absences?id=eq.{data['id']}",
@@ -1676,11 +1566,11 @@ def update_absence():
 
 
 # ---------------- DELETE ----------------
+
 @app.route("/delete/<int:id>")
 def delete_absence(id):
 
-    if "user" not in session:
-        return redirect("/")
+    print("DELETE CHIAMATA CON ID:", id)
 
     requests.delete(
         f"{SUPABASE_URL}/rest/v1/absences?id=eq.{id}",
