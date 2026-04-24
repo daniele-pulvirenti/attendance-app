@@ -32,7 +32,7 @@ def check_session_timeout():
                 return redirect(url_for("login"))
         session["last_activity"] = now.isoformat()
 
-SUPABASE_URL = "https://supabase.co"
+SUPABASE_URL = "https://supabase.com"
 SUPABASE_KEY = "sb_publishable_DZ69ih5L9IqvJmt44VUK4w_8uelJ5xU"
 HEADERS = {
     "apikey": SUPABASE_KEY,
