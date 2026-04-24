@@ -797,10 +797,10 @@ def switch_view(view):
 
 @app.route("/dashboard")
 def dashboard():
-
+    print(session)
     if "user" not in session:
         return redirect("/")
-
+    view = session.get("view", "worker")
     user = session["user"]
 
     sector = user["sector"]
@@ -821,7 +821,7 @@ def dashboard():
         pending_by_sector[s] = pending_by_sector.get(s, 0) + 1
 
     # ================= CAPO =================
-    view = session.get("view", "worker")
+    
 
     if view == "manager" and user["role"] == "manager":
 
