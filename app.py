@@ -884,22 +884,26 @@ def dashboard():
         events_json = json.dumps(events)
         # richieste pending SOLO del sector visualizzato
         pending_requests = [r for r in all_pending if r["sector"] == sector] if sector else []
-        html = f"""
-        <h2 style="color:#38bdf8">Benvenuta {user['first_name']}</h2>
+        if user["role"] == "manager":
 
-        <div style="margin-bottom:15px;">
-            <a href="/switch_view/manager">
-                <button style="padding:8px;background:#ef4444;color:white;">
-                    👔 Manager View
-                </button>
-            </a>
-    
-            <a href="/switch_view/worker">
-                <button style="padding:8px;background:#3b82f6;color:white;">
-                    👷 Worker View
-                </button>
-            </a>
-        </div>
+            current_view = session.get("view", "worker")
+        
+            html += f"""
+            <div style="margin-bottom:15px; padding:10px; background:#0f172a; border-radius:8px; display:flex; gap:10px; align-items:center;">
+                <b style="color:white;">Modalità:</b>
+        
+                <a href="/switch_view/manager">
+                    <button style="padding:6px 10px; background:{'#22c55e' if current_view=='manager' else '#334155'}; color:white; border:none; border-radius:6px;">
+                        👔 Manager
+                    </button>
+                </a>
+        
+                <a href="/switch_view/worker">
+                    <button style="padding:6px 10px; background:{'#3b82f6' if current_view=='worker' else '#334155'}; color:white; border:none; border-radius:6px;">
+                        👷 Worker
+                    </button>
+                </a>
+            </div>
         
         <style>
         .sector-btn {{
@@ -1503,7 +1507,10 @@ def add_absence():
     absence_type = request.form["type"]
 
     # 👇 VIEW (manager/worker switch)
-    view = session.get("view", "worker")
+    view = session.get("view")
+
+    if not view:
+        view = "manager" if user["role"] == "manager" else "worker"
 
     # ---------------- FERIE ----------------
     if absence_type == "ferie":
@@ -1555,7 +1562,10 @@ def update_absence():
     data = request.json
 
     # 👇 view attiva (manager / worker)
-    view = session.get("view", "worker")
+    view = session.get("view")
+
+    if not view:
+        view = "manager" if user["role"] == "manager" else "worker"
 
     payload = {
         "type": data["type"],
