@@ -800,28 +800,64 @@ def switch_view(view):
 
 @app.route("/dashboard")
 def dashboard():
-    print(session)
     if "user" not in session:
         return redirect("/")
-    view = session.get("view", "worker")
+    
     user = session["user"]
-
+    # Se la sessione non ha una 'view', impostiamo quella del ruolo reale
+    if "view" not in session:
+        session["view"] = user.get("role", "worker")
+    
+    current_view = session["view"]
     sector = user["sector"]
 
-    # ===== Recupero TUTTE le richieste pending =====
+    # 1. LOGICA DELLO SWITCH (Sempre calcolata se è un manager)
+    switch_html = ""
+    if user.get("role") == "manager":
+        switch_html = f"""
+        <div style="margin-bottom:20px; padding:12px; background:#0f172a; border-radius:10px; display:flex; gap:12px; align-items:center; border: 1px solid #1e293b;">
+            <b style="color:white; font-family:sans-serif; font-size:14px;">Cambia Vista:</b>
+            <a href="/switch_view/manager" style="text-decoration:none;">
+                <button style="padding:8px 16px; background:{'#22c55e' if current_view=='manager' else '#334155'}; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:600;">
+                    👔 Dashboard Manager
+                </button>
+            </a>
+            <a href="/switch_view/worker" style="text-decoration:none;">
+                <button style="padding:8px 16px; background:{'#3b82f6' if current_view=='worker' else '#334155'}; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:600;">
+                    👷 Vista Lavoratore
+                </button>
+            </a>
+        </div>
+        """
+
+    # 2. RECUPERO DATI (Esempio pending richieste)
     res = requests.get(
         f"{SUPABASE_URL}/rest/v1/absences?status=eq.pending",
         headers=HEADERS
     )
+    all_pending = res.json() if res.status_code == 200 else []
     
-    all_pending = res.json()
-    
-    # Conta quante richieste pending per ogni sector
     pending_by_sector = {}
-    
     for req in all_pending:
-        s = req["sector"]
+        s = req.get("sector")
         pending_by_sector[s] = pending_by_sector.get(s, 0) + 1
+
+    # 3. LOGICA DI RENDERING
+    # Passiamo 'switch_html' a render_template indipendentemente dalla vista
+    if current_view == "manager":
+        return render_template(
+            "dashboard_manager.html", 
+            user=user, 
+            switch_menu=switch_html, 
+            pending=pending_by_sector
+        )
+    else:
+        return render_template(
+            "dashboard_worker.html", 
+            user=user, 
+            switch_menu=switch_html
+        )
+
 
     # ================= CAPO =================
     
