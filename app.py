@@ -199,21 +199,46 @@ def reset_password(token):
 @app.route("/", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        username = request.form["username"]
-        password = request.form["password"]
-        res = requests.get(f"{SUPABASE_URL}/rest/v1/users?username=eq.{username}", headers=HEADERS)
-        user_data = res.json()
-        if not user_data: return "Utente non trovato"
-        db_user = user_data[0]
+        username = request.form.get("username")
+        password = request.form.get("password")
+        
+        # Chiamata a Supabase
+        res = requests.get(
+            f"{SUPABASE_URL}/rest/v1/users?username=eq.{username}", 
+            headers=HEADERS
+        )
+        
+        # Controllo se la risposta è valida
+        if res.status_code != 200:
+            return f"Errore Database: {res.text}"
+            
+        try:
+            user_list = res.json()
+        except Exception:
+            return "Errore nella lettura dei dati dal server."
+
+        # Se la lista è vuota, l'utente non esiste
+        if not user_list or len(user_list) == 0:
+            return "Utente non trovato"
+
+        db_user = user_list[0] # Prendo il primo utente della lista
+
+        # Verifica Password
         if bcrypt.checkpw(password.encode(), db_user["password"].encode()):
             session.permanent = True
             session["user"] = db_user
             session["last_activity"] = datetime.utcnow().isoformat()
+            
+            # Impostazione vista iniziale
             role = db_user.get("role", "worker")
             session["view"] = "manager" if role == "manager" else "worker"
+            
             return redirect("/dashboard")
-        return "Login errato"
+        
+        return "Password errata"
+        
     return render_template_string(LOGIN_HTML)
+
 
 @app.route("/switch_view/<view>")
 def switch_view(view):
