@@ -918,7 +918,7 @@ def dashboard():
                         </button>
                     </a>
                 </div>
-                """
+                
 
         
         <style>
