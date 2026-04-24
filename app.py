@@ -812,6 +812,8 @@ def dashboard():
         import json
 
         sector = request.args.get("sector")
+        if not sector:
+            sector = "all"
     
         params = {
             "select": "*"
@@ -898,46 +900,66 @@ def dashboard():
             border-radius:8px;
             margin-bottom:15px;
         }}
+        .selected-btn {{
+            background:#0ea5e9 !important;
+            border:2px solid white;
+            transform:scale(1.05);
+        }}
         </style>
         
         <div style="margin-bottom:15px; display:flex; gap:8px; flex-wrap:wrap;">
             <a href="/dashboard?sector=all">
-                <button class="sector-btn">Tutti</button>
+                <button class="sector-btn
+                {'selected-btn' if sector=='all' else ''}">
+                Tutti
+                </button>
             </a>
         
             <a href="/dashboard?sector=Dogane">
-                <button class="sector-btn {'alert-btn' if pending_by_sector.get('Dogane',0) > 0 else ''}">
-                    Dogane {'🔔 ' + str(pending_by_sector.get('Dogane',0)) if pending_by_sector.get('Dogane',0) > 0 else ''}
+                <button class="sector-btn 
+                {'alert-btn' if pending_by_sector.get('Dogane',0) > 0 else ''}">
+                {'selected-btn' if sector=='Dogane' else ''}">
+                Dogane {'🔔 ' + str(pending_by_sector.get('Dogane',0)) if pending_by_sector.get('Dogane',0) > 0 else ''}
                 </button>
             </a>
         
             <a href="/dashboard?sector=Syllabus">
-                <button class="sector-btn {'alert-btn' if pending_by_sector.get('Syllabus',0) > 0 else ''}">
-                    Syllabus {'🔔 ' + str(pending_by_sector.get('Syllabus',0)) if pending_by_sector.get('Syllabus',0) > 0 else ''}
+                <button class="sector-btn 
+                {'alert-btn' if pending_by_sector.get('Syllabus',0) > 0 else ''}">
+                {'selected-btn' if sector=='Syllabus' else ''}">
+                Syllabus {'🔔 ' + str(pending_by_sector.get('Syllabus',0)) if pending_by_sector.get('Syllabus',0) > 0 else ''}
                 </button>
             </a>
         
             <a href="/dashboard?sector=Unica">
-                <button class="sector-btn {'alert-btn' if pending_by_sector.get('Unica',0) > 0 else ''}">
-                    Unica {'🔔 ' + str(pending_by_sector.get('Unica',0)) if pending_by_sector.get('Unica',0) > 0 else ''}
+                <button class="sector-btn 
+                {'alert-btn' if pending_by_sector.get('Unica',0) > 0 else ''}">
+                {'selected-btn' if sector=='Unica' else ''}">
+                Unica {'🔔 ' + str(pending_by_sector.get('Unica',0)) if pending_by_sector.get('Unica',0) > 0 else ''}
                 </button>
             </a>
         
             <a href="/dashboard?sector=Accise">
-                <button class="sector-btn {'alert-btn' if pending_by_sector.get('Accise',0) > 0 else ''}">
-                    Accise {'🔔 ' + str(pending_by_sector.get('Accise',0)) if pending_by_sector.get('Accise',0) > 0 else ''}
+                <button class="sector-btn 
+                {'alert-btn' if pending_by_sector.get('Accise',0) > 0 else ''}">
+                {'selected-btn' if sector=='Accise' else ''}">
+                Accise {'🔔 ' + str(pending_by_sector.get('Accise',0)) if pending_by_sector.get('Accise',0) > 0 else ''}
                 </button>
             </a>
         
             <a href="/dashboard?sector=Fabbisogni">
-                <button class="sector-btn {'alert-btn' if pending_by_sector.get('Fabbisogni',0) > 0 else ''}">
-                    Fabbisogni {'🔔 ' + str(pending_by_sector.get('Fabbisogni',0)) if pending_by_sector.get('Fabbisogni',0) > 0 else ''}
+                <button class="sector-btn 
+                {'alert-btn' if pending_by_sector.get('Fabbisogni',0) > 0 else ''}">
+                {'selected-btn' if sector=='Fabbisogni' else ''}">
+                Fabbisogni {'🔔 ' + str(pending_by_sector.get('Fabbisogni',0)) if pending_by_sector.get('Fabbisogni',0) > 0 else ''}
                 </button>
             </a>
         
             <a href="/dashboard?sector=Bonus">
-                <button class="sector-btn {'alert-btn' if pending_by_sector.get('Bonus',0) > 0 else ''}">
-                    Bonus {'🔔 ' + str(pending_by_sector.get('Bonus',0)) if pending_by_sector.get('Bonus',0) > 0 else ''}
+                <button class="sector-btn 
+                {'alert-btn' if pending_by_sector.get('Bonus',0) > 0 else ''}">
+                {'selected-btn' if sector=='Bonus' else ''}">
+                Bonus {'🔔 ' + str(pending_by_sector.get('Bonus',0)) if pending_by_sector.get('Bonus',0) > 0 else ''}
                 </button>
             </a>
         
