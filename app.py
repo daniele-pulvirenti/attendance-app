@@ -202,40 +202,33 @@ def login():
         username = request.form.get("username")
         password = request.form.get("password")
         
-        # Chiamata a Supabase
-        res = requests.get(
-            f"{SUPABASE_URL}/rest/v1/users?username=eq.{username}", 
-            headers=HEADERS
-        )
+        # URL corretto per Supabase PostgREST
+        url = f"{SUPABASE_URL}/rest/v1/users"
+        params = {"username": f"eq.{username}", "select": "*"}
+        
+        res = requests.get(url, headers=HEADERS, params=params)
+        
+        if res.status_code == 404:
+            return "Errore 404: La tabella 'users' non è stata trovata su Supabase. Controlla il nome della tabella."
         
         if res.status_code != 200:
-            return f"Errore di connessione al database (Status: {res.status_code})"
+            return f"Errore Database: {res.status_code} - {res.text}"
             
-        try:
-            user_list = res.json()
-        except:
-            return "Errore: Il database ha risposto in modo non valido."
+        user_list = res.json()
 
-        # Supabase restituisce una LISTA. Dobbiamo prendere il primo elemento [0]
-        if isinstance(user_list, list) and len(user_list) > 0:
+        if user_list and len(user_list) > 0:
             db_user = user_list[0]
-            
-            # Verifica Password
             if bcrypt.checkpw(password.encode(), db_user["password"].encode()):
                 session.permanent = True
                 session["user"] = db_user
                 session["last_activity"] = datetime.utcnow().isoformat()
-                
-                role = db_user.get("role", "worker")
-                session["view"] = "manager" if role == "manager" else "worker"
-                
+                session["view"] = db_user.get("role", "worker")
                 return redirect("/dashboard")
-            else:
-                return "Password errata"
-        else:
-            return "Utente non trovato"
+            return "Password errata"
+        return "Utente non trovato"
         
     return render_template_string(LOGIN_HTML)
+
 
 
 
