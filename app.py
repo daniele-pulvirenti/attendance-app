@@ -1257,18 +1257,6 @@ window.addEventListener("DOMContentLoaded", blockWeekendDates);
 
         <h3>📌 Le tue assenze</h3>
         <h3 style="color:#38bdf8;margin-bottom:10px;">📅 Calendario assenze</h3>
-
-        <div style="
-            display:flex;
-            justify-content:space-between;
-            align-items:center;
-            background:#0f172a;
-            padding:10px 15px;
-            border-radius:12px;
-            color:white;
-            margin-bottom:15px;
-            box-shadow:0 4px 12px rgba(0,0,0,0.3);
-        ">
         
             <button onclick="changeMonth(-1)" style="
                 background:#1e40af;
