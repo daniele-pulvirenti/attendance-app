@@ -789,6 +789,44 @@ def dashboard():
 
     user = session["user"]
 
+    html = ""
+    
+    # ===== FORM FERIE/PERMESSI VISIBILE A TUTTI =====
+    html += """
+    <h3>➕ Inserisci assenza</h3>
+    
+    <form method="post" action="/add_absence" style="
+        background:#111827;
+        padding:15px;
+        border-radius:10px;
+        color:white;
+    ">
+    
+    Tipo:
+    <select name="type" id="type" onchange="toggleAddForm()">
+    <option value="ferie">Ferie</option>
+    <option value="permesso">Permesso</option>
+    </select><br><br>
+    
+    <div id="singleDate">
+    Data: <input type="date" name="date"><br><br>
+    </div>
+    
+    <div id="rangeDate" style="display:none;">
+    Dal: <input type="date" name="date_from"><br><br>
+    Al: <input type="date" name="date_to"><br><br>
+    </div>
+    
+    Dalle: <input type="time" name="start_time" id="start" min="09:00" max="18:00"><br><br>
+    Alle: <input type="time" name="end_time" id="end" min="09:00" max="18:00"><br><br>
+    
+    <button id="submitBtn" type="submit" disabled
+    style="background:#3b82f6;color:white;padding:6px;border:none;border-radius:6px;opacity:0.5;">
+    Invia
+    </button>
+    </form>
+    """
+
     sector = user["sector"]
 
     # ===== Recupero TUTTE le richieste pending =====
@@ -1139,39 +1177,7 @@ function handleAction(url) {{
         <a href='/logout'>Logout</a>
         <hr>
 
-        <h3>➕ Inserisci assenza</h3>
-
-        <form method="post" action="/add_absence" style="
-            background:#111827;
-            padding:15px;
-            border-radius:10px;
-            color:white;
-        ">
-
-          Tipo:
-          <select name="type" id="type" onchange="toggleAddForm()">
-            <option value="ferie">Ferie</option>
-            <option value="permesso">Permesso</option>
-          </select><br><br>
-
-          <div id="singleDate">
-            Data: <input type="date" name="date"><br><br>
-        </div>
         
-        <div id="rangeDate" style="display:none;">
-            Dal: <input type="date" name="date_from"><br><br>
-            Al: <input type="date" name="date_to"><br><br>
-        </div>
-
-          Dalle: <input type="time" name="start_time" id="start" min="09:00" max="18:00"><br><br>
-          
-          Alle: <input type="time" name="end_time" id="end" min="09:00" max="18:00"><br><br>
-
-        <button id="submitBtn" type="submit" disabled
-        style="background:#3b82f6;color:white;padding:6px;border:none;border-radius:6px;opacity:0.5;">
-        Invia
-        </button>
-        </form>
 
         <script>
         function toggleAddForm(){{
