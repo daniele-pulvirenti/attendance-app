@@ -1126,7 +1126,7 @@ function handleAction(url) {{
         return html
 
     # ================= LAVORATORE =================
-    else:
+    if user["role"] == "manager" or "worker":
 
         res = requests.get(
             f"{SUPABASE_URL}/rest/v1/absences?worker_name=eq.{user['username']}",
