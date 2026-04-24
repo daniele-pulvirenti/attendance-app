@@ -886,7 +886,12 @@ def dashboard():
         pending_requests = [r for r in all_pending if r["sector"] == sector] if sector else []
         if user["role"] == "manager":
 
-            current_view = session.get("view", "worker")
+            current_view = session.get("view")
+
+            if not current_view:
+                current_view = "manager" if user.get("role") == "manager" else "worker"
+                session["view"] = current_view
+                
             html = ""
             html += f"""
             <div style="margin-bottom:15px; padding:10px; background:#0f172a; border-radius:8px; display:flex; gap:10px; align-items:center;">
