@@ -13,6 +13,31 @@ load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "dev_key")
 
+from datetime import datetime, timedelta
+from flask import session, redirect, url_for, request
+
+# durata massima sessione
+app.permanent_session_lifetime = timedelta(minutes=30)
+
+@app.before_request
+def check_session_timeout():
+    # escludi login e statici
+    if request.endpoint in ("login", "static"):
+        return
+
+    if "user" in session:
+        now = datetime.utcnow()
+        last_activity = session.get("last_activity")
+
+        if last_activity:
+            elapsed = now - datetime.fromisoformat(last_activity)
+
+            if elapsed.total_seconds() > 1800:
+                session.clear()
+                return redirect(url_for("login"))
+
+        session["last_activity"] = now.isoformat()
+
 SUPABASE_URL = "https://dlhayirunoremlpkyxlo.supabase.co"
 SUPABASE_KEY = "sb_publishable_DZ69ih5L9IqvJmt44VUK4w_8uelJ5xU"
 
@@ -745,7 +770,9 @@ def login():
         db_user = user_data[0]
 
         if bcrypt.checkpw(password.encode(), db_user["password"].encode()):
+            session.permanent = True
             session["user"] = db_user
+            session["last_activity"] = datetime.utcnow().isoformat()
             return redirect("/dashboard")
 
         return "Login errato"
