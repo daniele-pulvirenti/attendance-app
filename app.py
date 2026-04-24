@@ -917,7 +917,7 @@ def dashboard():
         
             <a href="/dashboard?sector=Dogane">
                 <button class="sector-btn 
-                {'alert-btn' if pending_by_sector.get('Dogane',0) > 0 else ''}">
+                {'alert-btn' if pending_by_sector.get('Dogane',0) > 0 else ''}
                 {'selected-btn' if sector=='Dogane' else ''}">
                 Dogane {'🔔 ' + str(pending_by_sector.get('Dogane',0)) if pending_by_sector.get('Dogane',0) > 0 else ''}
                 </button>
@@ -925,7 +925,7 @@ def dashboard():
         
             <a href="/dashboard?sector=Syllabus">
                 <button class="sector-btn 
-                {'alert-btn' if pending_by_sector.get('Syllabus',0) > 0 else ''}">
+                {'alert-btn' if pending_by_sector.get('Syllabus',0) > 0 else ''}
                 {'selected-btn' if sector=='Syllabus' else ''}">
                 Syllabus {'🔔 ' + str(pending_by_sector.get('Syllabus',0)) if pending_by_sector.get('Syllabus',0) > 0 else ''}
                 </button>
@@ -933,7 +933,7 @@ def dashboard():
         
             <a href="/dashboard?sector=Unica">
                 <button class="sector-btn 
-                {'alert-btn' if pending_by_sector.get('Unica',0) > 0 else ''}">
+                {'alert-btn' if pending_by_sector.get('Unica',0) > 0 else ''}
                 {'selected-btn' if sector=='Unica' else ''}">
                 Unica {'🔔 ' + str(pending_by_sector.get('Unica',0)) if pending_by_sector.get('Unica',0) > 0 else ''}
                 </button>
@@ -941,7 +941,7 @@ def dashboard():
         
             <a href="/dashboard?sector=Accise">
                 <button class="sector-btn 
-                {'alert-btn' if pending_by_sector.get('Accise',0) > 0 else ''}">
+                {'alert-btn' if pending_by_sector.get('Accise',0) > 0 else ''}
                 {'selected-btn' if sector=='Accise' else ''}">
                 Accise {'🔔 ' + str(pending_by_sector.get('Accise',0)) if pending_by_sector.get('Accise',0) > 0 else ''}
                 </button>
@@ -949,7 +949,7 @@ def dashboard():
         
             <a href="/dashboard?sector=Fabbisogni">
                 <button class="sector-btn 
-                {'alert-btn' if pending_by_sector.get('Fabbisogni',0) > 0 else ''}">
+                {'alert-btn' if pending_by_sector.get('Fabbisogni',0) > 0 else ''}
                 {'selected-btn' if sector=='Fabbisogni' else ''}">
                 Fabbisogni {'🔔 ' + str(pending_by_sector.get('Fabbisogni',0)) if pending_by_sector.get('Fabbisogni',0) > 0 else ''}
                 </button>
@@ -957,7 +957,7 @@ def dashboard():
         
             <a href="/dashboard?sector=Bonus">
                 <button class="sector-btn 
-                {'alert-btn' if pending_by_sector.get('Bonus',0) > 0 else ''}">
+                {'alert-btn' if pending_by_sector.get('Bonus',0) > 0 else ''}
                 {'selected-btn' if sector=='Bonus' else ''}">
                 Bonus {'🔔 ' + str(pending_by_sector.get('Bonus',0)) if pending_by_sector.get('Bonus',0) > 0 else ''}
                 </button>
