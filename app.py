@@ -943,7 +943,7 @@ def dashboard():
         
         {'<div class="notification-box"><b>Richieste in attesa:</b><ul>' +
         ''.join([f"<li>{r['worker_name']} — {r['type']} ({r['date_from']} → {r.get('date_to','')})</li>" for r in pending_requests]) +
-        '</ul></div>' if has_notifications else ''}
+        '</ul></div>' if len(pending_requests) > 0 else ''}
         
         <a href='/logout'>Logout</a>
         <hr>
