@@ -199,33 +199,38 @@ def reset_password(token):
 @app.route("/", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        username = request.form.get("username")
-        password = request.form.get("password")
-        
-        # URL corretto per Supabase PostgREST
-        url = f"{SUPABASE_URL}/rest/v1/users"
-        params = {"username": f"eq.{username}", "select": "*"}
-        
-        res = requests.get(url, headers=HEADERS, params=params)
-        
-        if res.status_code == 404:
-            return "Errore 404: La tabella 'users' non è stata trovata su Supabase. Controlla il nome della tabella."
-        
-        if res.status_code != 200:
-            return f"Errore Database: {res.status_code} - {res.text}"
-            
-        user_list = res.json()
+        username = request.form["username"]
+        password = request.form["password"]
 
-        if user_list and len(user_list) > 0:
-            db_user = user_list[0]
-            if bcrypt.checkpw(password.encode(), db_user["password"].encode()):
-                session.permanent = True
-                session["user"] = db_user
-                session["last_activity"] = datetime.utcnow().isoformat()
-                session["view"] = db_user.get("role", "worker")
-                return redirect("/dashboard")
-            return "Password errata"
-        return "Utente non trovato"
+        # Esattamente come nel PDF (Pagina 16)
+        res = requests.get(
+            f"{SUPABASE_URL}/rest/v1/users?username=eq.{username}",
+            headers=HEADERS
+        )
+        
+        try:
+            user_data = res.json()
+        except:
+            return "Errore server (JSON non valido)"
+
+        if not user_data:
+            return "Utente non trovato"
+
+        # user_data è una lista, prendiamo il primo elemento [0]
+        db_user = user_data[0]
+
+        if bcrypt.checkpw(password.encode(), db_user["password"].encode()):
+            session.permanent = True
+            session["user"] = db_user
+            session["last_activity"] = datetime.utcnow().isoformat()
+            
+            # Impostazione ruolo e vista
+            role = db_user.get("role", "worker")
+            session["view"] = "manager" if role == "manager" else "worker"
+            
+            return redirect("/dashboard")
+        
+        return "Login errato"
         
     return render_template_string(LOGIN_HTML)
 
