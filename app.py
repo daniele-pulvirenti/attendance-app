@@ -789,6 +789,16 @@ def dashboard():
 
     user = session["user"]
 
+    sector = user["sector"]
+
+    res = requests.get(
+        f"{SUPABASE_URL}/rest/v1/absences?sector=eq.{sector}&status=eq.pending",
+        headers=HEADERS
+    )
+    
+    pending_requests = res.json()
+    has_notifications = len(pending_requests) > 0
+
     # ================= CAPO =================
     if user["role"] == "manager":
 
@@ -851,15 +861,82 @@ def dashboard():
         html = f"""
         <h2 style="color:#38bdf8">Benvenuta {user['first_name']}</h2>
         
+        <style>
+        .sector-btn {{
+            background:#2d89ef;
+            color:white;
+            padding:8px 14px;
+            border:none;
+            border-radius:6px;
+            font-weight:bold;
+            cursor:pointer;
+        }}
+        
+        .alert-btn {{
+            background:#e74c3c !important;
+            animation:pulse 1.2s infinite;
+        }}
+        
+        @keyframes pulse {{
+            0% {{ box-shadow:0 0 0 0 rgba(231,76,60,0.7); }}
+            70% {{ box-shadow:0 0 0 10px rgba(231,76,60,0); }}
+            100% {{ box-shadow:0 0 0 0 rgba(231,76,60,0); }}
+        }}
+        
+        .notification-box {{
+            background:#1f2937;
+            color:white;
+            padding:12px;
+            border-radius:8px;
+            margin-bottom:15px;
+        }}
+        </style>
+        
         <div style="margin-bottom:15px; display:flex; gap:8px; flex-wrap:wrap;">
-            <a href="/dashboard?sector=all"><button>Tutti</button></a>
-            <a href="/dashboard?sector=Dogane"><button>Dogane</button></a>
-            <a href="/dashboard?sector=Syllabus"><button>Syllabus</button></a>
-            <a href="/dashboard?sector=Unica"><button>Unica</button></a>
-            <a href="/dashboard?sector=Accise"><button>Accise</button></a>
-            <a href="/dashboard?sector=Fabbisogni"><button>Fabbisogni</button></a>
-            <a href="/dashboard?sector=Bonus"><button>Bonus</button></a>
+            <a href="/dashboard?sector=all">
+                <button class="sector-btn">Tutti</button>
+            </a>
+        
+            <a href="/dashboard?sector=Dogane">
+                <button class="sector-btn {'alert-btn' if has_notifications and sector=='Dogane' else ''}">
+                    Dogane {'🔔 ' + str(len(pending_requests)) if has_notifications and sector=='Dogane' else ''}
+                </button>
+            </a>
+        
+            <a href="/dashboard?sector=Syllabus">
+                <button class="sector-btn {'alert-btn' if has_notifications and sector=='Syllabus' else ''}">
+                    Syllabus {'🔔 ' + str(len(pending_requests)) if has_notifications and sector=='Syllabus' else ''}
+                </button>
+            </a>
+        
+            <a href="/dashboard?sector=Unica">
+                <button class="sector-btn {'alert-btn' if has_notifications and sector=='Unica' else ''}">
+                    Unica {'🔔 ' + str(len(pending_requests)) if has_notifications and sector=='Unica' else ''}
+                </button>
+            </a>
+        
+            <a href="/dashboard?sector=Accise">
+                <button class="sector-btn {'alert-btn' if has_notifications and sector=='Accise' else ''}">
+                    Accise {'🔔 ' + str(len(pending_requests)) if has_notifications and sector=='Accise' else ''}
+                </button>
+            </a>
+        
+            <a href="/dashboard?sector=Fabbisogni">
+                <button class="sector-btn {'alert-btn' if has_notifications and sector=='Fabbisogni' else ''}">
+                    Fabbisogni {'🔔 ' + str(len(pending_requests)) if has_notifications and sector=='Fabbisogni' else ''}
+                </button>
+            </a>
+        
+            <a href="/dashboard?sector=Bonus">
+                <button class="sector-btn {'alert-btn' if has_notifications and sector=='Bonus' else ''}">
+                    Bonus {'🔔 ' + str(len(pending_requests)) if has_notifications and sector=='Bonus' else ''}
+                </button>
+            </a>
         </div>
+        
+        {'<div class="notification-box"><b>Richieste in attesa:</b><ul>' +
+        ''.join([f"<li>{r['worker_name']} — {r['type']} ({r['date_from']} → {r.get('date_to','')})</li>" for r in pending_requests]) +
+        '</ul></div>' if has_notifications else ''}
         
         <a href='/logout'>Logout</a>
         <hr>
