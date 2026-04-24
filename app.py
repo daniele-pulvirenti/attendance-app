@@ -883,7 +883,8 @@ def dashboard():
     document.addEventListener("input", validateForm);
     </script>
     """
-
+    return render_template_string(html)
+    
     sector = user["sector"]
 
     # ===== Recupero TUTTE le richieste pending =====
