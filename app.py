@@ -788,10 +788,13 @@ def login():
 @app.route("/switch_view/<view>")
 def switch_view(view):
 
-    if "user" not in session:
-        return redirect("/")
+    print("SWITCH CHIAMATO:", view)
+    print("USER PRIMA:", session.get("user"))
+    print("VIEW PRIMA:", session.get("view"))
 
     session["view"] = view
+
+    print("VIEW DOPO:", session.get("view"))
 
     return redirect("/dashboard")
 
