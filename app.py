@@ -887,7 +887,7 @@ def dashboard():
         if user["role"] == "manager":
 
             current_view = session.get("view", "worker")
-        
+            html = ""
             html += f"""
             <div style="margin-bottom:15px; padding:10px; background:#0f172a; border-radius:8px; display:flex; gap:10px; align-items:center;">
                 <b style="color:white;">Modalità:</b>
