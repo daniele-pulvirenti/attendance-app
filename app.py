@@ -1057,7 +1057,18 @@ function handleAction(url) {{
         """
 
         # ================= LA TUA LISTA ORIGINALE =================
+
+        from datetime import datetime
+
+        now = datetime.now()
+        current_month = now.month
+        current_year = now.year
+        
         for d in data:
+            date_obj = datetime.strptime(d["date_from"], "%Y-%m-%d")
+        
+            if date_obj.month != current_month or date_obj.year != current_year:
+                continue
 
             color = "#f59e0b" if d["status"] == "pending" else "#22c55e" if d["status"] == "approved" else "#ef4444"
         
@@ -1075,18 +1086,20 @@ function handleAction(url) {{
                 border-radius:10px;
                 margin-bottom:10px;
                 color:white;
-                box-shadow:0 4px 12px rgba(0,0,0,0.4)
+                box-shadow:0 4px 12px rgba(0,0,0,0.4);
+                text-align:left;
+                width:100%;
             ">
                 <b>{d["worker_name"]}</b><br>
                 📅 {date_display}<br>
                 🏷 {d.get("type","")}<br>
                 ⏰ {time_display}<br>
                 Stato: <span style="color:{color}">{d["status"]}</span><br><br>
-        
+            
                 <a href="/approve/{d["id"]}" style="color:#22c55e">✔ Approva</a> |
                 <a href="/reject/{d["id"]}" style="color:#ef4444">✖ Rifiuta</a>
             </div>
-        """
+            """
             
         return html
 
