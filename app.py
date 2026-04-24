@@ -1058,7 +1058,7 @@ function handleAction(url) {{
 
         # ================= LA TUA LISTA ORIGINALE =================
 
-        from datetime import datetime
+      
 
         now = datetime.now()
         current_month = now.month
