@@ -825,6 +825,63 @@ def dashboard():
     Invia
     </button>
     </form>
+    <script>
+    function toggleAddForm(){{
+    
+        let type = document.getElementById("type").value;
+    
+        let start = document.getElementById("start");
+        let end = document.getElementById("end");
+    
+        let singleDate = document.getElementById("singleDate");
+        let rangeDate = document.getElementById("rangeDate");
+    
+        if(type === "ferie"){{
+    
+            start.disabled = true;
+            end.disabled = true;
+            start.value = "";
+            end.value = "";
+    
+            singleDate.style.display = "none";
+            rangeDate.style.display = "block";
+    
+        }} else {{
+    
+            start.disabled = false;
+            end.disabled = false;
+    
+            singleDate.style.display = "block";
+            rangeDate.style.display = "none";
+        }}
+    
+        validateForm();
+    }}
+    
+    function validateForm(){{
+    
+        let btn = document.getElementById("submitBtn");
+        let type = document.getElementById("type").value;
+    
+        if(type === "ferie"){{
+    
+            let from = document.querySelector("[name='date_from']").value;
+            let to = document.querySelector("[name='date_to']").value;
+            btn.disabled = !(from && to);
+    
+        }} else {{
+    
+            let date = document.querySelector("[name='date']").value;
+            let start = document.getElementById("start").value;
+            let end = document.getElementById("end").value;
+            btn.disabled = !(date && start && end);
+        }}
+    
+        btn.style.opacity = btn.disabled ? "0.5" : "1";
+    }}
+    
+    document.addEventListener("input", validateForm);
+    </script>
     """
 
     sector = user["sector"]
