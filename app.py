@@ -788,12 +788,7 @@ def dashboard():
         return redirect("/")
 
     user = session["user"]
-    is_manager = user["role"] == "manager"
-    res = requests.get(
-        f"{SUPABASE_URL}/rest/v1/absences?worker_name=eq.{user['username']}",
-        headers=HEADERS
-    )
-    data = res.json()
+
     sector = user["sector"]
 
     # ===== Recupero TUTTE le richieste pending =====
@@ -1131,7 +1126,7 @@ function handleAction(url) {{
         return html
 
     # ================= LAVORATORE =================
-       
+    else:
 
         res = requests.get(
             f"{SUPABASE_URL}/rest/v1/absences?worker_name=eq.{user['username']}",
@@ -1475,10 +1470,8 @@ def add_absence():
         return redirect("/")
 
     user = session["user"]
-    absence_type = request.form["type"]
 
-    # ✅ manager approvato automatico
-    status = "approved" if user["role"] == "manager" else "pending"
+    absence_type = request.form["type"]
 
     # ---------------- FERIE ----------------
     if absence_type == "ferie":
@@ -1506,7 +1499,29 @@ def add_absence():
         "type": absence_type,
         "start_time": start_time,
         "end_time": end_time,
-        "status": status
+        "status": "pending"
+    }
+
+    requests.post(
+        f"{SUPABASE_URL}/rest/v1/absences",
+        headers=HEADERS,
+        json=data
+    )
+
+    return redirect("/dashboard")
+
+    if "user" not in session:
+        return redirect("/")
+
+    user = session["user"]
+
+    data = {
+        "worker_name": user["username"],
+        "date": request.form["date"],
+        "type": request.form["type"],
+        "start_time": request.form["start_time"] if request.form["type"] != "ferie" else None,
+        "end_time": request.form["end_time"] if request.form["type"] != "ferie" else None,
+        "status": "pending"
     }
 
     requests.post(
@@ -1518,31 +1533,25 @@ def add_absence():
     return redirect("/dashboard")
 
 
+# ---------------- UPDATE ----------------
 @app.route("/update_absence", methods=["POST"])
 def update_absence():
 
-    if "user" not in session:
-        return {"ok": False}, 401
-
-    user = session["user"]
     data = request.json
-
-    # ✅ manager = approvato automatico
-    status = "approved" if user["role"] == "manager" else "pending"
 
     payload = {
         "type": data["type"],
         "start_time": data.get("start_time"),
         "end_time": data.get("end_time"),
-        "status": status
+        "status": "pending"
     }
 
-    # ---------------- FERIE ----------------
+    # ferie
     if data["type"] == "ferie":
         payload["date_from"] = data.get("date_from")
         payload["date_to"] = data.get("date_to")
 
-    # ---------------- PERMESSO ----------------
+    # permesso
     else:
         payload["date_from"] = data.get("date_from")
         payload["date_to"] = data.get("date_to")
