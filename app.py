@@ -791,13 +791,20 @@ def dashboard():
 
     sector = user["sector"]
 
+    # ===== Recupero TUTTE le richieste pending =====
     res = requests.get(
-        f"{SUPABASE_URL}/rest/v1/absences?sector=eq.{sector}&status=eq.pending",
+        f"{SUPABASE_URL}/rest/v1/absences?status=eq.pending",
         headers=HEADERS
     )
     
-    pending_requests = res.json()
-    has_notifications = len(pending_requests) > 0
+    all_pending = res.json()
+    
+    # Conta quante richieste pending per ogni sector
+    pending_by_sector = {}
+    
+    for req in all_pending:
+        s = req["sector"]
+        pending_by_sector[s] = pending_by_sector.get(s, 0) + 1
 
     # ================= CAPO =================
     if user["role"] == "manager":
@@ -857,7 +864,8 @@ def dashboard():
             })
 
         events_json = json.dumps(events)
-
+        # richieste pending SOLO del sector visualizzato
+        pending_requests = [r for r in all_pending if r["sector"] == sector] if sector else []
         html = f"""
         <h2 style="color:#38bdf8">Benvenuta {user['first_name']}</h2>
         
@@ -898,41 +906,40 @@ def dashboard():
             </a>
         
             <a href="/dashboard?sector=Dogane">
-                <button class="sector-btn {'alert-btn' if has_notifications and sector=='Dogane' else ''}">
-                    Dogane {'🔔 ' + str(len(pending_requests)) if has_notifications and sector=='Dogane' else ''}
+                <button class="sector-btn {'alert-btn' if pending_by_sector.get('Dogane',0) > 0 else ''}">
+                    Dogane {'🔔 ' + str(pending_by_sector.get('Dogane',0)) if pending_by_sector.get('Dogane',0) > 0 else ''}
                 </button>
             </a>
         
             <a href="/dashboard?sector=Syllabus">
-                <button class="sector-btn {'alert-btn' if has_notifications and sector=='Syllabus' else ''}">
-                    Syllabus {'🔔 ' + str(len(pending_requests)) if has_notifications and sector=='Syllabus' else ''}
+                <button class="sector-btn {'alert-btn' if pending_by_sector.get('Syllabus',0) > 0 else ''}">
+                    Syllabus {'🔔 ' + str(pending_by_sector.get('Syllabus',0)) if pending_by_sector.get('Syllabus',0) > 0 else ''}
                 </button>
             </a>
         
             <a href="/dashboard?sector=Unica">
-                <button class="sector-btn {'alert-btn' if has_notifications and sector=='Unica' else ''}">
-                    Unica {'🔔 ' + str(len(pending_requests)) if has_notifications and sector=='Unica' else ''}
+                <button class="sector-btn {'alert-btn' if pending_by_sector.get('Unica',0) > 0 else ''}">
+                    Unica {'🔔 ' + str(pending_by_sector.get('Unica',0)) if pending_by_sector.get('Unica',0) > 0 else ''}
                 </button>
             </a>
         
             <a href="/dashboard?sector=Accise">
-                <button class="sector-btn {'alert-btn' if has_notifications and sector=='Accise' else ''}">
-                    Accise {'🔔 ' + str(len(pending_requests)) if has_notifications and sector=='Accise' else ''}
+                <button class="sector-btn {'alert-btn' if pending_by_sector.get('Accise',0) > 0 else ''}">
+                    Accise {'🔔 ' + str(pending_by_sector.get('Accise',0)) if pending_by_sector.get('Accise',0) > 0 else ''}
                 </button>
             </a>
         
             <a href="/dashboard?sector=Fabbisogni">
-                <button class="sector-btn {'alert-btn' if has_notifications and sector=='Fabbisogni' else ''}">
-                    Fabbisogni {'🔔 ' + str(len(pending_requests)) if has_notifications and sector=='Fabbisogni' else ''}
+                <button class="sector-btn {'alert-btn' if pending_by_sector.get('Fabbisogni',0) > 0 else ''}">
+                    Fabbisogni {'🔔 ' + str(pending_by_sector.get('Fabbisogni',0)) if pending_by_sector.get('Fabbisogni',0) > 0 else ''}
                 </button>
             </a>
         
             <a href="/dashboard?sector=Bonus">
-                <button class="sector-btn {'alert-btn' if has_notifications and sector=='Bonus' else ''}">
-                    Bonus {'🔔 ' + str(len(pending_requests)) if has_notifications and sector=='Bonus' else ''}
+                <button class="sector-btn {'alert-btn' if pending_by_sector.get('Bonus',0) > 0 else ''}">
+                    Bonus {'🔔 ' + str(pending_by_sector.get('Bonus',0)) if pending_by_sector.get('Bonus',0) > 0 else ''}
                 </button>
             </a>
-        </div>
         
         {'<div class="notification-box"><b>Richieste in attesa:</b><ul>' +
         ''.join([f"<li>{r['worker_name']} — {r['type']} ({r['date_from']} → {r.get('date_to','')})</li>" for r in pending_requests]) +
