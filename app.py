@@ -1254,33 +1254,7 @@ window.addEventListener("DOMContentLoaded", blockWeekendDates);
         </script>
 
         <hr>
-
-        <h3>📌 Le tue assenze</h3>
         <h3 style="color:#38bdf8;margin-bottom:10px;">📅 Calendario assenze</h3>
-        
-            <button onclick="changeMonth(-1)" style="
-                background:#1e40af;
-                color:white;
-                border:none;
-                padding:6px 12px;
-                border-radius:8px;
-                cursor:pointer;
-            ">◀</button>
-        
-            <div id="monthLabel" style="
-                font-weight:bold;
-                font-size:16px;
-                letter-spacing:0.5px;
-            "></div>
-        
-            <button onclick="changeMonth(1)" style="
-                background:#1e40af;
-                color:white;
-                border:none;
-                padding:6px 12px;
-                border-radius:8px;
-                cursor:pointer;
-            ">▶</button>
         
         </div>
         <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet">
