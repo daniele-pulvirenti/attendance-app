@@ -208,36 +208,35 @@ def login():
             headers=HEADERS
         )
         
-        # Controllo se la risposta è valida
         if res.status_code != 200:
-            return f"Errore Database: {res.text}"
+            return f"Errore di connessione al database (Status: {res.status_code})"
             
         try:
             user_list = res.json()
-        except Exception:
-            return "Errore nella lettura dei dati dal server."
+        except:
+            return "Errore: Il database ha risposto in modo non valido."
 
-        # Se la lista è vuota, l'utente non esiste
-        if not user_list or len(user_list) == 0:
+        # Supabase restituisce una LISTA. Dobbiamo prendere il primo elemento [0]
+        if isinstance(user_list, list) and len(user_list) > 0:
+            db_user = user_list[0]
+            
+            # Verifica Password
+            if bcrypt.checkpw(password.encode(), db_user["password"].encode()):
+                session.permanent = True
+                session["user"] = db_user
+                session["last_activity"] = datetime.utcnow().isoformat()
+                
+                role = db_user.get("role", "worker")
+                session["view"] = "manager" if role == "manager" else "worker"
+                
+                return redirect("/dashboard")
+            else:
+                return "Password errata"
+        else:
             return "Utente non trovato"
-
-        db_user = user_list[0] # Prendo il primo utente della lista
-
-        # Verifica Password
-        if bcrypt.checkpw(password.encode(), db_user["password"].encode()):
-            session.permanent = True
-            session["user"] = db_user
-            session["last_activity"] = datetime.utcnow().isoformat()
-            
-            # Impostazione vista iniziale
-            role = db_user.get("role", "worker")
-            session["view"] = "manager" if role == "manager" else "worker"
-            
-            return redirect("/dashboard")
-        
-        return "Password errata"
         
     return render_template_string(LOGIN_HTML)
+
 
 
 @app.route("/switch_view/<view>")
