@@ -773,10 +773,10 @@ def login():
             session.permanent = True
             session["user"] = db_user
             session["last_activity"] = datetime.utcnow().isoformat()
-            if db_user["role"] == "manager":
-                session["view"] = "manager"
-            else:
-                session["view"] = "worker"      
+            role = db_user.get("role", "worker")
+
+            session["user"] = db_user
+            session["view"] = "manager" if role == "manager" else "worker"   
             return redirect("/dashboard")
 
         return "Login errato"
