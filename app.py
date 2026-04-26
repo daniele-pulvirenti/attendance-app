@@ -2044,7 +2044,7 @@ def settings():
         if update_data:
             try:
                 response = requests.patch(
-                    f"{SUPABASE_URL}/rest/v1/users?id=eq.{user_id}",
+                    f"{SUPABASE_URL}/rest/v1/users?id=eq.{user}",
                     headers=headers,
                     json=update_data
                 )
