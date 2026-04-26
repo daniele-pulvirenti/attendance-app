@@ -1347,62 +1347,50 @@ function handleAction(url) {{
 <h3 style="color:white">Lista richieste</h3>
         """
 
-        # ================= LA TUA LISTA ORIGINALE =================
+        # ================= LA TUA LISTA ORIGINALE =================    
 
-      
-
-        now = datetime.now()
-        current_month = now.month
-        current_year = now.year
-        
-        for d in data:
-            date_obj = datetime.strptime(d["date_from"], "%Y-%m-%d")
-        
-            start = datetime.strptime(d["date_from"], "%Y-%m-%d")
-            end = datetime.strptime(d.get("date_to", d["date_from"]), "%Y-%m-%d")
-            
-            first_day = datetime(current_year, current_month, 1)
-            if current_month == 12:
-                last_day = datetime(current_year + 1, 1, 1)
-            else:
-                last_day = datetime(current_year, current_month + 1, 1)
-            
-            # mostra se l'intervallo tocca il mese corrente
-            if end < first_day or start >= last_day:
-                continue
-
-            color = "#f59e0b" if d["status"] == "pending" else "#22c55e" if d["status"] == "approved" else "#ef4444"
-        
-            if d.get("type") == "ferie":
-                date_display = f'{d.get("date_from")} → {d.get("date_to")}'
-                time_display = "09:00 - 18:00"
-            else:
-                date_display = d.get("date_from")
-                time_display = f'{d.get("start_time")} - {d.get("end_time")}'
-        
-            html += f"""
-            <div style="
-                background:#0f172a;
-                padding:12px;
-                border-radius:10px;
-                margin-bottom:10px;
-                color:white;
-                box-shadow:0 4px 12px rgba(0,0,0,0.4);
-                text-align:left;
-                width:100%;
-            ">
-                <b>{d["worker_name"]}</b><br>
-                📅 {date_display}<br>
-                🏷 {d.get("type","")}<br>
-                ⏰ {time_display}<br>
-                Stato: <span style="color:{color}">{d["status"]}</span><br><br>
-            
-                <a href="/approve/{d["id"]}" style="color:#22c55e">✔ Approva</a> |
-                <a href="/reject/{d["id"]}" style="color:#ef4444">✖ Rifiuta</a>
-            </div>
-            """
-        
-        return html
+    today = date.today()
+    
+    for d in data:
+        start = datetime.strptime(d["date_from"], "%Y-%m-%d").date()
+        end = datetime.strptime(d.get("date_to", d["date_from"]), "%Y-%m-%d").date()
+    
+        # Nascondi solo richieste completamente passate
+        if end < today:
+            continue
+    
+        color = "#f59e0b" if d["status"] == "pending" else "#22c55e" if d["status"] == "approved" else "#ef4444"
+    
+        if d.get("type") == "ferie":
+            date_display = f'{d.get("date_from")} → {d.get("date_to")}'
+            time_display = "09:00 - 18:00"
+        else:
+            date_display = d.get("date_from")
+            time_display = f'{d.get("start_time")} - {d.get("end_time")}'
+    
+        html += f"""
+        <div style="
+            background:#0f172a;
+            padding:12px;
+            border-radius:10px;
+            margin-bottom:10px;
+            color:white;
+            box-shadow:0 4px 12px rgba(0,0,0,0.4);
+            text-align:left;
+            width:100%;
+        ">
+            <b>{d["worker_name"]}</b><br>
+            📅 {date_display}<br>
+            🏷 {d.get("type","")}<br>
+            ⏰ {time_display}<br>
+            Stato: <span style="color:{color}">{d["status"]}</span><br><br>
+    
+            <a href="/approve/{d["id"]}" style="color:#22c55e">✔ Approva</a> |
+            <a href="/reject/{d["id"]}" style="color:#ef4444">✖ Rifiuta</a>
+        </div>
+        """
+    
+    return html
 
     # ================= LAVORATORE =================
     else:
