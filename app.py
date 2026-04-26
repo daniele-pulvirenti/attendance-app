@@ -129,12 +129,88 @@ def dashboard():
         return redirect("/")
 
     user = session["user"]
-    view = session.get("view")
+    view = session.get("view", "worker")
 
+    # ===== PRENDI TUTTE LE REQUEST PENDING =====
+    res = requests.get(
+        f"{SUPABASE_URL}/rest/v1/absences?status=eq.pending",
+        headers=HEADERS
+    )
+
+    all_pending = res.json() if res.status_code == 200 else []
+
+    pending_by_sector = {}
+    for r in all_pending:
+        s = r.get("sector")
+        if s:
+            pending_by_sector[s] = pending_by_sector.get(s, 0) + 1
+
+    # ================= MANAGER =================
     if view == "manager":
-        return render_template("dashboard_manager.html", user=user)
 
-    return render_template("dashboard_worker.html", user=user)
+        selected_sector = request.args.get("sector", "all")
+
+        params = {"select": "*"}
+
+        if selected_sector != "all":
+            params["sector"] = f"eq.{selected_sector}"
+
+        res = requests.get(
+            f"{SUPABASE_URL}/rest/v1/absences",
+            headers=HEADERS,
+            params=params
+        )
+
+        data = res.json() if res.status_code == 200 else []
+
+        # ===== CALENDAR EVENTS =====
+        events = []
+        for d in data:
+
+            if d.get("type") == "ferie":
+                end_date = datetime.strptime(d["date_to"], "%Y-%m-%d") + timedelta(days=1)
+                end_date = end_date.strftime("%Y-%m-%d")
+            else:
+                end_date = d["date_from"]
+
+            events.append({
+                "id": d["id"],
+                "title": f"{d.get('worker_name')} - {d.get('type')}",
+                "start": d["date_from"],
+                "end": end_date,
+                "color":
+                    "#f59e0b" if d["status"] == "pending"
+                    else "#22c55e" if d["status"] == "approved"
+                    else "#ef4444",
+                "extendedProps": d
+            })
+
+        events_json = json.dumps(events)
+
+        return render_template(
+            "dashboard_manager.html",
+            user=user,
+            data=data,
+            events=events_json,
+            pending_by_sector=pending_by_sector,
+            selected_sector=selected_sector
+        )
+
+    # ================= WORKER =================
+    else:
+
+        res = requests.get(
+            f"{SUPABASE_URL}/rest/v1/absences?worker_name=eq.{user['username']}",
+            headers=HEADERS
+        )
+
+        data = res.json() if res.status_code == 200 else []
+
+        return render_template(
+            "dashboard_worker.html",
+            user=user,
+            data=data
+        )
 
 
 # ================= LOGOUT =================
@@ -152,3 +228,37 @@ def health():
 
 if __name__ == "__main__":
     app.run(debug=True)
+
+# ================= APPROVE/REJECT =================
+@app.route("/approve/<id>")
+def approve(id):
+
+    requests.patch(
+        f"{SUPABASE_URL}/rest/v1/absences?id=eq.{id}",
+        headers=HEADERS,
+        json={"status": "approved"}
+    )
+
+    return ("ok", 200)
+
+
+@app.route("/reject/<id>")
+def reject(id):
+
+    requests.patch(
+        f"{SUPABASE_URL}/rest/v1/absences?id=eq.{id}",
+        headers=HEADERS,
+        json={"status": "rejected"}
+    )
+
+    return ("ok", 200)
+
+# ================= SWITCH VIEW =================
+@app.route("/switch_view/<view>")
+def switch_view(view):
+
+    if "user" not in session:
+        return redirect("/")
+
+    session["view"] = view
+    return redirect("/dashboard")
