@@ -5,6 +5,7 @@ from datetime import datetime, timedelta, date
 import bcrypt
 import requests
 import json
+from services.excel_service import generate_excel
 
 load_dotenv()
 
@@ -293,41 +294,11 @@ def export_excel():
 
     data = res.json() if res.status_code == 200 else []
 
-    wb = Workbook()
-
-    sectors = {}
-    for r in data:
-        sectors.setdefault(r["sector"], []).append(r)
-
-    for sector, records in sectors.items():
-
-        ws = wb.create_sheet(title=sector)
-
-        ws.append([
-            "Lavoratore", "Tipo", "Dal", "Al",
-            "Ora Inizio", "Ora Fine", "Stato"
-        ])
-
-        for r in records:
-            ws.append([
-                r["worker_name"],
-                r["type"],
-                r["date_from"],
-                r["date_to"],
-                r.get("start_time"),
-                r.get("end_time"),
-                r["status"]
-            ])
-
-    if "Sheet" in wb.sheetnames:
-        wb.remove(wb["Sheet"])
-
-    stream = BytesIO()
-    wb.save(stream)
-    stream.seek(0)
+    # 👇 USA IL SERVICE
+    file_stream = generate_excel(data)
 
     return send_file(
-        stream,
+        file_stream,
         as_attachment=True,
         download_name=f"report_{date_from}_{date_to}.xlsx",
         mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
