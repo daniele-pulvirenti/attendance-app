@@ -1351,9 +1351,39 @@ window.addEventListener("DOMContentLoaded", blockWeekendDates);
         <h3 style="color:#38bdf8;margin-bottom:10px;">📅 Calendario assenze</h3>
         
         </div>
-        <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet">
-        <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
-        <div id="calendar"></div>
+        <link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css' rel='stylesheet' />
+        <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js'></script>
+        
+        <div id='calendar'></div>
+        
+        <div id="eventModal" style="
+            display:none;
+            position:fixed;
+            top:0; left:0;
+            width:100%; height:100%;
+            background:rgba(0,0,0,0.6);
+            justify-content:center;
+            align-items:center;
+            z-index:9999;
+        ">
+            <div style="
+                background:white;
+                padding:20px;
+                border-radius:10px;
+                width:350px;
+                font-family:Arial;
+                position:relative;
+            ">
+                <span onclick="closeModal()" style="
+                    position:absolute;
+                    top:10px;
+                    right:15px;
+                    cursor:pointer;
+                    font-weight:bold;
+                ">✖</span>
+                <div id="modalBody"></div>
+            </div>
+        </div>
         """
 
         for d in data:
@@ -1498,56 +1528,63 @@ const data = {{ data | tojson }};
 
 let currentDate = new Date();
 
-document.addEventListener("DOMContentLoaded", function () {
+document.addEventListener('DOMContentLoaded', function() {
 
-    if (!window.FullCalendar) {
-        console.error("FullCalendar non caricato");
-        return;
-    }
+    var calendarEl = document.getElementById('calendar');
 
-    const calendarEl = document.getElementById("calendar");
+    var calendar = new FullCalendar.Calendar(calendarEl, {
 
-    const calendar = new FullCalendar.Calendar(calendarEl, {
         initialView: "dayGridMonth",
         locale: "it",
         firstDay: 1,
-        
 
         weekends: true,
+
+        headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'timeGridDay,timeGridWeek'
+        },
 
         dayCellDidMount: function(info) {
             const day = info.date.getDay();
             if (day === 0 || day === 6) {
-                info.el.style.backgroundColor = "#0b1220";
-                info.el.style.opacity = "0.5";
+                info.el.style.backgroundColor = "#111827";
+                info.el.style.opacity = "0.6";
             }
         },
 
-        events: (typeof data !== "undefined" ? data : []).map(d => {
+        slotMinTime: "08:00:00",
+        slotMaxTime: "19:00:00",
 
-            if (d.type === "ferie") {
-                return {
-                    title: "Ferie",
-                    start: d.date_from,
-                    end: new Date(new Date(d.date_to).getTime() + 86400000).toISOString().split("T")[0],
-                    color: d.status === "approved" ? "#22c55e"
-                          : d.status === "rejected" ? "#ef4444"
-                          : "#f59e0b"
-                };
-            }
+        events: {{ events_json }},
 
-            return {
-                title: "Permesso",
-                start: d.date_from,
-                color: d.status === "approved" ? "#22c55e"
-                      : d.status === "rejected" ? "#ef4444"
-                      : "#f59e0b"
-            };
-        })
+        eventClick: function(info) {
+
+            let e = info.event;
+
+            let html = `
+                <h3>${e.extendedProps.worker}</h3>
+                <p><b>Tipo:</b> ${e.extendedProps.type}</p>
+                <p><b>Data:</b> ${e.extendedProps.date_from}
+                ${e.extendedProps.date_to ? ' → ' + e.extendedProps.date_to : ''}</p>
+                <p><b>Orario:</b> ${e.extendedProps.start_time ?? '09:00'} - ${e.extendedProps.end_time ?? '18:00'}</p>
+                <p><b>Stato:</b> ${e.extendedProps.status}</p>
+            `;
+
+            document.getElementById("modalBody").innerHTML = html;
+            document.getElementById("eventModal").style.display = "flex";
+        },
+
+        height: "auto"
     });
 
     calendar.render();
 });
+
+function closeModal() {
+    document.getElementById("eventModal").style.display = "none";
+}
 
 </script>
 """
