@@ -1544,31 +1544,25 @@ def add_absence():
         return redirect("/")
 
     user = session["user"]
+    real_role = user.get("role")  # ← RUOLO VERO
+
     absence_type = request.form["type"]
-
-    # 👇 VIEW (manager/worker switch)
-    view = session.get("view")
-
-    if not view:
-        view = "manager" if user["role"] == "manager" else "worker"
 
     # ---------------- FERIE ----------------
     if absence_type == "ferie":
-
         date_from = request.form["date_from"]
         date_to = request.form["date_to"]
-
         start_time = None
         end_time = None
 
     # ---------------- PERMESSO ----------------
     else:
-
         date_from = request.form["date"]
         date_to = request.form["date"]
-
         start_time = request.form["start_time"]
         end_time = request.form["end_time"]
+
+    status = "approved" if real_role == "manager" else "pending"
 
     data = {
         "worker_name": user["username"],
@@ -1578,9 +1572,7 @@ def add_absence():
         "type": absence_type,
         "start_time": start_time,
         "end_time": end_time,
-
-        # 🔥 QUI LA LOGICA GIUSTA
-        "status": "approved" if view == "manager" else "pending"
+        "status": status
     }
 
     requests.post(
@@ -1599,21 +1591,16 @@ def update_absence():
         return {"ok": False}, 401
 
     user = session["user"]
+    real_role = user.get("role")  # ← RUOLO VERO
     data = request.json
 
-    # 👇 view attiva (manager / worker)
-    view = session.get("view")
-
-    if not view:
-        view = "manager" if user["role"] == "manager" else "worker"
+    status = "approved" if real_role == "manager" else "pending"
 
     payload = {
         "type": data["type"],
         "start_time": data.get("start_time"),
         "end_time": data.get("end_time"),
-
-        # 🔥 logica coerente con add_absence
-        "status": "approved" if view == "manager" else "pending"
+        "status": status
     }
 
     # ---------------- FERIE ----------------
