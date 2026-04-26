@@ -262,3 +262,147 @@ def switch_view(view):
 
     session["view"] = view
     return redirect("/dashboard")
+
+# ================= EXPORT EXCEL =================
+@app.route("/export_excel")
+def export_excel():
+
+    if "user" not in session:
+        return redirect("/")
+
+    user = session["user"]
+
+    if user.get("role") != "manager":
+        return "Non autorizzato", 403
+
+    date_from = request.args.get("date_from")
+    date_to = request.args.get("date_to")
+
+    params = {
+        "date_from": f"gte.{date_from}",
+        "date_to": f"lte.{date_to}",
+        "select": "*",
+        "order": "sector"
+    }
+
+    res = requests.get(
+        f"{SUPABASE_URL}/rest/v1/absences",
+        headers=HEADERS,
+        params=params
+    )
+
+    data = res.json() if res.status_code == 200 else []
+
+    wb = Workbook()
+
+    sectors = {}
+    for r in data:
+        sectors.setdefault(r["sector"], []).append(r)
+
+    for sector, records in sectors.items():
+
+        ws = wb.create_sheet(title=sector)
+
+        ws.append([
+            "Lavoratore", "Tipo", "Dal", "Al",
+            "Ora Inizio", "Ora Fine", "Stato"
+        ])
+
+        for r in records:
+            ws.append([
+                r["worker_name"],
+                r["type"],
+                r["date_from"],
+                r["date_to"],
+                r.get("start_time"),
+                r.get("end_time"),
+                r["status"]
+            ])
+
+    if "Sheet" in wb.sheetnames:
+        wb.remove(wb["Sheet"])
+
+    stream = BytesIO()
+    wb.save(stream)
+    stream.seek(0)
+
+    return send_file(
+        stream,
+        as_attachment=True,
+        download_name=f"report_{date_from}_{date_to}.xlsx",
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+
+# ================= SETTINGS =================
+@app.route("/settings", methods=["GET", "POST"])
+def settings():
+
+    if "user" not in session:
+        return redirect("/")
+
+    user = session["user"]
+    user_id = user["id"]
+
+    message = ""
+    success = False
+
+    if request.method == "POST":
+
+        new_email = request.form.get("email")
+        current_password = request.form.get("current_password")
+        new_password = request.form.get("password")
+        confirm = request.form.get("confirm")
+
+        update_data = {}
+
+        # ===== EMAIL =====
+        if new_email:
+
+            check = requests.get(
+                f"{SUPABASE_URL}/rest/v1/users?email=eq.{new_email}",
+                headers=HEADERS
+            ).json()
+
+            if check and check[0]["id"] != user_id:
+                return render_template("settings.html", message="Email già usata", success=False)
+
+            update_data["email"] = new_email
+
+        # ===== PASSWORD =====
+        if new_password:
+
+            if not current_password:
+                return render_template("settings.html", message="Inserisci password attuale", success=False)
+
+            res = requests.get(
+                f"{SUPABASE_URL}/rest/v1/users?id=eq.{user_id}",
+                headers=HEADERS
+            ).json()
+
+            stored_hash = res[0]["password"]
+
+            if not bcrypt.checkpw(current_password.encode(), stored_hash.encode()):
+                return render_template("settings.html", message="Password errata", success=False)
+
+            if new_password != confirm:
+                return render_template("settings.html", message="Password non uguali", success=False)
+
+            hashed = bcrypt.hashpw(new_password.encode(), bcrypt.gensalt()).decode()
+            update_data["password"] = hashed
+
+        # ===== UPDATE =====
+        if update_data:
+
+            res = requests.patch(
+                f"{SUPABASE_URL}/rest/v1/users?id=eq.{user_id}",
+                headers=HEADERS,
+                json=update_data
+            )
+
+            if res.status_code in [200, 204]:
+                message = "✔️ Salvato"
+                success = True
+            else:
+                message = "Errore salvataggio"
+
+    return render_template("settings.html", message=message, success=success)
