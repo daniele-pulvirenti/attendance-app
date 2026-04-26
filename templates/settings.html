@@ -1,0 +1,48 @@
+<h2>⚙️ Impostazioni</h2>
+
+<form method="POST">
+
+<label>Email</label>
+<input type="email" name="email" placeholder="Nuova email">
+
+<br><br>
+
+<label>Password attuale</label>
+<input type="password" name="current_password">
+
+<label>Nuova password</label>
+<input type="password" name="password">
+
+<label>Conferma</label>
+<input type="password" name="confirm">
+
+<br><br>
+
+<button>Salva</button>
+
+</form>
+
+<div id="toast" class="{{ 'show success' if success else 'show error' if message else '' }}">
+{{ message }}
+</div>
+
+<style>
+#toast {
+position:fixed;
+bottom:20px;
+left:50%;
+transform:translateX(-50%);
+padding:12px;
+border-radius:8px;
+color:white;
+}
+.success {background:#22c55e;}
+.error {background:#ef4444;}
+</style>
+
+<script>
+setTimeout(()=> {
+    let t=document.getElementById("toast");
+    if(t) t.style.display="none";
+},3000)
+</script>
