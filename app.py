@@ -756,7 +756,6 @@ def login():
         username = request.form["username"]
         password = request.form["password"]
 
-        # 🔥 QUERY CORRETTA: USERS (NON ABSENCES)
         res = requests.get(
             f"{SUPABASE_URL}/rest/v1/users?username=eq.{username}",
             headers=HEADERS
@@ -768,7 +767,89 @@ def login():
             return "Errore server"
 
         if not user_data:
-            return "Utente non trovato"
+            return """
+            <!DOCTYPE html>
+            <html lang="it">
+            <head>
+            <meta charset="UTF-8">
+            <title>Utente non trovato</title>
+            <style>
+                body {
+                    margin: 0;
+                    height: 100vh;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    background: linear-gradient(135deg, #1e3c72, #2a5298);
+                    font-family: Arial, Helvetica, sans-serif;
+                }
+            
+                .alert-box {
+                    background: white;
+                    padding: 40px 50px;
+                    border-radius: 12px;
+                    box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+                    text-align: center;
+                    max-width: 420px;
+                    animation: fadeIn 0.4s ease-in-out;
+                }
+            
+                .alert-icon {
+                    font-size: 50px;
+                    color: #f39c12;
+                    margin-bottom: 15px;
+                }
+            
+                .alert-title {
+                    font-size: 22px;
+                    font-weight: bold;
+                    margin-bottom: 10px;
+                    color: #333;
+                }
+            
+                .alert-message {
+                    font-size: 16px;
+                    color: #666;
+                    margin-bottom: 25px;
+                }
+            
+                .btn-back {
+                    display: inline-block;
+                    padding: 12px 25px;
+                    background-color: #2a5298;
+                    color: white;
+                    text-decoration: none;
+                    border-radius: 8px;
+                    transition: 0.2s;
+                    font-weight: bold;
+                }
+            
+                .btn-back:hover {
+                    background-color: #1e3c72;
+                    transform: scale(1.05);
+                }
+            
+                @keyframes fadeIn {
+                    from { opacity: 0; transform: translateY(10px); }
+                    to { opacity: 1; transform: translateY(0); }
+                }
+            </style>
+            </head>
+            <body>
+            
+            <div class="alert-box">
+                <div class="alert-icon">⚠️</div>
+                <div class="alert-title">Utente non trovato</div>
+                <div class="alert-message">
+                    Non esiste alcun account con questo username.<br>
+                    Verifica di averlo digitato correttamente.
+                </div>
+                <a href="/" class="btn-back">Torna al login</a>
+            </div>
+            
+            </body>
+            </html>
+            """
 
         db_user = user_data[0]
 
@@ -783,8 +864,87 @@ def login():
             return redirect("/dashboard")
 
         return """
-        <h3>Username o password NON VALIDI ⛔</h3>
-        <a href="/">Torna al login</a>
+        <!DOCTYPE html>
+        <html lang="it">
+        <head>
+        <meta charset="UTF-8">
+        <title>Login errore</title>
+        <style>
+            body {
+                margin: 0;
+                height: 100vh;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: linear-gradient(135deg, #1e3c72, #2a5298);
+                font-family: Arial, Helvetica, sans-serif;
+            }
+        
+            .alert-box {
+                background: white;
+                padding: 40px 50px;
+                border-radius: 12px;
+                box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+                text-align: center;
+                max-width: 420px;
+                animation: fadeIn 0.4s ease-in-out;
+            }
+        
+            .alert-icon {
+                font-size: 50px;
+                color: #e74c3c;
+                margin-bottom: 15px;
+            }
+        
+            .alert-title {
+                font-size: 22px;
+                font-weight: bold;
+                margin-bottom: 10px;
+                color: #333;
+            }
+        
+            .alert-message {
+                font-size: 16px;
+                color: #666;
+                margin-bottom: 25px;
+            }
+        
+            .btn-back {
+                display: inline-block;
+                padding: 12px 25px;
+                background-color: #2a5298;
+                color: white;
+                text-decoration: none;
+                border-radius: 8px;
+                transition: 0.2s;
+                font-weight: bold;
+            }
+        
+            .btn-back:hover {
+                background-color: #1e3c72;
+                transform: scale(1.05);
+            }
+        
+            @keyframes fadeIn {
+                from { opacity: 0; transform: translateY(10px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+        </style>
+        </head>
+        <body>
+        
+        <div class="alert-box">
+            <div class="alert-icon">⛔</div>
+            <div class="alert-title">Credenziali non valide</div>
+            <div class="alert-message">
+                Lo username o la password inseriti non sono corretti.<br>
+                Riprova.
+            </div>
+            <a href="/" class="btn-back">Torna al login</a>
+        </div>
+        
+        </body>
+        </html>
         """
 
     return render_template_string(LOGIN_HTML)
