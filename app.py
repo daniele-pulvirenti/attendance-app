@@ -1449,9 +1449,39 @@ function handleAction(url) {{
         ">
             Logout
         </a>
-        <a href="/settings">
-            ⚙️ Impostazioni account
+        <a href="/settings" class="settings-btn">
+    ⚙️ Impostazioni account
         </a>
+        
+        <style>
+        .settings-btn {{
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px;
+            background: linear-gradient(135deg, #1f2937, #0f172a);
+            color: #e2e8f0;
+            text-decoration: none;
+            border-radius: 10px;
+            font-weight: 500;
+            font-family: Arial, sans-serif;
+            border: 1px solid #334155;
+            transition: all 0.25s ease;
+        }}
+        
+        /* hover figo */
+        .settings-btn:hover {{
+            background: linear-gradient(135deg, #3b82f6, #0ea5e9);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(59,130,246,0.4);
+        }}
+        
+        /* click */
+        .settings-btn:active {{
+            transform: scale(0.96);
+        }}
+        </style>
         <hr>
 
         <h3>➕ Inserisci assenza</h3>
