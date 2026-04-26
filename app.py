@@ -1538,9 +1538,42 @@ window.addEventListener("DOMContentLoaded", blockWeekendDates);
         <h3 style="color:#38bdf8;margin-bottom:10px;">📅 Calendario assenze</h3>
         
         </div>
-        <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet">
-        <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
-        <div id="calendar"></div>
+        <link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css' rel='stylesheet' />
+        <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js'></script>
+        
+        <style>
+            html, body {{
+                margin: 0;
+                padding: 0;
+                height: 100%;
+                font-family: Arial, Helvetica, sans-serif;
+                background: #f4f6f9;
+            }}
+        
+            .page-wrapper {{
+                padding: 30px;
+                height: 100%;
+                box-sizing: border-box;
+            }}
+        
+            .calendar-card {{
+                background: white;
+                border-radius: 14px;
+                box-shadow: 0 15px 35px rgba(0,0,0,0.12);
+                padding: 20px;
+                height: calc(100% - 60px);
+            }}
+        
+            #calendar {{
+                height: 100%;
+            }}
+        </style>
+        
+        <div class="page-wrapper">
+            <div class="calendar-card">
+                <div id="calendar"></div>
+            </div>
+        </div>
         """
 
         for d in data:
@@ -1698,6 +1731,12 @@ document.addEventListener("DOMContentLoaded", function () {
         initialView: "dayGridMonth",
         locale: "it",
         firstDay: 1,
+
+        headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,timeGridWeek,timeGridDay'
+        },
         
 
         weekends: true,
