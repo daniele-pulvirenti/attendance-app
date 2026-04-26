@@ -197,18 +197,20 @@ def register():
             return "Tutti i campi sono obbligatori"
     
         # 🔐 VALIDAZIONE PASSWORD
-        if len(new_password) < 6:
+        if len(password) < 6:
             return render_template_string(
-                TEMPLATE,
+                REGISTER_TEMPLATE,
                 message="La password deve avere almeno 6 caratteri",
-                success=False
+                success=False,
+                users=users
             )
-
-        if not any(char.isdigit() for char in new_password):
+        
+        if not any(char.isdigit() for char in password):
             return render_template_string(
-                TEMPLATE,
+                REGISTER_TEMPLATE,
                 message="La password deve contenere almeno un numero",
-                success=False
+                success=False,
+                users=users
             )
     
         # 🔎 evita duplicati username
