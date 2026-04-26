@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Registrazione</title>
+
+<style>
+body {
+    margin:0;
+    font-family:Arial;
+    background:#0f172a;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+    color:white;
+}
+
+.card {
+    background:#1e293b;
+    padding:25px;
+    border-radius:10px;
+    width:320px;
+}
+
+input {
+    width:100%;
+    padding:10px;
+    margin:8px 0;
+    border-radius:6px;
+    border:none;
+}
+
+button {
+    width:100%;
+    padding:10px;
+    background:#3b82f6;
+    border:none;
+    border-radius:6px;
+    color:white;
+    font-weight:bold;
+}
+</style>
+</head>
+
+<body>
+
+<div class="card">
+
+<h2>Registrazione</h2>
+
+<form method="POST">
+
+<input name="username" placeholder="Username" required>
+<input name="email" type="email" placeholder="Email" required>
+<input name="password" type="password" placeholder="Password" required>
+<input name="sector" placeholder="Settore" required>
+
+<button>Registrati</button>
+
+</form>
+
+<br>
+<a href="/" style="color:#38bdf8;">← Torna al login</a>
+
+</div>
+
+</body>
+</html>
