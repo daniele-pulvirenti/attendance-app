@@ -2335,55 +2335,86 @@ def settings():
             ).json()
 
             if check and check[0]["id"] != user_id:
-                return render_template_string(TEMPLATE, message="Email già utilizzata", success=False)
+                return render_template_string(
+                    TEMPLATE,
+                    message="Email già utilizzata",
+                    success=False
+                )
 
             update_data["email"] = new_email
 
         # 🔹 CAMBIO PASSWORD
-if new_password:
+        if new_password:
 
-    # 🔐 VALIDAZIONE PASSWORD
-    if len(new_password) < 6:
-        return render_template_string(
-            TEMPLATE,
-            message="La password deve avere almeno 6 caratteri",
-            success=False
-        )
+            # 🔐 VALIDAZIONE PASSWORD
+            if len(new_password) < 6:
+                return render_template_string(
+                    TEMPLATE,
+                    message="La password deve avere almeno 6 caratteri",
+                    success=False
+                )
 
-    if not any(char.isdigit() for char in new_password):
-        return render_template_string(
-            TEMPLATE,
-            message="La password deve contenere almeno un numero",
-            success=False
-        )
+            if not any(char.isdigit() for char in new_password):
+                return render_template_string(
+                    TEMPLATE,
+                    message="La password deve contenere almeno un numero",
+                    success=False
+                )
 
-    if not current_password:
-        return render_template_string(
-            TEMPLATE,
-            message="Inserisci la password attuale",
-            success=False
-        )
+            if not current_password:
+                return render_template_string(
+                    TEMPLATE,
+                    message="Inserisci la password attuale",
+                    success=False
+                )
 
-    res = requests.get(
-        f"{SUPABASE_URL}/rest/v1/users?id=eq.{user_id}",
-        headers=headers
-    ).json()
+            res = requests.get(
+                f"{SUPABASE_URL}/rest/v1/users?id=eq.{user_id}",
+                headers=headers
+            ).json()
 
-    stored_hash = res[0]["password"]
+            stored_hash = res[0]["password"]
 
-    if not bcrypt.checkpw(current_password.encode("utf-8"), stored_hash.encode("utf-8")):
-        return render_template_string(
-            TEMPLATE,
-            message="Password attuale errata",
-            success=False
-        )
+            if not bcrypt.checkpw(
+                current_password.encode("utf-8"),
+                stored_hash.encode("utf-8")
+            ):
+                return render_template_string(
+                    TEMPLATE,
+                    message="Password attuale errata",
+                    success=False
+                )
 
-    if new_password != confirm:
-        return render_template_string(
-            TEMPLATE,
-            message="Le password non corrispondono",
-            success=False
-        )
+            if new_password != confirm:
+                return render_template_string(
+                    TEMPLATE,
+                    message="Le password non corrispondono",
+                    success=False
+                )
+
+            # 🔐 HASH
+            hashed = bcrypt.hashpw(
+                new_password.encode("utf-8"),
+                bcrypt.gensalt()
+            ).decode("utf-8")
+
+            update_data["password"] = hashed
+
+        # 🔹 UPDATE DB
+        if update_data:
+            response = requests.patch(
+                f"{SUPABASE_URL}/rest/v1/users?id=eq.{user_id}",
+                headers=headers,
+                json=update_data
+            )
+
+            if response.status_code in [200, 204]:
+                message = "✔️ Modifiche salvate con successo"
+                success = True
+            else:
+                message = "Errore durante l'aggiornamento"
+
+    return render_template_string(TEMPLATE, message=message, success=success)
 
     # 🔐 HASH
     hashed = bcrypt.hashpw(
