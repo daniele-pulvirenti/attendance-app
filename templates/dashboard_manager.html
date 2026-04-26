@@ -1,89 +1,236 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
-<html>
+<!DOCTYPE html>
+<html lang="it">
 <head>
-  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-  <meta http-equiv="Content-Style-Type" content="text/css">
-  <title></title>
-  <meta name="Generator" content="Cocoa HTML Writer">
-  <meta name="CocoaVersion" content="2685.5">
-  <style type="text/css">
-    p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica}
-    p.p2 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica; min-height: 14.0px}
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Dashboard Manager</title>
+
+<link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css' rel='stylesheet' />
+<script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js'></script>
+
+<style>
+
+body {
+    margin:0;
+    font-family:Arial, sans-serif;
+    background:#0f172a;
+    color:white;
+}
+
+/* HEADER */
+.header {
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:15px;
+    background:#020617;
+}
+
+.header a {
+    color:white;
+    text-decoration:none;
+    margin-left:10px;
+}
+
+/* BUTTON */
+button {
+    padding:8px 12px;
+    border:none;
+    border-radius:6px;
+    cursor:pointer;
+}
+
+.btn-green { background:#22c55e; color:white; }
+.btn-red { background:#ef4444; color:white; }
+.btn-blue { background:#3b82f6; color:white; }
+
+/* FORM */
+.filters {
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    padding:15px;
+}
+
+/* CALENDAR */
+#calendar {
+    background:white;
+    color:black;
+    padding:10px;
+    border-radius:10px;
+    margin:15px;
+}
+
+/* CARDS */
+.card {
+    background:#1f2937;
+    padding:12px;
+    border-radius:10px;
+    margin:10px;
+}
+
+/* MODAL */
+.modal {
+    display:none;
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    background:rgba(0,0,0,0.7);
+    justify-content:center;
+    align-items:center;
+}
+
+.modal-content {
+    background:white;
+    color:black;
+    padding:20px;
+    border-radius:10px;
+    width:300px;
+}
+
+/* MOBILE */
+@media(max-width:768px){
+    .filters{
+        flex-direction:column;
+    }
+}
+
+</style>
 </head>
+
 <body>
-<p class="p1">&lt;!DOCTYPE html&gt;</p>
-<p class="p1">&lt;html lang="it"&gt;</p>
-<p class="p1">&lt;head&gt;</p>
-<p class="p1">&lt;meta charset="UTF-8"&gt;</p>
-<p class="p1">&lt;title&gt;Dashboard Manager&lt;/title&gt;</p>
-<p class="p2"><br></p>
-<p class="p1">&lt;link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css' rel='stylesheet' /&gt;</p>
-<p class="p1">&lt;script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js'&gt;&lt;/script&gt;</p>
-<p class="p2"><br></p>
-<p class="p1">&lt;style&gt;</p>
-<p class="p1">body { background:#0f172a; color:white; font-family:Arial; }</p>
-<p class="p1">button { padding:6px 10px; border-radius:6px; border:none; cursor:pointer; }</p>
-<p class="p1">&lt;/style&gt;</p>
-<p class="p1">&lt;/head&gt;</p>
-<p class="p2"><br></p>
-<p class="p1">&lt;body&gt;</p>
-<p class="p2"><br></p>
-<p class="p1">&lt;h2&gt;👔 Dashboard Manager&lt;/h2&gt;</p>
-<p class="p2"><br></p>
-<p class="p1">&lt;a href="/logout"&gt;Logout&lt;/a&gt; |</p>
-<p class="p1">&lt;a href="/switch_view/worker"&gt;👷 Vista Worker&lt;/a&gt;</p>
-<p class="p2"><br></p>
-<p class="p1">&lt;hr&gt;</p>
-<p class="p2"><br></p>
-<p class="p1">&lt;div id="calendar"&gt;&lt;/div&gt;</p>
-<p class="p2"><br></p>
-<p class="p1">&lt;script&gt;</p>
-<p class="p1">document.addEventListener('DOMContentLoaded', function() {</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>var calendar = new FullCalendar.Calendar(</p>
-<p class="p1"><span class="Apple-converted-space">        </span>document.getElementById('calendar'), {</p>
-<p class="p1"><span class="Apple-converted-space">        </span>initialView: 'dayGridMonth',</p>
-<p class="p1"><span class="Apple-converted-space">        </span>locale: 'it',</p>
-<p class="p1"><span class="Apple-converted-space">        </span>events: {{ events|safe }},</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>eventClick: function(info){</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">            </span>let e = info.event;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">            </span>if(confirm(</p>
-<p class="p1"><span class="Apple-converted-space">                </span>e.title + "\n\nApprovi questa richiesta?"</p>
-<p class="p1"><span class="Apple-converted-space">            </span>)){</p>
-<p class="p1"><span class="Apple-converted-space">                </span>fetch("/approve/" + e.id).then(()=&gt;location.reload())</p>
-<p class="p1"><span class="Apple-converted-space">            </span>} else {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>fetch("/reject/" + e.id).then(()=&gt;location.reload())</p>
-<p class="p1"><span class="Apple-converted-space">            </span>}</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>});</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>calendar.render();</p>
-<p class="p1">});</p>
-<p class="p1">&lt;/script&gt;</p>
-<p class="p2"><br></p>
-<p class="p1">&lt;hr&gt;</p>
-<p class="p2"><br></p>
-<p class="p1">&lt;h3&gt;Richieste&lt;/h3&gt;</p>
-<p class="p2"><br></p>
-<p class="p1">{% for d in data %}</p>
-<p class="p1">&lt;div style="margin:10px; padding:10px; background:#1f2937; border-radius:8px;"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;b&gt;{{ d.worker_name }}&lt;/b&gt;&lt;br&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>{{ d.type }}&lt;br&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>{{ d.date_from }} → {{ d.date_to }}&lt;br&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>Stato: {{ d.status }}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;br&gt;&lt;br&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;button onclick="fetch('/approve/{{d.id}}').then(()=&gt;location.reload())"&gt;✔&lt;/button&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;button onclick="fetch('/reject/{{d.id}}').then(()=&gt;location.reload())"&gt;✖&lt;/button&gt;</p>
-<p class="p1">&lt;/div&gt;</p>
-<p class="p1">{% endfor %}</p>
-<p class="p2"><br></p>
-<p class="p1">&lt;/body&gt;</p>
-<p class="p1">&lt;/html&gt;</p>
+
+<!-- HEADER -->
+<div class="header">
+    <h2>👔 Dashboard Manager</h2>
+
+    <div>
+        <a href="/switch_view/worker">👷 Worker</a>
+        <a href="/settings">⚙️ Settings</a>
+        <a href="/logout">🚪 Logout</a>
+    </div>
+</div>
+
+<!-- EXPORT -->
+<form class="filters" method="GET" action="/export_excel">
+    <div>
+        Dal:<br>
+        <input type="date" name="date_from" required>
+    </div>
+
+    <div>
+        Al:<br>
+        <input type="date" name="date_to" required>
+    </div>
+
+    <button class="btn-green">📥 Excel</button>
+</form>
+
+<!-- CALENDAR -->
+<div id="calendar"></div>
+
+<!-- MODAL -->
+<div id="modal" class="modal">
+    <div class="modal-content">
+        <div id="modalBody"></div>
+        <br>
+        <button class="btn-green" onclick="approve()">✔ Approva</button>
+        <button class="btn-red" onclick="reject()">✖ Rifiuta</button>
+        <button onclick="closeModal()">Chiudi</button>
+    </div>
+</div>
+
+<!-- LISTA -->
+<h3 style="padding-left:15px;">Richieste</h3>
+
+{% for d in data %}
+<div class="card">
+
+    <b>{{ d.worker_name }}</b><br>
+    {{ d.type }}<br>
+    {{ d.date_from }} → {{ d.date_to }}<br>
+
+    Stato:
+    <span style="
+        color:
+        {% if d.status == 'pending' %}#f59e0b
+        {% elif d.status == 'approved' %}#22c55e
+        {% else %}#ef4444
+        {% endif %}
+    ">
+        {{ d.status }}
+    </span>
+
+    <br><br>
+
+    <button class="btn-green" onclick="quickApprove('{{d.id}}')">✔</button>
+    <button class="btn-red" onclick="quickReject('{{d.id}}')">✖</button>
+
+</div>
+{% endfor %}
+
+<!-- JS -->
+<script>
+
+let currentId = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+
+    var calendar = new FullCalendar.Calendar(
+        document.getElementById('calendar'),
+        {
+            initialView: 'dayGridMonth',
+            locale: 'it',
+            firstDay:1,
+
+            events: {{ events|safe }},
+
+            eventClick: function(info){
+
+                let e = info.event;
+                currentId = e.id;
+
+                let html = `
+                    <b>${e.extendedProps.worker_name || ''}</b><br>
+                    Tipo: ${e.extendedProps.type}<br>
+                    Data: ${e.extendedProps.date_from}
+                `;
+
+                document.getElementById("modalBody").innerHTML = html;
+                document.getElementById("modal").style.display = "flex";
+            }
+        }
+    );
+
+    calendar.render();
+});
+
+function closeModal(){
+    document.getElementById("modal").style.display = "none";
+}
+
+function approve(){
+    fetch("/approve/" + currentId)
+        .then(()=>location.reload());
+}
+
+function reject(){
+    fetch("/reject/" + currentId)
+        .then(()=>location.reload());
+}
+
+function quickApprove(id){
+    fetch("/approve/" + id).then(()=>location.reload());
+}
+
+function quickReject(id){
+    fetch("/reject/" + id).then(()=>location.reload());
+}
+
+</script>
+
 </body>
 </html>
