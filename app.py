@@ -1557,7 +1557,7 @@ document.addEventListener('DOMContentLoaded', function() {
         slotMinTime: "08:00:00",
         slotMaxTime: "19:00:00",
 
-        events: {{ events_json }},
+        events: {{ events_json|tojson|safe }},
 
         eventClick: function(info) {
 
