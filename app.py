@@ -2036,14 +2036,11 @@ def settings():
         # SOLO SE QUALCOSA È STATO ATTIVATO
         if update_data:
 
-            url = f"{SUPABASE_URL}/rest/v1/users?id=eq.{user_id}"
-            
-            headers = {
-                "apikey": SUPABASE_KEY,
-                "Authorization": f"Bearer {SUPABASE_KEY}",
-                "Content-Type": "application/json",
-                "Prefer": "return=minimal"
-            }
+            update = requests.patch(
+                f"{SUPABASE_URL}/rest/v1/users?id=eq.{user_id}",
+                headers=headers,
+                json=update_data
+            )
 
             requests.patch(url, json=update_data, headers=headers)
 
