@@ -1348,8 +1348,8 @@ function handleAction(url) {{
         """
 
         # ================= LA TUA LISTA ORIGINALE =================    
-        from datetime import datetime, date
-        today = date.today()
+        
+        today = datetime.date.today()
         
         for d in data:
             start = datetime.strptime(d["date_from"], "%Y-%m-%d").date()
