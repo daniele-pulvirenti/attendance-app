@@ -1217,6 +1217,9 @@ def dashboard():
             Logout
         </a>
         <hr>
+        <a href="/settings">
+            ⚙️ Impostazioni account
+        </a>
         <form method="GET" action="/export_excel" style="margin-bottom:20px; display:flex; gap:10px; align-items:end;">
             <div>
                 <label style="color:white;">Dal:</label><br>
@@ -1415,6 +1418,9 @@ function handleAction(url) {{
             transition:0.2s;
         ">
             Logout
+        </a>
+        <a href="/settings">
+            ⚙️ Impostazioni account
         </a>
         <hr>
 
@@ -1994,6 +2000,60 @@ def export_excel():
         download_name=f"report_assenze_{date_from}_{date_to}.xlsx",
         mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
+
+# ---------------- SETTINGS ----------------
+@app.route("/settings", methods=["GET", "POST"])
+def settings():
+    if "user_id" not in session:
+        return redirect("/login")
+
+    user_id = session["user_id"]
+
+    if request.method == "POST":
+        new_email = request.form.get("email")
+        new_password = request.form.get("password")
+
+        update_data = {}
+
+        if new_email:
+            update_data["email"] = new_email
+
+        if new_password:
+            hashed = bcrypt.hashpw(new_password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+            update_data["password"] = hashed
+            if new_password != request.form.get("confirm"):
+                return "Password non corrispondono"
+
+        if update_data:
+            url = f"{SUPABASE_URL}/rest/v1/users?id=eq.{user_id}"
+            headers = {
+                "apikey": SUPABASE_KEY,
+                "Authorization": f"Bearer {SUPABASE_KEY}",
+                "Content-Type": "application/json",
+                "Prefer": "return=minimal"
+            }
+
+            requests.patch(url, json=update_data, headers=headers)
+
+        return redirect("/dashboard")
+
+    return render_template_string("""
+    <h2>⚙️ Impostazioni account</h2>
+
+    <form method="POST">
+        <label>Email</label><br>
+        <input type="email" name="email" placeholder="Nuova email"><br><br>
+
+        <label>Nuova password</label><br>
+        <input type="password" name="password" placeholder="Nuova password"><br><br>
+        <input type="password" name="confirm" placeholder="Conferma password">
+
+        <button type="submit">Salva modifiche</button>
+    </form>
+
+    <br>
+    <a href="/dashboard">⬅ Torna indietro</a>
+    """)
 
 # ---------------- LOGOUT ----------------
 @app.route("/logout")
