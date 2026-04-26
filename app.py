@@ -1227,7 +1227,7 @@ function handleAction(url) {{
             headers=HEADERS
         )
         data = res.json()
-
+        events_json = json.dumps(events)
         html = f"""
         <h2 style="color:#38bdf8">Benvenuto {user['first_name']}</h2>
         <a href='/logout'>Logout</a>
