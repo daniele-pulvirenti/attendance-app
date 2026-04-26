@@ -2034,73 +2034,93 @@ def export_excel():
 # ---------------- SETTINGS ----------------
 # 🔹 TEMPLATE (DEVE STARE SOPRA)
 TEMPLATE = """
-<div class="settings-container">
+<h2 class="title">⚙️ Impostazioni account</h2>
 
-    <h2 class="title">⚙️ Impostazioni account</h2>
+<form method="POST" id="settingsForm" class="card">
 
-    <form method="POST" class="settings-form" oninput="validateForm()" onsubmit="handleSubmit()">
+    <!-- EMAIL -->
+    <div class="option">
+        <label class="option-label">
+            <input type="checkbox" id="toggleEmail" onchange="toggleFields()">
+            <span>Modifica Email</span>
+        </label>
 
-        <!-- EMAIL -->
-        <div class="toggle-box">
-            <label class="toggle-label">
-                <input type="checkbox" id="toggleEmail" onchange="toggleFields()">
-                <span>Modifica Email</span>
-            </label>
+        <input type="email" name="email" id="emailField" placeholder="Nuova email" disabled>
+    </div>
 
-            <input type="email"
-                   name="email"
-                   id="emailField"
-                   placeholder="Nuova email"
-                   class="hidden-field"
-                   disabled>
+    <!-- PASSWORD -->
+    <div class="option">
+        <label class="option-label">
+            <input type="checkbox" id="togglePassword" onchange="toggleFields()">
+            <span>Modifica Password</span>
+        </label>
+
+        <div id="passwordGroup" class="password-group">
+            <input type="password" name="current_password" placeholder="Password attuale" disabled>
+            <input type="password" name="password" id="newPass" placeholder="Nuova password" disabled>
+            <input type="password" name="confirm" id="confirmPass" placeholder="Conferma password" disabled>
+            <small id="passError"></small>
         </div>
+    </div>
 
-        <!-- PASSWORD -->
-        <div class="toggle-box">
-            <label class="toggle-label">
-                <input type="checkbox" id="togglePassword" onchange="toggleFields()">
-                <span>Modifica Password</span>
-            </label>
+    <button type="submit" id="saveBtn" disabled>💾 Salva modifiche</button>
 
-            <div id="passwordGroup" class="hidden-field">
-                <input type="password" id="current_password" name="current_password" placeholder="Password attuale" disabled>
-                <input type="password" id="password" name="password" placeholder="Nuova password" disabled>
-                <input type="password" id="confirm" name="confirm" placeholder="Conferma password" disabled>
+</form>
 
-                <small id="passwordHint"></small>
-            </div>
-        </div>
-
-        <button type="submit" id="submitBtn" class="save-btn" disabled>
-            💾 Salva modifiche
-        </button>
-
-    </form>
-
-</div>
+<a href="/dashboard" class="back-btn">⬅ Torna indietro</a>
 
 <!-- TOAST -->
-<div id="toast"></div>
+<div id="toast" class="{{ 'show success' if success else 'show error' if message else '' }}">
+    {{ message }}
+</div>
 
 <style>
-.settings-container {
-    max-width: 420px;
-    margin: 60px auto;
-    padding: 30px;
-    background: rgba(15, 23, 42, 0.95);
-    border-radius: 16px;
-    box-shadow: 0 15px 40px rgba(0,0,0,0.5);
-    color: white;
-    font-family: Arial, sans-serif;
-}
 
+/* ===== TITLE ===== */
 .title {
-    text-align: center;
     color: #38bdf8;
-    margin-bottom: 25px;
+    text-align: center;
+    margin-bottom: 20px;
 }
 
-.settings-form input {
+/* ===== CARD ===== */
+.card {
+    background: #020617;
+    padding: 25px;
+    border-radius: 14px;
+    max-width: 420px;
+    margin: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* ===== OPTION BLOCK ===== */
+.option {
+    background: #020617;
+    border: 1px solid #334155;
+    border-radius: 12px;
+    padding: 15px;
+}
+
+/* ===== LABEL (FIX ALLINEAMENTO) ===== */
+.option-label {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-weight: bold;
+    color: white;
+    cursor: pointer;
+    justify-content: flex-start; /* 🔥 QUESTO RISOLVE */
+}
+
+/* checkbox */
+.option-label input {
+    transform: scale(1.2);
+}
+
+/* ===== INPUT ===== */
+input {
     width: 100%;
     padding: 10px;
     border-radius: 8px;
@@ -2110,156 +2130,39 @@ TEMPLATE = """
     color: white;
 }
 
-.toggle-box {
-    margin-bottom: 20px;
-    padding: 15px;
-    background: #020617;
-    border-radius: 10px;
-    border: 1px solid #334155;
+/* disabilitato */
+input:disabled {
+    opacity: 0.5;
 }
 
-.toggle-label {
+/* ===== PASSWORD GROUP ===== */
+.password-group {
     display: flex;
-    align-items: center;
-    gap: 12px;
-    cursor: pointer;
-    font-weight: bold;
+    flex-direction: column;
 }
 
-.hidden-field {
-    display: none;
-}
-
-.save-btn {
-    width: 100%;
-    padding: 12px;
-    border-radius: 10px;
-    border: none;
+/* ===== BUTTON ===== */
+#saveBtn {
     background: #334155;
     color: white;
+    padding: 12px;
+    border: none;
+    border-radius: 10px;
     font-weight: bold;
     cursor: not-allowed;
-}
-
-.save-btn.active {
-    background: linear-gradient(135deg, #22c55e, #16a34a);
-    cursor: pointer;
-}
-
-#passwordHint {
-    font-size: 12px;
-    margin-top: 5px;
-}
-
-/* TOAST */
-#toast {
-    visibility: hidden;
-    position: fixed;
-    bottom: 30px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: #111827;
-    color: white;
-    padding: 14px;
-    border-radius: 8px;
-    opacity: 0;
     transition: 0.3s;
 }
 
-#toast.show {
-    visibility: visible;
-    opacity: 1;
+#saveBtn.active {
+    background: #22c55e;
+    cursor: pointer;
 }
 
-#toast.success { background: #22c55e; }
-#toast.error { background: #ef4444; }
-</style>
-
-<script>
-function toggleFields() {
-
-    const emailToggle = document.getElementById("toggleEmail");
-    const emailField = document.getElementById("emailField");
-
-    const passToggle = document.getElementById("togglePassword");
-    const passGroup = document.getElementById("passwordGroup");
-    const passInputs = passGroup.querySelectorAll("input");
-
-    emailField.style.display = emailToggle.checked ? "block" : "none";
-    emailField.disabled = !emailToggle.checked;
-
-    passGroup.style.display = passToggle.checked ? "block" : "none";
-    passInputs.forEach(i => i.disabled = !passToggle.checked);
-
-    validateForm();
+#saveBtn.active:hover {
+    background: #16a34a;
 }
 
-function validateForm() {
-
-    const emailToggle = document.getElementById("toggleEmail").checked;
-    const passToggle = document.getElementById("togglePassword").checked;
-
-    const email = document.getElementById("emailField").value;
-    const password = document.getElementById("password").value;
-    const confirm = document.getElementById("confirm").value;
-
-    const hint = document.getElementById("passwordHint");
-    const btn = document.getElementById("submitBtn");
-
-    let valid = false;
-
-    if (emailToggle && email.length > 3) valid = true;
-
-    if (passToggle) {
-        if (password.length < 6) {
-            hint.innerText = "Minimo 6 caratteri";
-            hint.style.color = "#f59e0b";
-        } else if (password !== confirm) {
-            hint.innerText = "Le password non coincidono";
-            hint.style.color = "#ef4444";
-        } else {
-            hint.innerText = "Password valida ✔";
-            hint.style.color = "#22c55e";
-            valid = true;
-        }
-    } else {
-        hint.innerText = "";
-    }
-
-    btn.disabled = !(emailToggle || passToggle) || !valid;
-    btn.classList.toggle("active", !btn.disabled);
-}
-
-/* 🔥 CONFERMA SUBMIT */
-function handleSubmit() {
-    showToast("Salvataggio in corso...", "success");
-}
-
-/* TOAST */
-function showToast(msg, type="success") {
-    const toast = document.getElementById("toast");
-    toast.innerText = msg;
-    toast.className = "show " + type;
-
-    setTimeout(() => {
-        toast.className = toast.className.replace("show", "");
-    }, 3000);
-}
-
-/* 🔥 TOAST DA BACKEND */
-{% if message %}
-showToast("{{ message }}", "{{ 'success' if success else 'error' }}");
-{% endif %}
-
-window.addEventListener("DOMContentLoaded", toggleFields);
-</script>
-
-<br>
-<a href="/dashboard" class="back-btn">
-    ⬅ Torna indietro
-</a>
-
-<style>
+/* ===== BACK BUTTON ===== */
 .back-btn {
     display: inline-flex;
     align-items: center;
@@ -2270,19 +2173,91 @@ window.addEventListener("DOMContentLoaded", toggleFields);
     color: #38bdf8;
     text-decoration: none;
     border-radius: 10px;
-    font-weight: bold;
     border: 1px solid #334155;
-    transition: all 0.25s ease;
-    font-family: Arial, sans-serif;
+    transition: 0.25s;
 }
 
 .back-btn:hover {
-    background: #0f172a;
     color: #22c55e;
     transform: translateX(-4px);
-    border-color: #22c55e;
 }
+
+/* ===== TOAST ===== */
+#toast {
+    visibility: hidden;
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 14px 20px;
+    border-radius: 10px;
+    color: white;
+    font-weight: bold;
+}
+
+#toast.success { background: #22c55e; }
+#toast.error { background: #ef4444; }
+
+#toast.show {
+    visibility: visible;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from {opacity: 0; transform: translate(-50%,20px);}
+    to {opacity: 1; transform: translate(-50%,0);}
+}
+
 </style>
+
+<script>
+
+/* ===== TOGGLE ===== */
+function toggleFields() {
+
+    let emailChecked = document.getElementById("toggleEmail").checked;
+    let passChecked = document.getElementById("togglePassword").checked;
+
+    document.getElementById("emailField").disabled = !emailChecked;
+
+    document.querySelectorAll("#passwordGroup input").forEach(el => {
+        el.disabled = !passChecked;
+    });
+
+    let btn = document.getElementById("saveBtn");
+
+    if (emailChecked || passChecked) {
+        btn.disabled = false;
+        btn.classList.add("active");
+    } else {
+        btn.disabled = true;
+        btn.classList.remove("active");
+    }
+}
+
+/* ===== PASSWORD VALIDATION ===== */
+document.getElementById("confirmPass").addEventListener("input", function () {
+
+    let pass = document.getElementById("newPass").value;
+    let confirm = this.value;
+    let error = document.getElementById("passError");
+
+    if (confirm !== pass) {
+        error.innerText = "Le password non coincidono";
+        error.style.color = "#ef4444";
+    } else {
+        error.innerText = "Password corretta";
+        error.style.color = "#22c55e";
+    }
+});
+
+/* ===== TOAST AUTO HIDE ===== */
+setTimeout(() => {
+    let toast = document.getElementById("toast");
+    if (toast) toast.classList.remove("show");
+}, 3000);
+
+</script>
 """
 
 
