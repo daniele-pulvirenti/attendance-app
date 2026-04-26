@@ -1717,33 +1717,47 @@ def export_excel():
 
     # ===== CREA EXCEL =====
     wb = Workbook()
-    ws = wb.active
-    ws.title = "Report Assenze"
 
-    # Intestazioni
-    ws.append([
-        "Sector",
-        "Lavoratore",
-        "Tipo",
-        "Dal",
-        "Al",
-        "Ora Inizio",
-        "Ora Fine",
-        "Stato"
-    ])
-
-    # Righe
+    # Raggruppa per sector
+    sectors = {}
     for r in data:
+        s = r["sector"]
+        if s not in sectors:
+            sectors[s] = []
+        sectors[s].append(r)
+
+    # Crea un foglio per ogni sector
+    for sector, records in sectors.items():
+
+        ws = wb.create_sheet(title=sector)
+
+        # Intestazioni
         ws.append([
-            r["sector"],
-            r["worker_name"],
-            r["type"],
-            r["date_from"],
-            r["date_to"],
-            r.get("start_time"),
-            r.get("end_time"),
-            r["status"]
+            "Lavoratore",
+            "Tipo",
+            "Dal",
+            "Al",
+            "Ora Inizio",
+            "Ora Fine",
+            "Stato"
         ])
+
+        # Righe
+        for r in records:
+            ws.append([
+                r["worker_name"],
+                r["type"],
+                r["date_from"],
+                r["date_to"],
+                r.get("start_time"),
+                r.get("end_time"),
+                r["status"]
+            ])
+
+    # Rimuove il foglio vuoto iniziale creato da default
+    if "Sheet" in wb.sheetnames:
+        std = wb["Sheet"]
+        wb.remove(std)
 
     # Salva in memoria
     file_stream = BytesIO()
