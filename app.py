@@ -2393,19 +2393,19 @@ if new_password:
 
     update_data["password"] = hashed
 
-        # 🔹 UPDATE DB
-        if update_data:
-            response = requests.patch(
-                f"{SUPABASE_URL}/rest/v1/users?id=eq.{user_id}",
-                headers=headers,
-                json=update_data
-            )
+    # 🔹 UPDATE DB
+    if update_data:
+        response = requests.patch(
+            f"{SUPABASE_URL}/rest/v1/users?id=eq.{user_id}",
+            headers=headers,
+            json=update_data
+        )
 
-            if response.status_code in [200, 204]:
-                message = "✔️ Modifiche salvate con successo"
-                success = True
-            else:
-                message = "Errore durante l'aggiornamento"
+        if response.status_code in [200, 204]:
+            message = "✔️ Modifiche salvate con successo"
+            success = True
+        else:
+            message = "Errore durante l'aggiornamento"
 
     return render_template_string(TEMPLATE, message=message, success=success)
 
