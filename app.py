@@ -2010,23 +2010,34 @@ def settings():
     user = session["user"]
 
     if request.method == "POST":
-        new_email = request.form.get("email")
-        new_password = request.form.get("password")
 
         update_data = {}
 
+        # SWITCH EMAIL
+        new_email = request.form.get("email")
         if new_email:
             update_data["email"] = new_email
 
+        # SWITCH PASSWORD
+        new_password = request.form.get("password")
+        confirm = request.form.get("confirm")
+
         if new_password:
-            if new_password != request.form.get("confirm"):
+            if new_password != confirm:
                 return "Password non corrispondono"
-        
-            hashed = bcrypt.hashpw(new_password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+
+            hashed = bcrypt.hashpw(
+                new_password.encode("utf-8"),
+                bcrypt.gensalt()
+            ).decode("utf-8")
+
             update_data["password"] = hashed
 
+        # SOLO SE QUALCOSA È STATO ATTIVATO
         if update_data:
+
             url = f"{SUPABASE_URL}/rest/v1/users?username=eq.{username}"
+
             headers = {
                 "apikey": SUPABASE_KEY,
                 "Authorization": f"Bearer {SUPABASE_KEY}",
@@ -2042,15 +2053,41 @@ def settings():
     <h2>⚙️ Impostazioni account</h2>
 
     <form method="POST">
-        <label>Email</label><br>
-        <input type="email" name="email" placeholder="Nuova email"><br><br>
-
-        <label>Nuova password</label><br>
-        <input type="password" name="password" placeholder="Nuova password"><br><br>
-        <input type="password" name="confirm" placeholder="Conferma password">
-
-        <button type="submit">Salva modifiche</button>
+    
+      <!-- SWITCH EMAIL -->
+      <label>
+        <input type="checkbox" id="toggleEmail" onclick="toggleFields()">
+        Modifica Email
+      </label>
+      <input type="email" name="email" id="emailField" placeholder="Nuova email" disabled>
+    
+      <br><br>
+    
+      <!-- SWITCH PASSWORD -->
+      <label>
+        <input type="checkbox" id="togglePassword" onclick="toggleFields()">
+        Modifica Password
+      </label>
+    
+      <input type="password" name="password" id="passField" placeholder="Nuova password" disabled>
+      <input type="password" name="confirm" id="confirmField" placeholder="Conferma password" disabled>
+    
+      <br><br>
+    
+      <button type="submit">💾 Salva modifiche</button>
     </form>
+
+    <script>
+    function toggleFields() {
+        let emailToggle = document.getElementById("toggleEmail").checked;
+        let passToggle = document.getElementById("togglePassword").checked;
+    
+        document.getElementById("emailField").disabled = !emailToggle;
+    
+        document.getElementById("passField").disabled = !passToggle;
+        document.getElementById("confirmField").disabled = !passToggle;
+    }
+    </script>
 
     <br>
     <a href="/dashboard">⬅ Torna indietro</a>
