@@ -1040,7 +1040,19 @@ def dashboard():
         
         
         
-        <a href='/logout'>Logout</a>
+        <a href="/logout" style="
+            display:inline-block;
+            padding:8px 14px;
+            background:#ef4444;
+            color:white;
+            text-decoration:none;
+            border-radius:8px;
+            font-weight:bold;
+            font-family:Arial;
+            transition:0.2s;
+        ">
+            Logout
+        </a>
         <hr>
         <form method="GET" action="/export_excel" style="margin-bottom:20px; display:flex; gap:10px; align-items:end;">
             <div>
@@ -1230,7 +1242,19 @@ function handleAction(url) {{
 
         html = f"""
         <h2 style="color:#38bdf8">Benvenuto {user['first_name']}</h2>
-        <a href='/logout'>Logout</a>
+        <a href="/logout" style="
+            display:inline-block;
+            padding:8px 14px;
+            background:#ef4444;
+            color:white;
+            text-decoration:none;
+            border-radius:8px;
+            font-weight:bold;
+            font-family:Arial;
+            transition:0.2s;
+        ">
+            Logout
+        </a>
         <hr>
 
         <h3>➕ Inserisci assenza</h3>
