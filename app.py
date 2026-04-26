@@ -7,6 +7,9 @@ import secrets
 from datetime import datetime, timedelta
 import smtplib
 from email.mime.text import MIMEText
+from openpyxl import Workbook
+from flask import send_file
+from io import BytesIO
 
 load_dotenv()
 
@@ -941,10 +944,8 @@ def dashboard():
                             👷 Lavoratore
                         </button>
                     </a>
-                </div>
-                
+                </div>       
 
-        
         <style>
         .sector-btn {{
             background:#2d89ef;
@@ -1041,7 +1042,26 @@ def dashboard():
         
         <a href='/logout'>Logout</a>
         <hr>
-
+        <form method="GET" action="/export_excel" style="margin-bottom:20px; display:flex; gap:10px; align-items:end;">
+            <div>
+                <label style="color:white;">Dal:</label><br>
+                <input type="date" name="date_from" required>
+            </div>
+            <div>
+                <label style="color:white;">Al:</label><br>
+                <input type="date" name="date_to" required>
+            </div>
+            <button type="submit" style="
+                padding:8px 14px;
+                background:#16a34a;
+                color:white;
+                border:none;
+                border-radius:6px;
+                font-weight:bold;
+                cursor:pointer;">
+                📥 Scarica Excel
+            </button>
+        </form>
         <!-- ================= FULLCALENDAR ================= -->
 <link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css' rel='stylesheet' />
 <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js'></script>
@@ -1662,7 +1682,80 @@ def reject(id):
     )
 
     return redirect("/dashboard")
+    
+# ---------------- DOWNLOAD EXCEL ----------------
+@app.route("/export_excel")
+def export_excel():
 
+    if "user" not in session:
+        return redirect("/")
+
+    user = session["user"]
+
+    # Solo manager può esportare
+    if user.get("role") != "manager":
+        return "Non autorizzato", 403
+
+    date_from = request.args.get("date_from")
+    date_to = request.args.get("date_to")
+
+    # Recupera assenze nel range date
+    params = {
+        "date_from": f"gte.{date_from}",
+        "date_to": f"lte.{date_to}",
+        "select": "*",
+        "order": "sector"
+    }
+
+    res = requests.get(
+        f"{SUPABASE_URL}/rest/v1/absences",
+        headers=HEADERS,
+        params=params
+    )
+
+    data = res.json()
+
+    # ===== CREA EXCEL =====
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Report Assenze"
+
+    # Intestazioni
+    ws.append([
+        "Sector",
+        "Lavoratore",
+        "Tipo",
+        "Dal",
+        "Al",
+        "Ora Inizio",
+        "Ora Fine",
+        "Stato"
+    ])
+
+    # Righe
+    for r in data:
+        ws.append([
+            r["sector"],
+            r["worker_name"],
+            r["type"],
+            r["date_from"],
+            r["date_to"],
+            r.get("start_time"),
+            r.get("end_time"),
+            r["status"]
+        ])
+
+    # Salva in memoria
+    file_stream = BytesIO()
+    wb.save(file_stream)
+    file_stream.seek(0)
+
+    return send_file(
+        file_stream,
+        as_attachment=True,
+        download_name=f"report_assenze_{date_from}_{date_to}.xlsx",
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
 
 # ---------------- LOGOUT ----------------
 @app.route("/logout")
