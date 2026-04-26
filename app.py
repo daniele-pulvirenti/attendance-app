@@ -2036,8 +2036,8 @@ def settings():
         # SOLO SE QUALCOSA È STATO ATTIVATO
         if update_data:
 
-            url = f"{SUPABASE_URL}/rest/v1/users?username=eq.{user}"
-
+            url = f"{SUPABASE_URL}/rest/v1/users?id=eq.{user_id}"
+            
             headers = {
                 "apikey": SUPABASE_KEY,
                 "Authorization": f"Bearer {SUPABASE_KEY}",
