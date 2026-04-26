@@ -806,6 +806,30 @@ def dashboard():
     view = session.get("view", "worker")
     user = session["user"]
 
+    # ===== SWITCH SEMPRE VISIBILE AL MANAGER =====
+    switch_html = ""
+    
+    if user.get("role") == "manager":
+        current_view = session.get("view", "manager")
+    
+        switch_html = f"""
+        <div style="margin-bottom:15px; padding:10px; background:#0f172a; border-radius:8px; display:flex; gap:10px; align-items:center;">
+            <b style="color:white;">Vista Attuale:</b>
+    
+            <a href="/switch_view/manager" style="text-decoration:none;">
+                <button style="cursor:pointer; padding:6px 12px; background:{'#22c55e' if current_view=='manager' else '#334155'}; color:white; border:none; border-radius:6px; font-weight:bold;">
+                    👔 Manager
+                </button>
+            </a>
+    
+            <a href="/switch_view/worker" style="text-decoration:none;">
+                <button style="cursor:pointer; padding:6px 12px; background:{'#3b82f6' if current_view=='worker' else '#334155'}; color:white; border:none; border-radius:6px; font-weight:bold;">
+                    👷 Lavoratore
+                </button>
+            </a>
+        </div>
+        """
+
     sector = user["sector"]
 
     # ===== Recupero TUTTE le richieste pending =====
@@ -826,7 +850,7 @@ def dashboard():
     # ================= CAPO =================
     
 
-    if view == "manager" and user["role"] == "manager":
+    if view == "manager":
 
         import json
 
@@ -1172,7 +1196,7 @@ function handleAction(url) {{
                 <a href="/reject/{d["id"]}" style="color:#ef4444">✖ Rifiuta</a>
             </div>
             """
-            
+        
         return html
 
     # ================= LAVORATORE =================
@@ -1508,7 +1532,7 @@ document.addEventListener("DOMContentLoaded", function () {
 </script>
 """
         
-
+        html = switch_html + html
         return render_template_string(html, data=data)
 
 
