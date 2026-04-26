@@ -2004,25 +2004,32 @@ def export_excel():
 # ---------------- SETTINGS ----------------
 @app.route("/settings", methods=["GET", "POST"])
 def settings():
-    if "user" not in session:
+
+    user_id = session.get("user_id")
+    if not user_id:
         return redirect("/login")
 
-    user = session["user"]
+    headers = {
+        "apikey": SUPABASE_KEY,
+        "Authorization": f"Bearer {SUPABASE_KEY}",
+        "Content-Type": "application/json"
+    }
 
     if request.method == "POST":
 
         update_data = {}
 
-        # SWITCH EMAIL
         new_email = request.form.get("email")
-        if new_email:
-            update_data["email"] = new_email
-
-        # SWITCH PASSWORD
         new_password = request.form.get("password")
         confirm = request.form.get("confirm")
 
+        if new_email:
+            update_data["email"] = new_email
+
         if new_password:
+            if not confirm:
+                return "Conferma password mancante"
+
             if new_password != confirm:
                 return "Password non corrispondono"
 
@@ -2033,16 +2040,16 @@ def settings():
 
             update_data["password"] = hashed
 
-        # SOLO SE QUALCOSA È STATO ATTIVATO
         if update_data:
 
-            update = requests.patch(
+            response = requests.patch(
                 f"{SUPABASE_URL}/rest/v1/users?id=eq.{user_id}",
                 headers=headers,
                 json=update_data
             )
 
-            requests.patch(url, json=update_data, headers=headers)
+            print("STATUS:", response.status_code)
+            print("TEXT:", response.text)
 
         return redirect("/dashboard")
 
