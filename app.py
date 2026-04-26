@@ -2009,33 +2009,61 @@ def settings():
     if not user:
         return redirect("/login")
 
-    # 🔥 PRENDIAMO ID CORRETTO
     user_id = user["id"]
 
     headers = {
         "apikey": SUPABASE_KEY,
         "Authorization": f"Bearer {SUPABASE_KEY}",
-        "Content-Type": "application/json",
-        "Prefer": "return=minimal"
+        "Content-Type": "application/json"
     }
+
+    message = ""
+    success = False
 
     if request.method == "POST":
 
         update_data = {}
 
-        # 🔹 Pulizia input
         new_email = request.form.get("email", "").strip()
+        current_password = request.form.get("current_password", "").strip()
         new_password = request.form.get("password", "").strip()
         confirm = request.form.get("confirm", "").strip()
 
-        # 🔹 EMAIL
+        # 🔹 EMAIL DUPLICATA CHECK
         if new_email:
+            check = requests.get(
+                f"{SUPABASE_URL}/rest/v1/users?email=eq.{new_email}",
+                headers=headers
+            ).json()
+
+            if check and check[0]["id"] != user_id:
+                message = "Email già utilizzata"
+                return render_template_string(TEMPLATE, message=message, success=False)
+
             update_data["email"] = new_email
 
-        # 🔹 PASSWORD
+        # 🔹 CAMBIO PASSWORD CON VERIFICA
         if new_password:
+
+            if not current_password:
+                message = "Inserisci la password attuale"
+                return render_template_string(TEMPLATE, message=message, success=False)
+
+            # recupero password attuale dal DB
+            res = requests.get(
+                f"{SUPABASE_URL}/rest/v1/users?id=eq.{user_id}",
+                headers=headers
+            ).json()
+
+            stored_hash = res[0]["password"]
+
+            if not bcrypt.checkpw(current_password.encode("utf-8"), stored_hash.encode("utf-8")):
+                message = "Password attuale errata"
+                return render_template_string(TEMPLATE, message=message, success=False)
+
             if new_password != confirm:
-                return "Le password non corrispondono"
+                message = "Le password non corrispondono"
+                return render_template_string(TEMPLATE, message=message, success=False)
 
             hashed = bcrypt.hashpw(
                 new_password.encode("utf-8"),
@@ -2046,74 +2074,106 @@ def settings():
 
         # 🔹 UPDATE
         if update_data:
-            try:
-                response = requests.patch(
-                    f"{SUPABASE_URL}/rest/v1/users?id=eq.{user_id}",
-                    headers=headers,
-                    json=update_data
-                )
+            response = requests.patch(
+                f"{SUPABASE_URL}/rest/v1/users?id=eq.{user_id}",
+                headers=headers,
+                json=update_data
+            )
 
-                print("STATUS:", response.status_code)
-                print("TEXT:", response.text)
+            if response.status_code in [200, 204]:
+                message = "✔️ Modifiche salvate con successo"
+                success = True
+            else:
+                message = "Errore durante l'aggiornamento"
 
-                if response.status_code not in [200, 204]:
-                    return f"Errore durante l'aggiornamento: {response.text}"
-
-            except Exception as e:
-                return f"Errore di connessione: {str(e)}"
-
-        return redirect("/dashboard")
+    return render_template_string(TEMPLATE, message=message, success=success)
 
     # 🔹 UI SETTINGS
-    return render_template_string("""
-    <h2>⚙️ Impostazioni account</h2>
+    TEMPLATE = """
+<h2>⚙️ Impostazioni account</h2>
 
-    <form method="POST">
-    
-      <label>
-        <input type="checkbox" id="toggleEmail" onchange="toggleFields()"> Modifica Email
-      </label><br>
-      <input type="email" name="email" id="emailField" placeholder="Nuova email" style="display:none">
-    
-      <br><br>
-    
-      <label>
-        <input type="checkbox" id="togglePassword" onchange="toggleFields()"> Modifica Password
-      </label><br>
-    
-      <div id="passwordGroup" style="display:none">
-          <input type="password" name="password" id="passField" placeholder="Nuova password"><br>
-          <input type="password" name="confirm" id="confirmField" placeholder="Conferma password">
-      </div>
-    
-      <br><br>
-    
-      <button type="submit">💾 Salva modifiche</button>
-    </form>
+<form method="POST">
 
-    <script>
-    function toggleFields() {
-        document.getElementById("emailField").style.display = 
-            document.getElementById("toggleEmail").checked ? "block" : "none";
-        
-        document.getElementById("passwordGroup").style.display = 
-            document.getElementById("togglePassword").checked ? "block" : "none";
-            
-        if(!document.getElementById("toggleEmail").checked) {
-            document.getElementById("emailField").value = "";
-        }
+  <label>
+    <input type="checkbox" id="toggleEmail" onchange="toggleFields()"> Modifica Email
+  </label><br>
+  <input type="email" name="email" id="emailField" placeholder="Nuova email" style="display:none">
 
-        if(!document.getElementById("togglePassword").checked) {
-            document.getElementById("passField").value = "";
-            document.getElementById("confirmField").value = "";
-        }
-    }
-    </script>
+  <br><br>
 
-    <br>
-    <a href="/dashboard">⬅ Torna indietro</a>
-    """)
+  <label>
+    <input type="checkbox" id="togglePassword" onchange="toggleFields()"> Modifica Password
+  </label><br>
 
+  <div id="passwordGroup" style="display:none">
+      <input type="password" name="current_password" placeholder="Password attuale"><br>
+      <input type="password" name="password" placeholder="Nuova password"><br>
+      <input type="password" name="confirm" placeholder="Conferma password">
+  </div>
+
+  <br><br>
+
+  <button type="submit">💾 Salva modifiche</button>
+</form>
+
+<!-- TOAST -->
+<div id="toast" class="{{ 'show success' if success else 'show error' if message else '' }}">
+    {{ message }}
+</div>
+
+<style>
+#toast {
+  visibility: hidden;
+  min-width: 250px;
+  margin-left: -125px;
+  position: fixed;
+  bottom: 30px;
+  left: 50%;
+  padding: 16px;
+  border-radius: 8px;
+  color: white;
+  text-align: center;
+  z-index: 1000;
+}
+
+#toast.success { background-color: #2ecc71; }
+#toast.error { background-color: #e74c3c; }
+
+#toast.show {
+  visibility: visible;
+  animation: fadein 0.3s, fadeout 0.3s 3s;
+}
+
+@keyframes fadein {
+  from {bottom: 0; opacity: 0;}
+  to {bottom: 30px; opacity: 1;}
+}
+
+@keyframes fadeout {
+  from {opacity: 1;}
+  to {opacity: 0;}
+}
+</style>
+
+<script>
+function toggleFields() {
+    document.getElementById("emailField").style.display =
+        document.getElementById("toggleEmail").checked ? "block" : "none";
+
+    document.getElementById("passwordGroup").style.display =
+        document.getElementById("togglePassword").checked ? "block" : "none";
+}
+
+// auto-hide toast
+setTimeout(() => {
+    let toast = document.getElementById("toast");
+    if (toast) toast.classList.remove("show");
+}, 3500);
+</script>
+
+<br>
+<a href="/dashboard">⬅ Torna indietro</a>
+"""
 
 # ---------------- LOGOUT ----------------
 @app.route("/logout")
