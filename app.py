@@ -2004,10 +2004,10 @@ def export_excel():
 # ---------------- SETTINGS ----------------
 @app.route("/settings", methods=["GET", "POST"])
 def settings():
-    if "user_id" not in session:
+    if "user" not in session:
         return redirect("/login")
 
-    user_id = session["user_id"]
+    user = session["user"]
 
     if request.method == "POST":
         new_email = request.form.get("email")
@@ -2019,13 +2019,14 @@ def settings():
             update_data["email"] = new_email
 
         if new_password:
-            hashed = bcrypt.hashpw(new_password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
-            update_data["password"] = hashed
             if new_password != request.form.get("confirm"):
                 return "Password non corrispondono"
+        
+            hashed = bcrypt.hashpw(new_password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+            update_data["password"] = hashed
 
         if update_data:
-            url = f"{SUPABASE_URL}/rest/v1/users?id=eq.{user_id}"
+            url = f"{SUPABASE_URL}/rest/v1/users?username=eq.{username}"
             headers = {
                 "apikey": SUPABASE_KEY,
                 "Authorization": f"Bearer {SUPABASE_KEY}",
