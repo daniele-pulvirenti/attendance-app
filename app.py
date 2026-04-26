@@ -2004,7 +2004,7 @@ def export_excel():
 # ---------------- SETTINGS ----------------
 @app.route("/settings", methods=["GET", "POST"])
 def settings():
-    user_id = session.get("user_id")
+    user = session.get("user_id")
     if not user_id:
         return redirect("/login")
 
