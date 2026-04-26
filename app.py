@@ -2004,13 +2004,10 @@ def export_excel():
 # ---------------- SETTINGS ----------------
 @app.route("/settings", methods=["GET", "POST"])
 def settings():
-    # Recuperiamo i dati dalla sessione
-    session_data = session.get("user_id")
-    if not session_data:
-        return redirect("/login")
 
-    # Gestione robusta dell'ID: se session_data è un dizionario, prendi ['id'], altrimenti usa il valore così com'è
-    user_id = session_data["id"] if isinstance(session_data, dict) else session_data
+    user_id = session.get("user_id")
+    if not user_id:
+        return redirect("/login")
 
     headers = {
         "apikey": SUPABASE_KEY,
@@ -2020,21 +2017,19 @@ def settings():
     }
 
     if request.method == "POST":
+
         update_data = {}
-        
-        # Recupero campi dalla form
+
         new_email = request.form.get("email", "").strip()
         new_password = request.form.get("password", "").strip()
         confirm = request.form.get("confirm", "").strip()
 
-        # Aggiungi email se presente
+        # EMAIL
         if new_email:
             update_data["email"] = new_email
 
-        # Gestione Password con hashing
+        # PASSWORD
         if new_password:
-            if not confirm:
-                return "Conferma password mancante"
             if new_password != confirm:
                 return "Le password non corrispondono"
 
@@ -2042,87 +2037,27 @@ def settings():
                 new_password.encode("utf-8"),
                 bcrypt.gensalt()
             ).decode("utf-8")
+
             update_data["password"] = hashed
 
-        # Esegui l'aggiornamento solo se ci sono dati da inviare
+        # UPDATE SOLO SE NECESSARIO
         if update_data:
-            try:
-                response = requests.patch(
-                    f"{SUPABASE_URL}/rest/v1/users?id=eq.{user_id}",
-                    headers=headers,
-                    json=update_data
-                )
 
-                print("STATUS:", response.status_code)
-                print("TEXT:", response.text)
+            response = requests.patch(
+                f"{SUPABASE_URL}/rest/v1/users?id=eq.{user_id}",
+                headers=headers,
+                json=update_data
+            )
 
-                if response.status_code not in [200, 204]:
-                    return f"Errore durante l'aggiornamento: {response.text}"
-                
-                # OPZIONALE: Se cambi email, potresti voler aggiornare la sessione qui
-                if "email" in update_data and isinstance(session_data, dict):
-                    session_data["email"] = new_email
-                    session["user_id"] = session_data
+            print("STATUS:", response.status_code)
+            print("TEXT:", response.text)
 
-            except Exception as e:
-                return f"Errore di connessione al database: {str(e)}"
+            if response.status_code not in [200, 204]:
+                return f"Errore aggiornamento: {response.text}"
 
         return redirect("/dashboard")
 
-    # Render della pagina
-    return render_template_string("""
-    <h2>⚙️ Impostazioni account</h2>
-
-    <form method="POST">
-    
-      <!-- MODIFICA EMAIL -->
-      <label>
-        <input type="checkbox" id="toggleEmail" onchange="toggleFields()">
-        Modifica Email
-      </label><br>
-      <input type="email" name="email" id="emailField" placeholder="Nuova email" style="display:none; margin-top:5px;">
-    
-      <br><br>
-    
-      <!-- MODIFICA PASSWORD -->
-      <label>
-        <input type="checkbox" id="togglePassword" onchange="toggleFields()">
-        Modifica Password
-      </label><br>
-      <div id="passwordGroup" style="display:none; margin-top:5px;">
-          <input type="password" name="password" id="passField" placeholder="Nuova password"><br>
-          <input type="password" name="confirm" id="confirmField" placeholder="Conferma password" style="margin-top:5px;">
-      </div>
-    
-      <br><br>
-    
-      <button type="submit">💾 Salva modifiche</button>
-    </form>
-
-    <script>
-    function toggleFields() {
-        const emailToggle = document.getElementById("toggleEmail").checked;
-        const passToggle = document.getElementById("togglePassword").checked;
-    
-        const emailField = document.getElementById("emailField");
-        const passwordGroup = document.getElementById("passwordGroup");
-
-        // Mostra/Nascondi
-        emailField.style.display = emailToggle ? "block" : "none";
-        passwordGroup.style.display = passToggle ? "block" : "none";
-        
-        // Pulisci i valori se deselezionati per sicurezza
-        if(!emailToggle) emailField.value = "";
-        if(!passToggle) {
-            document.getElementById("passField").value = "";
-            document.getElementById("confirmField").value = "";
-        }
-    }
-    </script>
-
-    <br>
-    <a href="/dashboard">⬅ Torna alla Dashboard</a>
-    """)
+    return render_template_string(""" ... """)
 
 
 
