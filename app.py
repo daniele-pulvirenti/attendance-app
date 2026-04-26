@@ -1217,9 +1217,39 @@ def dashboard():
             Logout
         </a>
         <hr>
-        <a href="/settings">
-            ⚙️ Impostazioni account
+        <a href="/settings" class="settings-btn">
+    ⚙️ Impostazioni account
         </a>
+        
+        <style>
+        .settings-btn {{
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px;
+            background: linear-gradient(135deg, #1f2937, #0f172a);
+            color: #e2e8f0;
+            text-decoration: none;
+            border-radius: 10px;
+            font-weight: 500;
+            font-family: Arial, sans-serif;
+            border: 1px solid #334155;
+            transition: all 0.25s ease;
+        }}
+        
+        /* hover figo */
+        .settings-btn:hover {{
+            background: linear-gradient(135deg, #3b82f6, #0ea5e9);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(59,130,246,0.4);
+        }}
+        
+        /* click */
+        .settings-btn:active {{
+            transform: scale(0.96);
+        }}
+        </style>
         <form method="GET" action="/export_excel" style="margin-bottom:20px; display:flex; gap:10px; align-items:end;">
             <div>
                 <label style="color:white;">Dal:</label><br>
@@ -2004,31 +2034,126 @@ def export_excel():
 # ---------------- SETTINGS ----------------
 # 🔹 TEMPLATE (DEVE STARE SOPRA)
 TEMPLATE = """
-<h2>⚙️ Impostazioni account</h2>
+<div class="settings-container">
 
-<form method="POST">
+    <h2 class="title">⚙️ Impostazioni account</h2>
 
-  <label>
-    <input type="checkbox" id="toggleEmail" onchange="toggleFields()"> Modifica Email
-  </label><br>
-  <input type="email" name="email" id="emailField" placeholder="Nuova email" style="display:none">
+    <form method="POST" class="settings-form">
 
-  <br><br>
+        <!-- EMAIL -->
+        <div class="toggle-box">
+            <label class="toggle-label">
+                <input type="checkbox" id="toggleEmail" onchange="toggleFields()">
+                <span>Modifica Email</span>
+            </label>
 
-  <label>
-    <input type="checkbox" id="togglePassword" onchange="toggleFields()"> Modifica Password
-  </label><br>
+            <input type="email" name="email" id="emailField" placeholder="Nuova email">
+        </div>
 
-  <div id="passwordGroup" style="display:none">
-      <input type="password" name="current_password" placeholder="Password attuale"><br>
-      <input type="password" name="password" placeholder="Nuova password"><br>
-      <input type="password" name="confirm" placeholder="Conferma password">
-  </div>
+        <!-- PASSWORD -->
+        <div class="toggle-box">
+            <label class="toggle-label">
+                <input type="checkbox" id="togglePassword" onchange="toggleFields()">
+                <span>Modifica Password</span>
+            </label>
 
-  <br><br>
+            <div id="passwordGroup">
+                <input type="password" name="current_password" placeholder="Password attuale">
+                <input type="password" name="password" placeholder="Nuova password">
+                <input type="password" name="confirm" placeholder="Conferma password">
+            </div>
+        </div>
 
-  <button type="submit">💾 Salva modifiche</button>
-</form>
+        <!-- SUBMIT -->
+        <button type="submit" class="save-btn">
+            💾 Salva modifiche
+        </button>
+
+    </form>
+
+</div>
+
+<style>
+.settings-container {
+    max-width: 420px;
+    margin: 60px auto;
+    padding: 30px;
+    background: rgba(15, 23, 42, 0.95);
+    border-radius: 16px;
+    box-shadow: 0 15px 40px rgba(0,0,0,0.5);
+    color: white;
+    font-family: Arial, sans-serif;
+}
+
+.title {
+    text-align: center;
+    color: #38bdf8;
+    margin-bottom: 25px;
+}
+
+.settings-form input {
+    width: 100%;
+    padding: 10px;
+    border-radius: 8px;
+    border: none;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    background: #1f2937;
+    color: white;
+    outline: none;
+}
+
+/* TOGGLE BOX */
+.toggle-box {
+    margin-bottom: 20px;
+    padding: 15px;
+    background: #020617;
+    border-radius: 10px;
+    border: 1px solid #334155;
+}
+
+/* LABEL */
+.toggle-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+/* BOTTONE */
+.save-btn {
+    width: 100%;
+    padding: 12px;
+    border-radius: 10px;
+    border: none;
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.25s;
+}
+
+.save-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(34,197,94,0.4);
+}
+
+.save-btn:active {
+    transform: scale(0.97);
+}
+</style>
+
+<script>
+function toggleFields() {
+
+    document.getElementById("emailField").style.display =
+        document.getElementById("toggleEmail").checked ? "block" : "none";
+
+    document.getElementById("passwordGroup").style.display =
+        document.getElementById("togglePassword").checked ? "block" : "none";
+}
+</script>
 
 <!-- TOAST -->
 <div id="toast" class="{{ 'show success' if success else 'show error' if message else '' }}">
