@@ -2004,98 +2004,126 @@ def export_excel():
 # ---------------- SETTINGS ----------------
 @app.route("/settings", methods=["GET", "POST"])
 def settings():
-    user = session["user"]
-    if not user:
+    # Recuperiamo i dati dalla sessione
+    session_data = session.get("user_id")
+    if not session_data:
         return redirect("/login")
+
+    # Gestione robusta dell'ID: se session_data è un dizionario, prendi ['id'], altrimenti usa il valore così com'è
+    user_id = session_data["id"] if isinstance(session_data, dict) else session_data
 
     headers = {
         "apikey": SUPABASE_KEY,
         "Authorization": f"Bearer {SUPABASE_KEY}",
         "Content-Type": "application/json",
-        "Prefer": "return=minimal" # Ottimizza la risposta di Supabase
+        "Prefer": "return=minimal"
     }
 
     if request.method == "POST":
         update_data = {}
         
-        # Recuperiamo i dati e puliamo da eventuali spazi bianchi
+        # Recupero campi dalla form
         new_email = request.form.get("email", "").strip()
         new_password = request.form.get("password", "").strip()
         confirm = request.form.get("confirm", "").strip()
 
-        # Aggiungi email solo se il campo era attivo e compilato
+        # Aggiungi email se presente
         if new_email:
             update_data["email"] = new_email
 
-        # Gestione Password
+        # Gestione Password con hashing
         if new_password:
+            if not confirm:
+                return "Conferma password mancante"
             if new_password != confirm:
                 return "Le password non corrispondono"
-            
-            # Hash della password
+
             hashed = bcrypt.hashpw(
                 new_password.encode("utf-8"),
                 bcrypt.gensalt()
             ).decode("utf-8")
-            
             update_data["password"] = hashed
 
-        # Esegui la patch solo se c'è almeno un campo da aggiornare
+        # Esegui l'aggiornamento solo se ci sono dati da inviare
         if update_data:
             try:
                 response = requests.patch(
-                    f"{SUPABASE_URL}/rest/v1/users?id=eq.{user}",
+                    f"{SUPABASE_URL}/rest/v1/users?id=eq.{user_id}",
                     headers=headers,
                     json=update_data
                 )
-                
+
+                print("STATUS:", response.status_code)
+                print("TEXT:", response.text)
+
                 if response.status_code not in [200, 204]:
                     return f"Errore durante l'aggiornamento: {response.text}"
+                
+                # OPZIONALE: Se cambi email, potresti voler aggiornare la sessione qui
+                if "email" in update_data and isinstance(session_data, dict):
+                    session_data["email"] = new_email
+                    session["user_id"] = session_data
+
             except Exception as e:
-                return f"Errore di connessione: {str(e)}"
+                return f"Errore di connessione al database: {str(e)}"
 
         return redirect("/dashboard")
 
+    # Render della pagina
     return render_template_string("""
     <h2>⚙️ Impostazioni account</h2>
+
     <form method="POST">
+    
+      <!-- MODIFICA EMAIL -->
       <label>
-        <input type="checkbox" id="toggleEmail" onchange="toggleFields()"> Modifica Email
+        <input type="checkbox" id="toggleEmail" onchange="toggleFields()">
+        Modifica Email
       </label><br>
-      <input type="email" name="email" id="emailField" placeholder="Nuova email" style="display:none">
+      <input type="email" name="email" id="emailField" placeholder="Nuova email" style="display:none; margin-top:5px;">
     
       <br><br>
+    
+      <!-- MODIFICA PASSWORD -->
       <label>
-        <input type="checkbox" id="togglePassword" onchange="toggleFields()"> Modifica Password
+        <input type="checkbox" id="togglePassword" onchange="toggleFields()">
+        Modifica Password
       </label><br>
-      <div id="passwordGroup" style="display:none">
+      <div id="passwordGroup" style="display:none; margin-top:5px;">
           <input type="password" name="password" id="passField" placeholder="Nuova password"><br>
-          <input type="password" name="confirm" id="confirmField" placeholder="Conferma password">
+          <input type="password" name="confirm" id="confirmField" placeholder="Conferma password" style="margin-top:5px;">
       </div>
     
       <br><br>
+    
       <button type="submit">💾 Salva modifiche</button>
     </form>
 
     <script>
     function toggleFields() {
-        // Invece di disabled, usiamo display per chiarezza
-        // ma assicurati che i campi siano vuoti se non usati
-        document.getElementById("emailField").style.display = 
-            document.getElementById("toggleEmail").checked ? "block" : "none";
+        const emailToggle = document.getElementById("toggleEmail").checked;
+        const passToggle = document.getElementById("togglePassword").checked;
+    
+        const emailField = document.getElementById("emailField");
+        const passwordGroup = document.getElementById("passwordGroup");
+
+        // Mostra/Nascondi
+        emailField.style.display = emailToggle ? "block" : "none";
+        passwordGroup.style.display = passToggle ? "block" : "none";
         
-        document.getElementById("passwordGroup").style.display = 
-            document.getElementById("togglePassword").checked ? "block" : "none";
-            
-        if(!document.getElementById("toggleEmail").checked) document.getElementById("emailField").value = "";
-        if(!document.getElementById("togglePassword").checked) {
+        // Pulisci i valori se deselezionati per sicurezza
+        if(!emailToggle) emailField.value = "";
+        if(!passToggle) {
             document.getElementById("passField").value = "";
             document.getElementById("confirmField").value = "";
         }
     }
     </script>
-    <br><a href="/dashboard">⬅ Torna indietro</a>
+
+    <br>
+    <a href="/dashboard">⬅ Torna alla Dashboard</a>
     """)
+
 
 
 # ---------------- LOGOUT ----------------
