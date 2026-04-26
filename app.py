@@ -1358,7 +1358,17 @@ function handleAction(url) {{
         for d in data:
             date_obj = datetime.strptime(d["date_from"], "%Y-%m-%d")
         
-            if date_obj.month != current_month or date_obj.year != current_year:
+            start = datetime.strptime(d["date_from"], "%Y-%m-%d")
+            end = datetime.strptime(d.get("date_to", d["date_from"]), "%Y-%m-%d")
+            
+            first_day = datetime(current_year, current_month, 1)
+            if current_month == 12:
+                last_day = datetime(current_year + 1, 1, 1)
+            else:
+                last_day = datetime(current_year, current_month + 1, 1)
+            
+            # mostra se l'intervallo tocca il mese corrente
+            if end < first_day or start >= last_day:
                 continue
 
             color = "#f59e0b" if d["status"] == "pending" else "#22c55e" if d["status"] == "approved" else "#ef4444"
