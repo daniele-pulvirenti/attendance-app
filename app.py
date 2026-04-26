@@ -4,7 +4,7 @@ import os
 from dotenv import load_dotenv
 import bcrypt
 import secrets 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 import smtplib
 from email.mime.text import MIMEText
 from openpyxl import Workbook
@@ -1348,8 +1348,8 @@ function handleAction(url) {{
         """
 
         # ================= LA TUA LISTA ORIGINALE =================    
-        import datetime
-        today = datetime.date.today()
+        
+        today = date.today()
         
         for d in data:
             start = datetime.strptime(d["date_from"], "%Y-%m-%d").date()
