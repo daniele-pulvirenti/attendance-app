@@ -1647,7 +1647,7 @@ function handleAction(url) {{
         data = res.json()
 
         html = f"""
-        <h2 style="color:#38bdf8">Benvenuto {user['first_name']}</h2>
+        <h2 style="color:#38bdf8">Benvenuto/a {user['first_name']}</h2>
         <a href="/logout" style="
             display:inline-block;
             padding:8px 14px;
