@@ -1349,51 +1349,10 @@ window.addEventListener("DOMContentLoaded", blockWeekendDates);
 
         <hr>
         <h3 style="color:#38bdf8;margin-bottom:10px;">📅 Calendario assenze</h3>
-        <style>
-            #calendar {{
-                max-width: 1100px;
-                margin: 40px auto;
-                background: #0f172a;
-                padding: 20px;
-                border-radius: 12px;
-                box-shadow: 0 10px 25px rgba(0,0,0,0.4);
-            }}
         
-            .fc-toolbar-title {{
-                color: white;
-                font-size: 22px;
-                font-weight: bold;
-            }}
-        
-            .fc-button {{
-                background: #334155 !important;
-                border: none !important;
-                color: white !important;
-                font-weight: bold;
-                border-radius: 6px !important;
-            }}
-        
-            .fc-button:hover {{
-                background: #475569 !important;
-            }}
-        
-            .fc-col-header-cell-cushion,
-            .fc-daygrid-day-number {{
-                color: white !important;
-            }}
-        
-            .fc-daygrid-day {{
-                background-color: #1e293b;
-            }}
-        
-            .fc-day-today {{
-                background: #334155 !important;
-            }}
-        </style>
         </div>
         <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet">
         <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
-        
         <div id="calendar"></div>
         """
 
@@ -1539,34 +1498,52 @@ const data = {{ data | tojson }};
 
 let currentDate = new Date();
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener("DOMContentLoaded", function () {
 
-    var calendarEl = document.getElementById('calendar');
+    if (!window.FullCalendar) {
+        console.error("FullCalendar non caricato");
+        return;
+    }
 
-    var calendar = new FullCalendar.Calendar(calendarEl, {
-        initialView: 'dayGridMonth',
-        height: 650,
-        locale: 'it',
+    const calendarEl = document.getElementById("calendar");
 
-        headerToolbar: {
-            left: 'prev,next today',
-            center: 'title',
-            right: 'dayGridMonth,timeGridWeek'
+    const calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: "dayGridMonth",
+        locale: "it",
+        firstDay: 1,
+        
+
+        weekends: true,
+
+        dayCellDidMount: function(info) {
+            const day = info.date.getDay();
+            if (day === 0 || day === 6) {
+                info.el.style.backgroundColor = "#0b1220";
+                info.el.style.opacity = "0.5";
+            }
         },
 
-        buttonText: {
-            today: 'Oggi',
-            month: 'Mese',
-            week: 'Settimana'
-        },
+        events: (typeof data !== "undefined" ? data : []).map(d => {
 
-        events: {{ events_json|safe }},
+            if (d.type === "ferie") {
+                return {
+                    title: "Ferie",
+                    start: d.date_from,
+                    end: new Date(new Date(d.date_to).getTime() + 86400000).toISOString().split("T")[0],
+                    color: d.status === "approved" ? "#22c55e"
+                          : d.status === "rejected" ? "#ef4444"
+                          : "#f59e0b"
+                };
+            }
 
-        eventDidMount: function(info) {
-            info.el.style.borderRadius = "6px";
-            info.el.style.padding = "4px";
-            info.el.style.fontWeight = "bold";
-        }
+            return {
+                title: "Permesso",
+                start: d.date_from,
+                color: d.status === "approved" ? "#22c55e"
+                      : d.status === "rejected" ? "#ef4444"
+                      : "#f59e0b"
+            };
+        })
     });
 
     calendar.render();
