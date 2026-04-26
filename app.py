@@ -782,7 +782,10 @@ def login():
             session["view"] = "manager" if role == "manager" else "worker"   
             return redirect("/dashboard")
 
-        return "Login errato"
+        return """
+        <h3>Username o password NON VALIDI ⛔</h3>
+        <a href="/">Torna al login</a>
+        """
 
     return render_template_string(LOGIN_HTML)
 
