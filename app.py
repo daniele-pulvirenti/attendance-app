@@ -1,4 +1,4 @@
-from flask import Flask, request, session, redirect, render_template_string
+from flask import Flask, request, session, redirect, render_template_string, url_for, send_file
 import requests
 import os
 from dotenv import load_dotenv
@@ -8,24 +8,21 @@ from datetime import datetime, timedelta, date
 import smtplib
 from email.mime.text import MIMEText
 from openpyxl import Workbook
-from flask import send_file
 from io import BytesIO
 
 load_dotenv()
 
 app = Flask(__name__)
-app.secret_key = os.getenv("SECRET_KEY", "dev_key")
-
-from datetime import datetime, timedelta
-from flask import session, redirect, url_for, request
+app.secret_key = os.getenv("SECRET_KEY") or "dev_key"
 
 # durata massima sessione
 app.permanent_session_lifetime = timedelta(minutes=30)
 
+# 🔐 SESSION TIMEOUT
 @app.before_request
 def check_session_timeout():
     # escludi login e statici
-    if request.endpoint in ("login", "static"):
+    if not request.endpoint or request.endpoint in ("login", "static"):
         return
 
     if "user" in session:
@@ -33,16 +30,21 @@ def check_session_timeout():
         last_activity = session.get("last_activity")
 
         if last_activity:
-            elapsed = now - datetime.fromisoformat(last_activity)
+            try:
+                elapsed = now - datetime.fromisoformat(last_activity)
 
-            if elapsed.total_seconds() > 1800:
+                if elapsed.total_seconds() > 1800:
+                    session.clear()
+                    return redirect(url_for("login"))
+            except:
                 session.clear()
                 return redirect(url_for("login"))
 
         session["last_activity"] = now.isoformat()
 
+# 🔐 CONFIG SUPABASE
 SUPABASE_URL = "https://dlhayirunoremlpkyxlo.supabase.co"
-SUPABASE_KEY = "sb_publishable_DZ69ih5L9IqvJmt44VUK4w_8uelJ5xU"
+SUPABASE_KEY = os.getenv("SUPABASE_KEY") or "sb_publishable_DZ69ih5L9IqvJmt44VUK4w_8uelJ5xU"
 
 HEADERS = {
     "apikey": SUPABASE_KEY,
@@ -148,23 +150,18 @@ LOGIN_HTML = """
 <body>
 
     <form method="post" class="login-card">
-        <!-- Logo -->
         <img src="{{ url_for('static', filename='images/logo.jpeg') }}" alt="Logo" class="logo">
         
         <h2>Login Ferie&Permessi</h2>
 
-        <!-- Username -->
         Username:
         <input name="username" required><br>
 
-        <!-- Password -->
         Password:
         <input name="password" type="password" required><br>
 
-        <!-- Submit Button -->
         <button type="submit">Login</button>
 
-        <!-- Links for Register & Password Recovery -->
         <div class="links">
             <a href="/register">Registrati</a> | 
             <a href="/forgot">Password smarrita?</a>
@@ -182,7 +179,6 @@ LOGIN_HTML = """
 @app.route("/register", methods=["GET", "POST"])
 def register():
 
-    # ================= POST (SALVATAGGIO UTENTE) =================
     if request.method == "POST":
 
         username = request.form.get("username")
@@ -192,20 +188,20 @@ def register():
         first_name = request.form.get("first_name")
         last_name = request.form.get("last_name")
 
-        # 🔒 controllo base
         if not username or not email or not password or not sector:
             return "Tutti i campi sono obbligatori"
 
-        # 🔎 evita duplicati username
         check = requests.get(
             f"{SUPABASE_URL}/rest/v1/users?username=eq.{username}",
             headers=HEADERS
         )
 
+        if check.status_code != 200:
+            return "Errore server"
+
         if check.json():
             return "Username già registrato"
 
-        # 🔐 hash password
         hashed = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
 
         data = {
@@ -235,14 +231,15 @@ def register():
         <a href="/">Torna al login</a>
         """
 
-    # ================= GET (MOSTRA FORM) =================
-
     res = requests.get(
         f"{SUPABASE_URL}/rest/v1/users_available_free?select=username,sector,first_name,last_name",
         headers=HEADERS
     )
 
-    users = res.json()
+    if res.status_code != 200:
+        users = []
+    else:
+        users = res.json()
 
     return render_template_string("""
 <!DOCTYPE html>
@@ -380,29 +377,40 @@ function fillSector() {
 </body>
 </html>
 """, users=users)
+
+
+# ================= EMAIL =================
 def send_email(to, link):
+
+    email_user = os.getenv("EMAIL_USER") or "noreply.team104@gmail.com"
+    email_pass = os.getenv("EMAIL_PASS")  # 🔐 da mettere nel .env
 
     msg = MIMEText(f"Clicca qui per reimpostare la password:\n{link}")
     msg["Subject"] = "Reset Password"
-    msg["From"] = "noreply.team104@gmail.com"
+    msg["From"] = email_user
     msg["To"] = to
 
     with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
-        server.login("noreply.team104@gmail.com", "turf tlus ngor onwr")
+        server.login(email_user, email_pass)
         server.send_message(msg)
 
+
+# ================= FORGOT =================
 @app.route("/forgot", methods=["GET", "POST"])
 def forgot():
 
     if request.method == "POST":
 
-        email = request.form["email"]
+        email = request.form.get("email")
 
         # 🔎 controllo che email esista
         check = requests.get(
             f"{SUPABASE_URL}/rest/v1/users?email=eq.{email}",
             headers=HEADERS
         )
+
+        if check.status_code != 200:
+            return "Errore server"
 
         user_data = check.json()
 
@@ -411,7 +419,6 @@ def forgot():
 
         # 🔐 genera token
         token = secrets.token_urlsafe(32)
-        expires = (datetime.utcnow() + timedelta(minutes=15)).isoformat()
 
         # 💾 salva token su users
         res = requests.patch(
@@ -424,6 +431,9 @@ def forgot():
 
         print("RESET PATCH STATUS:", res.status_code)
         print("RESET PATCH RESPONSE:", res.text)
+
+        if res.status_code not in [200, 204]:
+            return "Errore generazione reset"
 
         # 🔗 link reset
         reset_link = f"https://attendance-app-9ozz.onrender.com/reset/{token}"
@@ -551,24 +561,25 @@ def forgot():
 </body>
 </html>
 """
+
+
+# ================= RESET =================
 @app.route("/reset/<token>", methods=["GET", "POST"])
 def reset_password(token):
 
-    headers = {
-        "apikey": SUPABASE_KEY,
-        "Authorization": f"Bearer {SUPABASE_KEY}",
-        "Content-Type": "application/json"
-    }
-
     if request.method == "POST":
 
-        new_password = request.form["password"].encode("utf-8")
-        hashed = bcrypt.hashpw(new_password, bcrypt.gensalt()).decode("utf-8")
+        password = request.form.get("password")
 
-        # 🔎 1. CERCO UTENTE COL TOKEN
+        if not password:
+            return "Password mancante"
+
+        hashed = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+
+        # 🔎 CERCO UTENTE COL TOKEN
         res = requests.get(
             f"{SUPABASE_URL}/rest/v1/users?reset_token=eq.{token}",
-            headers=headers
+            headers=HEADERS
         )
 
         print("RESET GET STATUS:", res.status_code)
@@ -577,20 +588,17 @@ def reset_password(token):
         if res.status_code != 200:
             return "Errore server durante verifica token"
 
-        try:
-            users = res.json()
-        except:
-            return "Errore lettura dati token"
+        users = res.json()
 
         if not users:
             return "Token non valido o scaduto"
 
         user_id = users[0]["id"]
 
-        # 🔄 2. UPDATE PASSWORD
+        # 🔄 UPDATE PASSWORD
         update = requests.patch(
             f"{SUPABASE_URL}/rest/v1/users?id=eq.{user_id}",
-            headers=headers,
+            headers=HEADERS,
             json={
                 "password": hashed,
                 "reset_token": None
@@ -598,7 +606,15 @@ def reset_password(token):
         )
 
         print("UPDATE STATUS:", update.status_code)
-        print("UPDATE TEXT:", update.text)
+
+        if update.status_code not in [200, 204]:
+            return "Errore aggiornamento password"
+
+        return """
+        <h3>Password aggiornata con successo ✅</h3>
+        <a href="/">Vai al login</a>
+        """
+print("UPDATE TEXT:", update.text)
 
         if update.status_code not in [200, 204]:
             return f"Errore aggiornamento password: {update.text}"
@@ -747,24 +763,32 @@ def reset_password(token):
 </body>
 </html>
 """
+
+
 # ---------------- LOGIN ----------------
 @app.route("/", methods=["GET", "POST"])
 def login():
 
     if request.method == "POST":
 
-        username = request.form["username"]
-        password = request.form["password"]
+        username = request.form.get("username")
+        password = request.form.get("password")
+
+        if not username or not password:
+            return "Username e password richiesti"
 
         res = requests.get(
             f"{SUPABASE_URL}/rest/v1/users?username=eq.{username}",
             headers=HEADERS
         )
 
+        if res.status_code != 200:
+            return "Errore server"
+
         try:
             user_data = res.json()
         except:
-            return "Errore server"
+            return "Errore lettura dati"
 
         if not user_data:
             return """
@@ -857,10 +881,10 @@ def login():
             session.permanent = True
             session["user"] = db_user
             session["last_activity"] = datetime.utcnow().isoformat()
-            role = db_user.get("role", "worker")
 
-            session["user"] = db_user
-            session["view"] = "manager" if role == "manager" else "worker"   
+            role = db_user.get("role", "worker")
+            session["view"] = "manager" if role == "manager" else "worker"
+
             return redirect("/dashboard")
 
         return """
@@ -869,35 +893,6 @@ def login():
         <head>
         <meta charset="UTF-8">
         <title>Login errore</title>
-        <style>
-            body {
-                margin: 0;
-                height: 100vh;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                background: linear-gradient(135deg, #1e3c72, #2a5298);
-                font-family: Arial, Helvetica, sans-serif;
-            }
-        
-            .alert-box {
-                background: white;
-                padding: 40px 50px;
-                border-radius: 12px;
-                box-shadow: 0 15px 35px rgba(0,0,0,0.2);
-                text-align: center;
-                max-width: 420px;
-                animation: fadeIn 0.4s ease-in-out;
-            }
-        
-            .alert-icon {
-                font-size: 50px;
-                color: #e74c3c;
-                margin-bottom: 15px;
-            }
-        
-            .alert-title {
-                font-size: 22px;
                 font-weight: bold;
                 margin-bottom: 10px;
                 color: #333;
@@ -954,100 +949,71 @@ def login():
 @app.route("/switch_view/<view>")
 def switch_view(view):
 
-    print("SWITCH CHIAMATO:", view)
-    print("USER PRIMA:", session.get("user"))
-    print("VIEW PRIMA:", session.get("view"))
+    if "user" not in session:
+        return redirect("/")
 
     session["view"] = view
-
-    print("VIEW DOPO:", session.get("view"))
-
     return redirect("/dashboard")
+
 
 @app.route("/dashboard")
 def dashboard():
-    print(session)
+
     if "user" not in session:
         return redirect("/")
-    view = session.get("view", "worker")
+
     user = session["user"]
+    view = session.get("view", "worker")
 
-    # ===== SWITCH SEMPRE VISIBILE AL MANAGER =====
-    switch_html = ""
-    
-    if user.get("role") == "manager":
-        current_view = session.get("view", "manager")
-    
-        switch_html = f"""
-        <div style="margin-bottom:15px; padding:10px; background:#0f172a; border-radius:8px; display:flex; gap:10px; align-items:center;">
-            <b style="color:white;">Vista Attuale:</b>
-    
-            <a href="/switch_view/manager" style="text-decoration:none;">
-                <button style="cursor:pointer; padding:6px 12px; background:{'#22c55e' if current_view=='manager' else '#334155'}; color:white; border:none; border-radius:6px; font-weight:bold;">
-                    👔 Manager
-                </button>
-            </a>
-    
-            <a href="/switch_view/worker" style="text-decoration:none;">
-                <button style="cursor:pointer; padding:6px 12px; background:{'#3b82f6' if current_view=='worker' else '#334155'}; color:white; border:none; border-radius:6px; font-weight:bold;">
-                    👷 Lavoratore
-                </button>
-            </a>
-        </div>
-        """
+    sector = user.get("sector")
 
-    sector = user["sector"]
-
-    # ===== Recupero TUTTE le richieste pending =====
+    # ===== Recupero richieste pending =====
     res = requests.get(
         f"{SUPABASE_URL}/rest/v1/absences?status=eq.pending",
         headers=HEADERS
     )
-    
-    all_pending = res.json()
-    
-    # Conta quante richieste pending per ogni sector
+
+    if res.status_code != 200:
+        all_pending = []
+    else:
+        all_pending = res.json()
+
+    # Conta pending per sector
     pending_by_sector = {}
-    
+
     for req in all_pending:
-        s = req["sector"]
-        pending_by_sector[s] = pending_by_sector.get(s, 0) + 1
+        s = req.get("sector")
+        if s:
+            pending_by_sector[s] = pending_by_sector.get(s, 0) + 1
 
-    # ================= CAPO =================
-    
-
+    # ================= MANAGER =================
     if view == "manager":
 
         import json
 
-        sector = request.args.get("sector")
-        if not sector:
-            sector = "all"
-    
-        params = {
-            "select": "*"
-        }
-    
-        if sector and sector != "all":
-            params["sector"] = f"eq.{sector}"
-    
+        selected_sector = request.args.get("sector") or "all"
+
+        params = {"select": "*"}
+
+        if selected_sector != "all":
+            params["sector"] = f"eq.{selected_sector}"
+
         res = requests.get(
             f"{SUPABASE_URL}/rest/v1/absences",
             headers=HEADERS,
             params=params
         )
-    
+
         try:
             data = res.json()
         except:
             data = []
 
-        # ================= PREPARAZIONE EVENTI CALENDARIO =================
+        # ===== EVENTI CALENDARIO =====
         events = []
 
         for d in data:
 
-            # FullCalendar usa END ESCLUSIVO → aggiungiamo 1 giorno per ferie
             if d.get("type") == "ferie":
                 end_date = datetime.strptime(d["date_to"], "%Y-%m-%d") + timedelta(days=1)
                 end_date = end_date.strftime("%Y-%m-%d")
@@ -1056,7 +1022,7 @@ def dashboard():
 
             events.append({
                 "id": d["id"],
-                "title": f"{d['worker_name']} - {d['type'].capitalize()}",
+                "title": f"{d.get('worker_name', '')} - {d.get('type', '').capitalize()}",
                 "start": d["date_from"],
                 "end": end_date,
                 "color":
@@ -1064,145 +1030,75 @@ def dashboard():
                     else "#22c55e" if d["status"] == "approved"
                     else "#ef4444",
                 "extendedProps": {
-                    "worker": d["worker_name"],
-                    "type": d["type"],
-                    "date_from": d["date_from"],
+                    "worker": d.get("worker_name"),
+                    "type": d.get("type"),
+                    "date_from": d.get("date_from"),
                     "date_to": d.get("date_to"),
                     "start_time": d.get("start_time"),
                     "end_time": d.get("end_time"),
-                    "status": d["status"]
+                    "status": d.get("status")
                 }
             })
 
         events_json = json.dumps(events)
-        # richieste pending SOLO del sector visualizzato
-        pending_requests = [r for r in all_pending if r["sector"] == sector] if sector else []
-        if user["role"] == "manager":
 
-            # Recuperiamo il ruolo reale e la visualizzazione attuale
-            user_role = user.get("role")
-            current_view = session.get("view")
-            
-            # Se è la prima volta, impostiamo la vista predefinita in base al ruolo
-            if not current_view:
-                current_view = user_role
-                session["view"] = current_view
-            
-            html = ""
-            
-            # Mostriamo lo switch SOLO se l'utente è un Manager (sia in modalità manager che worker)
-            if user_role == "manager":
-                html += f"""
-                <div style="margin-bottom:15px; padding:10px; background:#0f172a; border-radius:8px; display:flex; gap:10px; align-items:center;">
-                    <b style="color:white;">Vista Attuale:</b>
-            
-                    <a href="/switch_view/manager" style="text-decoration:none;">
-                        <button style="cursor:pointer; padding:6px 12px; background:{'#22c55e' if current_view=='manager' else '#334155'}; color:white; border:none; border-radius:6px; font-weight:bold;">
-                            👔 Manager
-                        </button>
-                    </a>
-            
-                    <a href="/switch_view/worker" style="text-decoration:none;">
-                        <button style="cursor:pointer; padding:6px 12px; background:{'#3b82f6' if current_view=='worker' else '#334155'}; color:white; border:none; border-radius:6px; font-weight:bold;">
-                            👷 Lavoratore
-                        </button>
-                    </a>
-                </div>       
+        # pending filtrate
+        if selected_sector == "all":
+            pending_requests = all_pending
+        else:
+            pending_requests = [r for r in all_pending if r.get("sector") == selected_sector]
 
-        <style>
-        .sector-btn {{
-            background:#2d89ef;
-            color:white;
-            padding:8px 14px;
-            border:none;
-            border-radius:6px;
-            font-weight:bold;
-            cursor:pointer;
-        }}
-        
-        .alert-btn {{
-            background:#e74c3c !important;
-            animation:pulse 1.2s infinite;
-        }}
-        
-        @keyframes pulse {{
-            0% {{ box-shadow:0 0 0 0 rgba(231,76,60,0.7); }}
-            70% {{ box-shadow:0 0 0 10px rgba(231,76,60,0); }}
-            100% {{ box-shadow:0 0 0 0 rgba(231,76,60,0); }}
-        }}
-        
-        .notification-box {{
-            background:#1f2937;
-            color:white;
-            padding:12px;
-            border-radius:8px;
-            margin-bottom:15px;
-        }}
-        .selected-btn {{
-            background:#0ea5e9 !important;
-            border:2px solid white;
-            transform:scale(1.05);
-        }}
-        </style>
-        
+        # ===== SWITCH VIEW =====
+        switch_html = ""
+
+        if user.get("role") == "manager":
+            current_view = session.get("view", "manager")
+
+            switch_html = f"""
+            <div style="margin-bottom:15px; padding:10px; background:#0f172a; border-radius:8px; display:flex; gap:10px; align-items:center;">
+                <b style="color:white;">Vista Attuale:</b>
+
+                <a href="/switch_view/manager">
+                    <button style="padding:6px 12px; background:{'#22c55e' if current_view=='manager' else '#334155'}; color:white; border:none; border-radius:6px;">
+                        👔 Manager
+                    </button>
+                </a>
+
+                <a href="/switch_view/worker">
+                    <button style="padding:6px 12px; background:{'#3b82f6' if current_view=='worker' else '#334155'}; color:white; border:none; border-radius:6px;">
+                        👷 Worker
+                    </button>
+                </a>
+            </div>
+            """
+
+        # ===== FILTRI SETTORI =====
+        sector_buttons = f"""
         <div style="margin-bottom:15px; display:flex; gap:8px; flex-wrap:wrap;">
+
             <a href="/dashboard?sector=all">
-                <button class="sector-btn
-                {'selected-btn' if sector=='all' else ''}">
-                Tutti
+                <button class="sector-btn {'selected-btn' if selected_sector=='all' else ''}">
+                    Tutti
                 </button>
             </a>
-        
-            <a href="/dashboard?sector=Dogane">
+        """
+
+        sectors = ["Dogane", "Syllabus", "Unica", "Accise", "Fabbisogni", "Bonus"]
+
+        for s in sectors:
+            count = pending_by_sector.get(s, 0)
+
+            sector_buttons += f"""
+            <a href="/dashboard?sector={s}">
                 <button class="sector-btn 
-                {'alert-btn' if pending_by_sector.get('Dogane',0) > 0 else ''}
-                {'selected-btn' if sector=='Dogane' else ''}">
-                Dogane {'🔔 ' + str(pending_by_sector.get('Dogane',0)) if pending_by_sector.get('Dogane',0) > 0 else ''}
+                {'alert-btn' if count > 0 else ''}
+                {'selected-btn' if selected_sector==s else ''}">
+                    {s} {'🔔 ' + str(count) if count > 0 else ''}
                 </button>
             </a>
-        
-            <a href="/dashboard?sector=Syllabus">
-                <button class="sector-btn 
-                {'alert-btn' if pending_by_sector.get('Syllabus',0) > 0 else ''}
-                {'selected-btn' if sector=='Syllabus' else ''}">
-                Syllabus {'🔔 ' + str(pending_by_sector.get('Syllabus',0)) if pending_by_sector.get('Syllabus',0) > 0 else ''}
-                </button>
-            </a>
-        
-            <a href="/dashboard?sector=Unica">
-                <button class="sector-btn 
-                {'alert-btn' if pending_by_sector.get('Unica',0) > 0 else ''}
-                {'selected-btn' if sector=='Unica' else ''}">
-                Unica {'🔔 ' + str(pending_by_sector.get('Unica',0)) if pending_by_sector.get('Unica',0) > 0 else ''}
-                </button>
-            </a>
-        
-            <a href="/dashboard?sector=Accise">
-                <button class="sector-btn 
-                {'alert-btn' if pending_by_sector.get('Accise',0) > 0 else ''}
-                {'selected-btn' if sector=='Accise' else ''}">
-                Accise {'🔔 ' + str(pending_by_sector.get('Accise',0)) if pending_by_sector.get('Accise',0) > 0 else ''}
-                </button>
-            </a>
-        
-            <a href="/dashboard?sector=Fabbisogni">
-                <button class="sector-btn 
-                {'alert-btn' if pending_by_sector.get('Fabbisogni',0) > 0 else ''}
-                {'selected-btn' if sector=='Fabbisogni' else ''}">
-                Fabbisogni {'🔔 ' + str(pending_by_sector.get('Fabbisogni',0)) if pending_by_sector.get('Fabbisogni',0) > 0 else ''}
-                </button>
-            </a>
-        
-            <a href="/dashboard?sector=Bonus">
-                <button class="sector-btn 
-                {'alert-btn' if pending_by_sector.get('Bonus',0) > 0 else ''}
-                {'selected-btn' if sector=='Bonus' else ''}">
-                Bonus {'🔔 ' + str(pending_by_sector.get('Bonus',0)) if pending_by_sector.get('Bonus',0) > 0 else ''}
-                </button>
-            </a>
-        
-        
-        
+            """
+
+        sector_buttons += "</div>"
         <a href="/logout" style="
             display:inline-block;
             padding:8px 14px;
@@ -1220,6 +1116,7 @@ def dashboard():
         <a href="/settings">
             ⚙️ Impostazioni account
         </a>
+
         <form method="GET" action="/export_excel" style="margin-bottom:20px; display:flex; gap:10px; align-items:end;">
             <div>
                 <label style="color:white;">Dal:</label><br>
@@ -1240,7 +1137,8 @@ def dashboard():
                 📥 Scarica Excel
             </button>
         </form>
-        <!-- ================= FULLCALENDAR ================= -->
+
+<!-- ================= FULLCALENDAR ================= -->
 <link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css' rel='stylesheet' />
 <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js'></script>
 
@@ -1276,101 +1174,97 @@ def dashboard():
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {{
+document.addEventListener('DOMContentLoaded', function() {
 
     var calendarEl = document.getElementById('calendar');
 
-    var calendar = new FullCalendar.Calendar(calendarEl, {{
+    var calendar = new FullCalendar.Calendar(calendarEl, {
         initialView: "dayGridMonth",
         locale: "it",
         firstDay: 1,
 
         weekends: true,
 
-        headerToolbar: {{
+        headerToolbar: {
             left: 'prev,next today',
             center: 'title',
             right: 'timeGridDay,timeGridWeek'
-        }},
+        },
 
-        dayCellDidMount: function(info) {{
+        dayCellDidMount: function(info) {
             const day = info.date.getDay();
-            if (day === 0 || day === 6) {{
+            if (day === 0 || day === 6) {
                 info.el.style.backgroundColor = "#111827";
                 info.el.style.opacity = "0.6";
-            }}
-        }},
+            }
+        },
 
-        locale: 'it',
         slotMinTime: "08:00:00",
         slotMaxTime: "19:00:00",
 
-        events: {events_json},
+        events: """ + events_json + """,
 
-        eventClick: function(info) {{
+        eventClick: function(info) {
 
             let e = info.event;
 
             let html = `
-                <h3>${{e.extendedProps.worker}}</h3>
-                <p><b>Tipo:</b> ${{e.extendedProps.type}}</p>
-                <p><b>Data:</b> ${{e.extendedProps.date_from}} ${{e.extendedProps.date_to ? '→ ' + e.extendedProps.date_to : ''}}</p>
-                <p><b>Orario:</b> ${{e.extendedProps.start_time ?? '09:00'}} - ${{e.extendedProps.end_time ?? '18:00'}}</p>
-                <p><b>Stato:</b> ${{e.extendedProps.status}}</p>
+                <h3>${e.extendedProps.worker}</h3>
+                <p><b>Tipo:</b> ${e.extendedProps.type}</p>
+                <p><b>Data:</b> ${e.extendedProps.date_from} ${e.extendedProps.date_to ? '→ ' + e.extendedProps.date_to : ''}</p>
+                <p><b>Orario:</b> ${e.extendedProps.start_time ?? '09:00'} - ${e.extendedProps.end_time ?? '18:00'}</p>
+                <p><b>Stato:</b> ${e.extendedProps.status}</p>
                 <br>
-                <button onclick="handleAction('/approve/${{e.id}}')" style="padding:8px 12px;background:#22c55e;color:white;border:none;border-radius:6px;margin-right:8px;">✔ Approva</button>
-                <button onclick="handleAction('/reject/${{e.id}}')" style="padding:8px 12px;background:#ef4444;color:white;border:none;border-radius:6px;">✖ Rifiuta</button>
+                <button onclick="handleAction('/approve/${e.id}')" style="padding:8px 12px;background:#22c55e;color:white;border:none;border-radius:6px;margin-right:8px;">✔ Approva</button>
+                <button onclick="handleAction('/reject/${e.id}')" style="padding:8px 12px;background:#ef4444;color:white;border:none;border-radius:6px;">✖ Rifiuta</button>
             `;
 
             document.getElementById("modalBody").innerHTML = html;
             document.getElementById("eventModal").style.display = "flex";
-        }},
+        },
 
         height: "auto"
-    }});
+    });
 
     calendar.render();
-}});
+});
 </script>
 
 <script>
-function closeModal() {{
+function closeModal() {
     document.getElementById("eventModal").style.display = "none";
-}}
+}
 
-function handleAction(url) {{
-    fetch(url).then(() => {{
+function handleAction(url) {
+    fetch(url).then(() => {
         closeModal();
         location.reload();
-    }});
-}}
+    });
+}
 </script>
 
 <hr>
 <h3 style="color:white">Lista richieste</h3>
-        """
+"""
 
-        # ================= LA TUA LISTA ORIGINALE =================    
-        
         today = date.today()
-        
+
         for d in data:
             start = datetime.strptime(d["date_from"], "%Y-%m-%d").date()
             end = datetime.strptime(d.get("date_to", d["date_from"]), "%Y-%m-%d").date()
-        
-            # Nascondi solo richieste completamente passate
+
             if end < today:
                 continue
-        
+
             color = "#f59e0b" if d["status"] == "pending" else "#22c55e" if d["status"] == "approved" else "#ef4444"
-        
+
             if d.get("type") == "ferie":
                 date_display = f'{d.get("date_from")} → {d.get("date_to")}'
                 time_display = "09:00 - 18:00"
             else:
                 date_display = d.get("date_from")
                 time_display = f'{d.get("start_time")} - {d.get("end_time")}'
-        
+
             html += f"""
             <div style="
                 background:#0f172a;
@@ -1382,17 +1276,17 @@ function handleAction(url) {{
                 text-align:left;
                 width:100%;
             ">
-                <b>{d["worker_name"]}</b><br>
+                <b>{d.get("worker_name","")}</b><br>
                 📅 {date_display}<br>
                 🏷 {d.get("type","")}<br>
                 ⏰ {time_display}<br>
-                Stato: <span style="color:{color}">{d["status"]}</span><br><br>
-        
+                Stato: <span style="color:{color}">{d.get("status")}</span><br><br>
+
                 <a href="/approve/{d["id"]}" style="color:#22c55e">✔ Approva</a> |
                 <a href="/reject/{d["id"]}" style="color:#ef4444">✖ Rifiuta</a>
             </div>
             """
-        
+
         return html
 
     # ================= LAVORATORE =================
@@ -1402,10 +1296,15 @@ function handleAction(url) {{
             f"{SUPABASE_URL}/rest/v1/absences?worker_name=eq.{user['username']}",
             headers=HEADERS
         )
-        data = res.json()
+
+        if res.status_code != 200:
+            data = []
+        else:
+            data = res.json()
 
         html = f"""
-        <h2 style="color:#38bdf8">Benvenuto {user['first_name']}</h2>
+        <h2 style="color:#38bdf8">Benvenuto {user.get('first_name')}</h2>
+
         <a href="/logout" style="
             display:inline-block;
             padding:8px 14px;
@@ -1414,14 +1313,11 @@ function handleAction(url) {{
             text-decoration:none;
             border-radius:8px;
             font-weight:bold;
-            font-family:Arial;
-            transition:0.2s;
         ">
             Logout
         </a>
-        <a href="/settings">
-            ⚙️ Impostazioni account
-        </a>
+
+        <a href="/settings">⚙️ Impostazioni account</a>
         <hr>
 
         <h3>➕ Inserisci assenza</h3>
@@ -1441,208 +1337,205 @@ function handleAction(url) {{
 
           <div id="singleDate">
             Data: <input type="date" name="date"><br><br>
-        </div>
+          </div>
         
-        <div id="rangeDate" style="display:none;">
+          <div id="rangeDate" style="display:none;">
             Dal: <input type="date" name="date_from"><br><br>
             Al: <input type="date" name="date_to"><br><br>
-        </div>
+          </div>
 
           Dalle: <input type="time" name="start_time" id="start" min="09:00" max="18:00"><br><br>
-          
           Alle: <input type="time" name="end_time" id="end" min="09:00" max="18:00"><br><br>
 
-        <button id="submitBtn" type="submit" disabled
-        style="background:#3b82f6;color:white;padding:6px;border:none;border-radius:6px;opacity:0.5;">
-        Invia
-        </button>
+          <button id="submitBtn" type="submit" disabled
+          style="background:#3b82f6;color:white;padding:6px;border:none;border-radius:6px;opacity:0.5;">
+          Invia
+          </button>
         </form>
 
         <script>
-        function toggleAddForm(){{
+        function toggleAddForm(){
 
             let type = document.getElementById("type").value;
-        
+
             let start = document.getElementById("start");
             let end = document.getElementById("end");
-        
+
             let singleDate = document.getElementById("singleDate");
             let rangeDate = document.getElementById("rangeDate");
-        
-            if(type === "ferie"){{
+
+            if(type === "ferie"){
                 start.disabled = true;
                 end.disabled = true;
                 start.value = "";
                 end.value = "";
-        
+
                 singleDate.style.display = "none";
                 rangeDate.style.display = "block";
-        
-            }} else {{
+
+            } else {
                 start.disabled = false;
                 end.disabled = false;
-        
+
                 singleDate.style.display = "block";
                 rangeDate.style.display = "none";
-            }}
-        
+            }
+
             validateForm();
-        }}
+        }
 
-        function blockWeekendDates() {{
-    document.querySelectorAll("input[type='date']").forEach(input => {{
-        input.addEventListener("input", function () {{
-            const day = new Date(this.value).getDay();
-            if (day === 0 || day === 6) {{
-                alert("Weekend non selezionabile");
-                this.value = "";
-            }}
-        }});
-    }});
-}}
-
+        function blockWeekendDates() {
+            document.querySelectorAll("input[type='date']").forEach(input => {
+                input.addEventListener("input", function () {
+                    const day = new Date(this.value).getDay();
+                    if (day === 0 || day === 6) {
+                        alert("Weekend non selezionabile");
+                        this.value = "";
+                    }
+                });
+            });
+        }
+        </script>
 window.addEventListener("DOMContentLoaded", blockWeekendDates);
 
-        function validateForm(){{
+function validateForm(){
 
-            let type = document.getElementById("type").value;
-        
-            let start = document.getElementById("start").value;
-            let end = document.getElementById("end").value;
-        
-            let submitBtn = document.getElementById("submitBtn");
-        
-            let valid = true;
-        
-            if(type === "ferie"){{
-                let from = document.querySelector("input[name='date_from']").value;
-                let to = document.querySelector("input[name='date_to']").value;
-        
-                if(!from || !to) valid = false;
-        
-            }} else {{
-                let date = document.querySelector("input[name='date']").value;
-        
-                if(!date || !start || !end) valid = false;
-            }}
-        
-            submitBtn.disabled = !valid;
-            submitBtn.style.opacity = valid ? "1" : "0.5";
-        }}
+    let type = document.getElementById("type").value;
 
-            document.querySelectorAll("input, select").forEach(el => {{
-        el.addEventListener("input", validateForm);
-    }});
-            window.addEventListener("DOMContentLoaded", function () {{
-            toggleAddForm();
-        }});
-        </script>
+    let start = document.getElementById("start").value;
+    let end = document.getElementById("end").value;
 
-        <hr>
-        <h3 style="color:#38bdf8;margin-bottom:10px;">📅 Calendario assenze</h3>
-        
-        </div>
-        <link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css' rel='stylesheet' />
-        <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js'></script>
-        
-        <style>
-            html, body {{
-                margin: 0;
-                padding: 0;
-                height: 100%;
-                font-family: Arial, Helvetica, sans-serif;
-                background: #f4f6f9;
-            }}
-        
-            .page-wrapper {{
-                padding: 30px;
-                height: 100%;
-                box-sizing: border-box;
-            }}
-        
-            .calendar-card {{
-                background: white;
-                border-radius: 14px;
-                box-shadow: 0 15px 35px rgba(0,0,0,0.12);
-                padding: 20px;
-                height: calc(100% - 60px);
-            }}
-        
-            #calendar {{
-                height: 100%;
-            }}
-        </style>
-        
-        <div class="page-wrapper">
-            <div class="calendar-card">
-                <div id="calendar"></div>
-            </div>
-        </div>
-        """
+    let submitBtn = document.getElementById("submitBtn");
 
-        for d in data:
+    let valid = true;
 
-            status = d.get("status", "pending")
-            color = "#f59e0b" if status == "pending" else "#22c55e" if status == "approved" else "#ef4444"
-        
-            html += f"""
-            <div class="card" style="
-                background:linear-gradient(135deg,#1e293b,#0f172a);
-                padding:12px;
-                border-radius:10px;
-                margin-bottom:10px;
-                color:white;
-                box-shadow:0 6px 15px rgba(0,0,0,0.3)
-            ">
-        
-                <input type="hidden" class="id" value='{d["id"]}'>
-        
-                <b>Stato:
-                    <span style="color:{color}; font-weight:bold;">
-                        {status.upper()}
-                    </span>
-                </b><br><br>
-        
-                Tipo:
-                <select class="type">
-                    <option value="ferie" {"selected" if d.get("type")=="ferie" else ""}>Ferie</option>
-                    <option value="permesso" {"selected" if d.get("type")=="permesso" else ""}>Permesso</option>
-                </select><br>
-        
-                Data:<br>
-                {f"""
-                Dal: <input type='date' class='date_from' value='{d.get("date_from","")}'><br>
-                Al: <input type='date' class='date_to' value='{d.get("date_to","")}'><br>
-                """ if d.get("type")=="ferie" else f"""
-                <input type='date' class='date' value='{d.get("date_from","")}'><br>
-                """}
-        
-                Dalle:
-                <input type="time" class="start" value='{d.get("start_time","")}'><br>
-        
-                Alle:
-                <input type="time" class="end" value='{d.get("end_time","")}'><br><br>
-        
-                <button onclick="update(this)" style="background:#3b82f6;color:white;">Modifica</button>
-                <button onclick="remove(this)" style="background:#ef4444;color:white;">Elimina</button>
-            </div>
-            """
+    if(type === "ferie"){
+        let from = document.querySelector("input[name='date_from']").value;
+        let to = document.querySelector("input[name='date_to']").value;
 
-        html += """
+        if(!from || !to) valid = false;
+
+    } else {
+        let date = document.querySelector("input[name='date']").value;
+
+        if(!date || !start || !end) valid = false;
+    }
+
+    submitBtn.disabled = !valid;
+    submitBtn.style.opacity = valid ? "1" : "0.5";
+}
+
+document.querySelectorAll("input, select").forEach(el => {
+    el.addEventListener("input", validateForm);
+});
+
+window.addEventListener("DOMContentLoaded", function () {
+    toggleAddForm();
+});
+</script>
+
+<hr>
+<h3 style="color:#38bdf8;margin-bottom:10px;">📅 Calendario assenze</h3>
+
+</div>
+
+<link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css' rel='stylesheet' />
+<script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js'></script>
+
+<style>
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    font-family: Arial, Helvetica, sans-serif;
+    background: #f4f6f9;
+}
+
+.page-wrapper {
+    padding: 30px;
+    height: 100%;
+    box-sizing: border-box;
+}
+
+.calendar-card {
+    background: white;
+    border-radius: 14px;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.12);
+    padding: 20px;
+    height: calc(100% - 60px);
+}
+
+#calendar {
+    height: 100%;
+}
+</style>
+
+<div class="page-wrapper">
+    <div class="calendar-card">
+        <div id="calendar"></div>
+    </div>
+</div>
+"""
+
+for d in data:
+
+    status = d.get("status", "pending")
+    color = "#f59e0b" if status == "pending" else "#22c55e" if status == "approved" else "#ef4444"
+
+    html += f"""
+    <div class="card" style="
+        background:linear-gradient(135deg,#1e293b,#0f172a);
+        padding:12px;
+        border-radius:10px;
+        margin-bottom:10px;
+        color:white;
+        box-shadow:0 6px 15px rgba(0,0,0,0.3)
+    ">
+
+        <input type="hidden" class="id" value='{d.get("id")}'>
+        <b>Stato:
+            <span style="color:{color}; font-weight:bold;">
+                {status.upper()}
+            </span>
+        </b><br><br>
+
+        Tipo:
+        <select class="type">
+            <option value="ferie" {"selected" if d.get("type")=="ferie" else ""}>Ferie</option>
+            <option value="permesso" {"selected" if d.get("type")=="permesso" else ""}>Permesso</option>
+        </select><br>
+
+        Data:<br>
+        {f"""
+        Dal: <input type='date' class='date_from' value='{d.get("date_from","")}'><br>
+        Al: <input type='date' class='date_to' value='{d.get("date_to","")}'><br>
+        """ if d.get("type")=="ferie" else f"""
+        <input type='date' class='date' value='{d.get("date_from","")}'><br>
+        """}
+
+        Dalle:
+        <input type="time" class="start" value='{d.get("start_time","")}'><br>
+
+        Alle:
+        <input type="time" class="end" value='{d.get("end_time","")}'><br><br>
+
+        <button onclick="update(this)" style="background:#3b82f6;color:white;">Modifica</button>
+        <button onclick="removeCard(this)" style="background:#ef4444;color:white;">Elimina</button>
+    </div>
+    """
+
+html += """
 <script>
 
-
-function remove(btn){
+function removeCard(btn){
     let card = btn.closest(".card");
     let id = card.querySelector(".id").value;
 
     fetch("/delete/" + id)
-        .then(res => res.text())
         .then(() => {
-            card.remove(); // sparisce subito senza reload
+            card.remove();
         });
 }
-
 
 function toggleRow(card){
 
@@ -1688,18 +1581,13 @@ function update(btn){
 
     if (type === "ferie") {
 
-        let fromEl = card.querySelector(".date_from");
-        let toEl = card.querySelector(".date_to");
-
-        payload.date_from = fromEl ? fromEl.value : null;
-        payload.date_to = toEl ? toEl.value : null;
+        payload.date_from = card.querySelector(".date_from")?.value || null;
+        payload.date_to = card.querySelector(".date_to")?.value || null;
 
     } else {
 
-        let dateEl = card.querySelector(".date");
-
-        payload.date_from = dateEl ? dateEl.value : null;
-        payload.date_to = dateEl ? dateEl.value : null;
+        payload.date_from = card.querySelector(".date")?.value || null;
+        payload.date_to = payload.date_from;
     }
 
     fetch("/update_absence", {
@@ -1707,83 +1595,14 @@ function update(btn){
         headers: {"Content-Type": "application/json"},
         body: JSON.stringify(payload)
     })
-    .then(res => res.json())
     .then(() => location.reload());
 }
-
-function remove(btn){
-    let id = btn.parentElement.querySelector(".id").value;
-
-    fetch("/delete/" + id)
-    .then(() => location.reload());
-}
-
-const data = {{ data | tojson }};
-
-let currentDate = new Date();
-
-document.addEventListener("DOMContentLoaded", function () {
-
-    if (!window.FullCalendar) {
-        console.error("FullCalendar non caricato");
-        return;
-    }
-
-    const calendarEl = document.getElementById("calendar");
-
-    const calendar = new FullCalendar.Calendar(calendarEl, {
-        initialView: "dayGridMonth",
-        locale: "it",
-        firstDay: 1,
-
-        headerToolbar: {
-            left: 'prev,next today',
-            center: 'title',
-            right: 'dayGridMonth,timeGridWeek,timeGridDay'
-        },
-        
-
-        weekends: true,
-
-        dayCellDidMount: function(info) {
-            const day = info.date.getDay();
-            if (day === 0 || day === 6) {
-                info.el.style.backgroundColor = "#0b1220";
-                info.el.style.opacity = "0.5";
-            }
-        },
-
-        events: (typeof data !== "undefined" ? data : []).map(d => {
-
-            if (d.type === "ferie") {
-                return {
-                    title: "Ferie",
-                    start: d.date_from,
-                    end: new Date(new Date(d.date_to).getTime() + 86400000).toISOString().split("T")[0],
-                    color: d.status === "approved" ? "#22c55e"
-                          : d.status === "rejected" ? "#ef4444"
-                          : "#f59e0b"
-                };
-            }
-
-            return {
-                title: "Permesso",
-                start: d.date_from,
-                color: d.status === "approved" ? "#22c55e"
-                      : d.status === "rejected" ? "#ef4444"
-                      : "#f59e0b"
-            };
-        })
-    });
-
-    calendar.render();
-});
 
 </script>
 """
-        
-        html = switch_html + html
-        return render_template_string(html, data=data)
+
+html = switch_html + html
+return render_template_string(html, data=data)
 
 
 # ---------------- ADD ----------------
@@ -1794,29 +1613,26 @@ def add_absence():
         return redirect("/")
 
     user = session["user"]
-    real_role = user.get("role")  # ← RUOLO VERO
+    real_role = user.get("role")
 
-    absence_type = request.form["type"]
+    absence_type = request.form.get("type")
 
-    # ---------------- FERIE ----------------
     if absence_type == "ferie":
-        date_from = request.form["date_from"]
-        date_to = request.form["date_to"]
+        date_from = request.form.get("date_from")
+        date_to = request.form.get("date_to")
         start_time = None
         end_time = None
-
-    # ---------------- PERMESSO ----------------
     else:
-        date_from = request.form["date"]
-        date_to = request.form["date"]
-        start_time = request.form["start_time"]
-        end_time = request.form["end_time"]
+        date_from = request.form.get("date")
+        date_to = request.form.get("date")
+        start_time = request.form.get("start_time")
+        end_time = request.form.get("end_time")
 
     status = "approved" if real_role == "manager" else "pending"
 
     data = {
-        "worker_name": user["username"],
-        "sector": user["sector"],
+        "worker_name": user.get("username"),
+        "sector": user.get("sector"),
         "date_from": date_from,
         "date_to": date_to,
         "type": absence_type,
@@ -1841,42 +1657,31 @@ def update_absence():
         return {"ok": False}, 401
 
     user = session["user"]
-    real_role = user.get("role")  # ← RUOLO VERO
-    data = request.json
+    real_role = user.get("role")
+    data = request.json or {}
 
     status = "approved" if real_role == "manager" else "pending"
 
     payload = {
-        "type": data["type"],
+        "type": data.get("type"),
         "start_time": data.get("start_time"),
         "end_time": data.get("end_time"),
-        "status": status
+        "status": status,
+        "date_from": data.get("date_from"),
+        "date_to": data.get("date_to")
     }
 
-    # ---------------- FERIE ----------------
-    if data["type"] == "ferie":
-        payload["date_from"] = data.get("date_from")
-        payload["date_to"] = data.get("date_to")
-
-    # ---------------- PERMESSO ----------------
-    else:
-        payload["date_from"] = data.get("date_from")
-        payload["date_to"] = data.get("date_to")
-
     requests.patch(
-        f"{SUPABASE_URL}/rest/v1/absences?id=eq.{data['id']}",
+        f"{SUPABASE_URL}/rest/v1/absences?id=eq.{data.get('id')}",
         headers=HEADERS,
         json=payload
     )
 
     return {"ok": True}
 
-# ---------------- DELETE ----------------
 
 @app.route("/delete/<int:id>")
 def delete_absence(id):
-
-    print("DELETE CHIAMATA CON ID:", id)
 
     requests.delete(
         f"{SUPABASE_URL}/rest/v1/absences?id=eq.{id}",
@@ -1885,23 +1690,19 @@ def delete_absence(id):
 
     return ("ok", 200)
 
-# ---------------- APPROVE ----------------
+
 @app.route("/approve/<id>")
 def approve(id):
 
-    r = requests.patch(
+    requests.patch(
         f"{SUPABASE_URL}/rest/v1/absences?id=eq.{id}",
         headers=HEADERS,
         json={"status": "approved"}
     )
 
-    print("APPROVE STATUS:", r.status_code)
-    print("APPROVE RESPONSE:", r.text)
-
     return redirect("/dashboard")
 
 
-# ---------------- REJECT ----------------
 @app.route("/reject/<id>")
 def reject(id):
 
@@ -1912,8 +1713,8 @@ def reject(id):
     )
 
     return redirect("/dashboard")
-    
-# ---------------- DOWNLOAD EXCEL ----------------
+
+
 @app.route("/export_excel")
 def export_excel():
 
@@ -1922,14 +1723,12 @@ def export_excel():
 
     user = session["user"]
 
-    # Solo manager può esportare
     if user.get("role") != "manager":
         return "Non autorizzato", 403
 
     date_from = request.args.get("date_from")
     date_to = request.args.get("date_to")
 
-    # Recupera assenze nel range date
     params = {
         "date_from": f"gte.{date_from}",
         "date_to": f"lte.{date_to}",
@@ -1943,25 +1742,18 @@ def export_excel():
         params=params
     )
 
-    data = res.json()
+    data = res.json() if res.status_code == 200 else []
 
-    # ===== CREA EXCEL =====
     wb = Workbook()
 
-    # Raggruppa per sector
     sectors = {}
     for r in data:
-        s = r["sector"]
-        if s not in sectors:
-            sectors[s] = []
-        sectors[s].append(r)
+        sectors.setdefault(r["sector"], []).append(r)
 
-    # Crea un foglio per ogni sector
     for sector, records in sectors.items():
 
         ws = wb.create_sheet(title=sector)
 
-        # Intestazioni
         ws.append([
             "Lavoratore",
             "Tipo",
@@ -1972,7 +1764,6 @@ def export_excel():
             "Stato"
         ])
 
-        # Righe
         for r in records:
             ws.append([
                 r["worker_name"],
@@ -1984,12 +1775,9 @@ def export_excel():
                 r["status"]
             ])
 
-    # Rimuove il foglio vuoto iniziale creato da default
     if "Sheet" in wb.sheetnames:
-        std = wb["Sheet"]
-        wb.remove(std)
+        wb.remove(wb["Sheet"])
 
-    # Salva in memoria
     file_stream = BytesIO()
     wb.save(file_stream)
     file_stream.seek(0)
@@ -2001,163 +1789,6 @@ def export_excel():
         mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
 
-# ---------------- SETTINGS ----------------
-# 🔹 TEMPLATE (DEVE STARE SOPRA)
-TEMPLATE = """
-<h2>⚙️ Impostazioni account</h2>
-
-<form method="POST">
-
-  <label>
-    <input type="checkbox" id="toggleEmail" onchange="toggleFields()"> Modifica Email
-  </label><br>
-  <input type="email" name="email" id="emailField" placeholder="Nuova email" style="display:none">
-
-  <br><br>
-
-  <label>
-    <input type="checkbox" id="togglePassword" onchange="toggleFields()"> Modifica Password
-  </label><br>
-
-  <div id="passwordGroup" style="display:none">
-      <input type="password" name="current_password" placeholder="Password attuale"><br>
-      <input type="password" name="password" placeholder="Nuova password"><br>
-      <input type="password" name="confirm" placeholder="Conferma password">
-  </div>
-
-  <br><br>
-
-  <button type="submit">💾 Salva modifiche</button>
-</form>
-
-<!-- TOAST -->
-<div id="toast" class="{{ 'show success' if success else 'show error' if message else '' }}">
-    {{ message }}
-</div>
-
-<style>
-#toast {
-  visibility: hidden;
-  position: fixed;
-  bottom: 30px;
-  left: 50%;
-  transform: translateX(-50%);
-  padding: 16px;
-  border-radius: 8px;
-  color: white;
-}
-
-#toast.success { background-color: #2ecc71; }
-#toast.error { background-color: #e74c3c; }
-
-#toast.show {
-  visibility: visible;
-}
-</style>
-
-<script>
-function toggleFields() {
-    document.getElementById("emailField").style.display =
-        document.getElementById("toggleEmail").checked ? "block" : "none";
-
-    document.getElementById("passwordGroup").style.display =
-        document.getElementById("togglePassword").checked ? "block" : "none";
-}
-
-// auto-hide toast
-setTimeout(() => {
-    let toast = document.getElementById("toast");
-    if (toast) toast.classList.remove("show");
-}, 3000);
-</script>
-
-<br>
-<a href="/dashboard">⬅ Torna indietro</a>
-"""
-
-
-
-# 🔹 ROUTE SETTINGS
-@app.route("/settings", methods=["GET", "POST"])
-def settings():
-
-    user = session.get("user")
-    if not user:
-        return redirect("/login")
-
-    user_id = user["id"]
-
-    headers = {
-        "apikey": SUPABASE_KEY,
-        "Authorization": f"Bearer {SUPABASE_KEY}",
-        "Content-Type": "application/json"
-    }
-
-    message = ""
-    success = False
-
-    if request.method == "POST":
-
-        update_data = {}
-
-        new_email = request.form.get("email", "").strip()
-        current_password = request.form.get("current_password", "").strip()
-        new_password = request.form.get("password", "").strip()
-        confirm = request.form.get("confirm", "").strip()
-
-        # 🔹 EMAIL DUPLICATA CHECK
-        if new_email:
-            check = requests.get(
-                f"{SUPABASE_URL}/rest/v1/users?email=eq.{new_email}",
-                headers=headers
-            ).json()
-
-            if check and check[0]["id"] != user_id:
-                return render_template_string(TEMPLATE, message="Email già utilizzata", success=False)
-
-            update_data["email"] = new_email
-
-        # 🔹 CAMBIO PASSWORD
-        if new_password:
-
-            if not current_password:
-                return render_template_string(TEMPLATE, message="Inserisci la password attuale", success=False)
-
-            res = requests.get(
-                f"{SUPABASE_URL}/rest/v1/users?id=eq.{user_id}",
-                headers=headers
-            ).json()
-
-            stored_hash = res[0]["password"]
-
-            if not bcrypt.checkpw(current_password.encode("utf-8"), stored_hash.encode("utf-8")):
-                return render_template_string(TEMPLATE, message="Password attuale errata", success=False)
-
-            if new_password != confirm:
-                return render_template_string(TEMPLATE, message="Le password non corrispondono", success=False)
-
-            hashed = bcrypt.hashpw(
-                new_password.encode("utf-8"),
-                bcrypt.gensalt()
-            ).decode("utf-8")
-
-            update_data["password"] = hashed
-
-        # 🔹 UPDATE DB
-        if update_data:
-            response = requests.patch(
-                f"{SUPABASE_URL}/rest/v1/users?id=eq.{user_id}",
-                headers=headers,
-                json=update_data
-            )
-
-            if response.status_code in [200, 204]:
-                message = "✔️ Modifiche salvate con successo"
-                success = True
-            else:
-                message = "Errore durante l'aggiornamento"
-
-    return render_template_string(TEMPLATE, message=message, success=success)
 
 # ---------------- LOGOUT ----------------
 @app.route("/logout")
@@ -2165,12 +1796,12 @@ def logout():
     session.clear()
     return redirect("/")
 
-# ---------------- KEEP SERVER AWAKE ----------------
+
+# ---------------- HEALTH ----------------
 @app.route("/health")
 def health():
     return "OK", 200
 
 
-# ---------------- RUN ----------------
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
