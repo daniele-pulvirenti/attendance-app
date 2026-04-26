@@ -260,141 +260,242 @@ def register():
     users = res.json()
 
     return render_template_string("""
-<!DOCTYPE html>
-<html lang="it">
-<head>
+    <!DOCTYPE html>
+    <html lang="it">
+    <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
+    
     <style>
-        body {
-            margin: 0;
-            font-family: Arial, sans-serif;
-            background: url('https://images.unsplash.com/photo-1497366754035-f200968a6e72') no-repeat center center/cover;
-            background-size: cover;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-        }
-
-        .card {
-            background: rgba(15, 23, 42, 0.92);
-            padding: 25px;
-            border-radius: 14px;
-            width: 90%;
-            max-width: 420px;
-            color: white;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        }
-
-        h2 {
-            text-align: center;
-            color: #38bdf8;
-            margin-bottom: 20px;
-        }
-
-        label {
-            font-size: 14px;
-            display: block;
-            margin-top: 10px;
-            margin-bottom: 5px;
-            color: #cbd5e1;
-        }
-
-        input, select {
-            width: 100%;
-            padding: 10px;
-            border-radius: 8px;
-            border: none;
-            margin-bottom: 10px;
-            outline: none;
-        }
-
-        button {
-            width: 100%;
-            padding: 10px;
-            background: #3b82f6;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-weight: bold;
-            margin-top: 10px;
-            cursor: pointer;
-        }
-
-        button:hover {
-            background: #2563eb;
-        }
-
-        .link {
-            text-align: center;
-            margin-top: 12px;
-        }
-
-        .link a {
-            color: #38bdf8;
-            text-decoration: none;
-            font-size: 13px;
-        }
+    body {
+        margin: 0;
+        font-family: 'Segoe UI', sans-serif;
+        min-height: 100vh;
+        background: linear-gradient(135deg,#0f172a,#1e293b,#0f172a);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    
+    /* glow */
+    body::before, body::after {
+        content: "";
+        position: fixed;
+        width: 500px;
+        height: 500px;
+        border-radius: 50%;
+        filter: blur(100px);
+        z-index: 0;
+    }
+    body::before {
+        background: rgba(59,130,246,0.25);
+        top: -100px;
+        left: -100px;
+    }
+    body::after {
+        background: rgba(34,197,94,0.2);
+        bottom: -100px;
+        right: -100px;
+    }
+    
+    .container {
+        position: relative;
+        z-index: 1;
+        width: 100%;
+        max-width: 420px;
+    }
+    
+    .card {
+        background: rgba(15,23,42,0.95);
+        padding: 30px;
+        border-radius: 16px;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+        color: white;
+    }
+    
+    h2 {
+        text-align: center;
+        color: #38bdf8;
+        margin-bottom: 20px;
+    }
+    
+    label {
+        font-size: 14px;
+        color: #cbd5e1;
+        display: block;
+        margin-top: 10px;
+    }
+    
+    input, select {
+        width: 100%;
+        padding: 10px;
+        border-radius: 8px;
+        border: none;
+        margin-top: 5px;
+        margin-bottom: 10px;
+        background: #1e293b;
+        color: white;
+    }
+    
+    input:focus, select:focus {
+        outline: 2px solid #38bdf8;
+    }
+    
+    /* password check */
+    .check {
+        font-size: 12px;
+        margin-bottom: 10px;
+    }
+    .valid { color:#22c55e; }
+    .invalid { color:#ef4444; }
+    
+    /* button */
+    button {
+        width: 100%;
+        padding: 12px;
+        background: #3b82f6;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: 0.2s;
+    }
+    
+    button:hover {
+        background: #2563eb;
+    }
+    
+    button:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+    }
+    
+    /* link */
+    .link {
+        text-align: center;
+        margin-top: 15px;
+    }
+    
+    .link a {
+        color: #38bdf8;
+        text-decoration: none;
+    }
+    
+    /* toast */
+    #toast {
+        position: fixed;
+        bottom: 30px;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 14px 20px;
+        border-radius: 10px;
+        color: white;
+        opacity: 0;
+        transition: 0.3s;
+    }
+    
+    #toast.show {
+        opacity: 1;
+    }
+    
+    .success { background: #22c55e; }
+    .error { background: #ef4444; }
+    
     </style>
-</head>
-
-<body>
-
-<div class="card">
-
-    <h2>Registrazione</h2>
-
+    </head>
+    
+    <body>
+    
+    <div class="container">
+    
+    <div class="card">
+    
+    <h2>📝 Registrazione</h2>
+    
     <form method="post">
-
-        <label>Username</label>
-        <select name="username" id="username" onchange="fillSector()" required>
-            <option value="">Seleziona username</option>
-            {% for u in users %}
-                <option value="{{ u.username }}"
-                        data-sector="{{ u.sector }}"
-                        data-first="{{ u.first_name }}"
-                        data-last="{{ u.last_name }}">
-                    {{ u.username }}
-                </option>
-            {% endfor %}
-        </select>
-
-        <input type="hidden" name="sector" id="sector">
-        <input type="hidden" name="first_name" id="first_name">
-        <input type="hidden" name="last_name" id="last_name">
-
-        <label>Email</label>
-        <input name="email" type="email" required>
-
-        <label>Password</label>
-        <input name="password" type="password" required>
-
-        <button type="submit">Registrati</button>
-
+    
+    <label>Username</label>
+    <select name="username" id="username" onchange="fillSector()" required>
+        <option value="">Seleziona username</option>
+        {% for u in users %}
+            <option value="{{ u.username }}"
+                    data-sector="{{ u.sector }}"
+                    data-first="{{ u.first_name }}"
+                    data-last="{{ u.last_name }}">
+                {{ u.username }}
+            </option>
+        {% endfor %}
+    </select>
+    
+    <input type="hidden" name="sector" id="sector">
+    <input type="hidden" name="first_name" id="first_name">
+    <input type="hidden" name="last_name" id="last_name">
+    
+    <label>Email</label>
+    <input name="email" type="email" required>
+    
+    <label>Password</label>
+    <input name="password" id="password" type="password" required>
+    
+    <div class="check">
+        <div id="len" class="invalid">• Minimo 6 caratteri</div>
+        <div id="num" class="invalid">• Almeno un numero</div>
+    </div>
+    
+    <button id="submitBtn" disabled>Registrati</button>
+    
     </form>
-
+    
     <div class="link">
         <a href="/">← Torna al login</a>
     </div>
-
-</div>
-
-<script>
-function fillSector() {
-
-    let select = document.getElementById("username");
-    let option = select.options[select.selectedIndex];
-
-    document.getElementById("sector").value = option.dataset.sector || "";
-    document.getElementById("first_name").value = option.dataset.first || "";
-    document.getElementById("last_name").value = option.dataset.last || "";
-}
-</script>
-
-</body>
-</html>
-""", users=users)
+    
+    </div>
+    </div>
+    
+    <div id="toast" class="{{ 'show success' if success else 'show error' if message else '' }}">
+        {{ message }}
+    </div>
+    
+    <script>
+    // autofill
+    function fillSector() {
+        let select = document.getElementById("username");
+        let option = select.options[select.selectedIndex];
+    
+        document.getElementById("sector").value = option.dataset.sector || "";
+        document.getElementById("first_name").value = option.dataset.first || "";
+        document.getElementById("last_name").value = option.dataset.last || "";
+    }
+    
+    // password validation
+    let password = document.getElementById("password");
+    let btn = document.getElementById("submitBtn");
+    
+    password.addEventListener("input", () => {
+    
+        let val = password.value;
+    
+        let lenOk = val.length >= 6;
+        let numOk = /\\d/.test(val);
+    
+        document.getElementById("len").className = lenOk ? "valid" : "invalid";
+        document.getElementById("num").className = numOk ? "valid" : "invalid";
+    
+        btn.disabled = !(lenOk && numOk);
+    });
+    
+    // toast auto hide
+    setTimeout(() => {
+        let t = document.getElementById("toast");
+        if (t) t.classList.remove("show");
+    }, 3000);
+    
+    </script>
+    
+    </body>
+    </html>
+    """, users=users, message="", success=False)
 def send_email(to, link):
 
     msg = MIMEText(f"Clicca qui per reimpostare la password:\n{link}")
