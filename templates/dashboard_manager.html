@@ -1,0 +1,89 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta http-equiv="Content-Style-Type" content="text/css">
+  <title></title>
+  <meta name="Generator" content="Cocoa HTML Writer">
+  <meta name="CocoaVersion" content="2685.5">
+  <style type="text/css">
+    p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica}
+    p.p2 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica; min-height: 14.0px}
+  </style>
+</head>
+<body>
+<p class="p1">&lt;!DOCTYPE html&gt;</p>
+<p class="p1">&lt;html lang="it"&gt;</p>
+<p class="p1">&lt;head&gt;</p>
+<p class="p1">&lt;meta charset="UTF-8"&gt;</p>
+<p class="p1">&lt;title&gt;Dashboard Manager&lt;/title&gt;</p>
+<p class="p2"><br></p>
+<p class="p1">&lt;link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css' rel='stylesheet' /&gt;</p>
+<p class="p1">&lt;script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js'&gt;&lt;/script&gt;</p>
+<p class="p2"><br></p>
+<p class="p1">&lt;style&gt;</p>
+<p class="p1">body { background:#0f172a; color:white; font-family:Arial; }</p>
+<p class="p1">button { padding:6px 10px; border-radius:6px; border:none; cursor:pointer; }</p>
+<p class="p1">&lt;/style&gt;</p>
+<p class="p1">&lt;/head&gt;</p>
+<p class="p2"><br></p>
+<p class="p1">&lt;body&gt;</p>
+<p class="p2"><br></p>
+<p class="p1">&lt;h2&gt;👔 Dashboard Manager&lt;/h2&gt;</p>
+<p class="p2"><br></p>
+<p class="p1">&lt;a href="/logout"&gt;Logout&lt;/a&gt; |</p>
+<p class="p1">&lt;a href="/switch_view/worker"&gt;👷 Vista Worker&lt;/a&gt;</p>
+<p class="p2"><br></p>
+<p class="p1">&lt;hr&gt;</p>
+<p class="p2"><br></p>
+<p class="p1">&lt;div id="calendar"&gt;&lt;/div&gt;</p>
+<p class="p2"><br></p>
+<p class="p1">&lt;script&gt;</p>
+<p class="p1">document.addEventListener('DOMContentLoaded', function() {</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>var calendar = new FullCalendar.Calendar(</p>
+<p class="p1"><span class="Apple-converted-space">        </span>document.getElementById('calendar'), {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>initialView: 'dayGridMonth',</p>
+<p class="p1"><span class="Apple-converted-space">        </span>locale: 'it',</p>
+<p class="p1"><span class="Apple-converted-space">        </span>events: {{ events|safe }},</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>eventClick: function(info){</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">            </span>let e = info.event;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">            </span>if(confirm(</p>
+<p class="p1"><span class="Apple-converted-space">                </span>e.title + "\n\nApprovi questa richiesta?"</p>
+<p class="p1"><span class="Apple-converted-space">            </span>)){</p>
+<p class="p1"><span class="Apple-converted-space">                </span>fetch("/approve/" + e.id).then(()=&gt;location.reload())</p>
+<p class="p1"><span class="Apple-converted-space">            </span>} else {</p>
+<p class="p1"><span class="Apple-converted-space">                </span>fetch("/reject/" + e.id).then(()=&gt;location.reload())</p>
+<p class="p1"><span class="Apple-converted-space">            </span>}</p>
+<p class="p1"><span class="Apple-converted-space">        </span>}</p>
+<p class="p1"><span class="Apple-converted-space">    </span>});</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>calendar.render();</p>
+<p class="p1">});</p>
+<p class="p1">&lt;/script&gt;</p>
+<p class="p2"><br></p>
+<p class="p1">&lt;hr&gt;</p>
+<p class="p2"><br></p>
+<p class="p1">&lt;h3&gt;Richieste&lt;/h3&gt;</p>
+<p class="p2"><br></p>
+<p class="p1">{% for d in data %}</p>
+<p class="p1">&lt;div style="margin:10px; padding:10px; background:#1f2937; border-radius:8px;"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;b&gt;{{ d.worker_name }}&lt;/b&gt;&lt;br&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{{ d.type }}&lt;br&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{{ d.date_from }} → {{ d.date_to }}&lt;br&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>Stato: {{ d.status }}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;br&gt;&lt;br&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;button onclick="fetch('/approve/{{d.id}}').then(()=&gt;location.reload())"&gt;✔&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;button onclick="fetch('/reject/{{d.id}}').then(()=&gt;location.reload())"&gt;✖&lt;/button&gt;</p>
+<p class="p1">&lt;/div&gt;</p>
+<p class="p1">{% endfor %}</p>
+<p class="p2"><br></p>
+<p class="p1">&lt;/body&gt;</p>
+<p class="p1">&lt;/html&gt;</p>
+</body>
+</html>
