@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Login</title>
+
+<style>
+body {
+    margin:0;
+    font-family:Arial;
+    background:url('https://images.unsplash.com/photo-1497366754035-f200968a6e72') center/cover no-repeat;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+}
+
+.card {
+    background:rgba(0,0,0,0.7);
+    padding:30px;
+    border-radius:12px;
+    color:white;
+    width:320px;
+    text-align:center;
+}
+
+input {
+    width:100%;
+    padding:10px;
+    margin:10px 0;
+    border-radius:6px;
+    border:none;
+}
+
+button {
+    width:100%;
+    padding:10px;
+    background:#38bdf8;
+    border:none;
+    border-radius:6px;
+    font-weight:bold;
+    cursor:pointer;
+}
+
+.error {
+    color:#ef4444;
+    margin-bottom:10px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="card">
+
+<h2>Login</h2>
+
+{% if error %}
+<div class="error">{{ error }}</div>
+{% endif %}
+
+<form method="POST">
+    <input name="username" placeholder="Username" required>
+    <input type="password" name="password" placeholder="Password" required>
+    <button>Login</button>
+</form>
+
+<br>
+
+<a href="/register" style="color:#38bdf8;">Registrati</a><br>
+<a href="/forgot" style="color:#38bdf8;">Password dimenticata?</a>
+
+</div>
+
+</body>
+</html>
