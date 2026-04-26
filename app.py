@@ -1348,7 +1348,7 @@ function handleAction(url) {{
         """
 
         # ================= LA TUA LISTA ORIGINALE =================    
-
+        from datetime import datetime, date
         today = date.today()
         
         for d in data:
