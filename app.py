@@ -248,8 +248,102 @@ def register():
             return "Errore registrazione"
 
         return """
-        <h3>Registrazione completata ✅</h3>
-        <a href="/">Torna al login</a>
+        <!DOCTYPE html>
+        <html lang="it">
+        <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        <style>
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(135deg,#0f172a,#1e293b,#0f172a);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        /* glow */
+        body::before, body::after {
+            content: "";
+            position: fixed;
+            width: 500px;
+            height: 500px;
+            border-radius: 50%;
+            filter: blur(100px);
+        }
+        body::before {
+            background: rgba(34,197,94,0.25);
+            top: -100px;
+            left: -100px;
+        }
+        body::after {
+            background: rgba(59,130,246,0.2);
+            bottom: -100px;
+            right: -100px;
+        }
+        
+        .card {
+            background: rgba(15,23,42,0.95);
+            padding: 40px;
+            border-radius: 16px;
+            text-align: center;
+            color: white;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+            max-width: 400px;
+        }
+        
+        .icon {
+            font-size: 50px;
+            margin-bottom: 15px;
+        }
+        
+        h3 {
+            color: #22c55e;
+            margin-bottom: 10px;
+        }
+        
+        p {
+            color: #cbd5e1;
+            font-size: 14px;
+            margin-bottom: 25px;
+        }
+        
+        a {
+            display: inline-block;
+            padding: 10px 18px;
+            background: #3b82f6;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+        
+        a:hover {
+            background: #2563eb;
+            transform: scale(1.05);
+        }
+        </style>
+        </head>
+        
+        <body>
+        
+        <div class="card">
+        
+            <div class="icon">🎉</div>
+        
+            <h3>Registrazione completata</h3>
+        
+            <p>Il tuo account è stato creato con successo.</p>
+        
+            <a href="/">Vai al login</a>
+        
+        </div>
+        
+        </body>
+        </html>
         """
 
     # ================= GET (MOSTRA FORM) =================
