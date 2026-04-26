@@ -2038,7 +2038,7 @@ TEMPLATE = """
 
     <h2 class="title">⚙️ Impostazioni account</h2>
 
-    <form method="POST" class="settings-form" oninput="validateForm()">
+    <form method="POST" class="settings-form" oninput="validateForm()" onsubmit="handleSubmit()">
 
         <!-- EMAIL -->
         <div class="toggle-box">
@@ -2108,7 +2108,6 @@ TEMPLATE = """
     margin-top: 10px;
     background: #1f2937;
     color: white;
-    outline: none;
 }
 
 .toggle-box {
@@ -2122,7 +2121,7 @@ TEMPLATE = """
 .toggle-label {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
     cursor: pointer;
     font-weight: bold;
 }
@@ -2131,7 +2130,6 @@ TEMPLATE = """
     display: none;
 }
 
-/* bottone */
 .save-btn {
     width: 100%;
     padding: 12px;
@@ -2141,7 +2139,6 @@ TEMPLATE = """
     color: white;
     font-weight: bold;
     cursor: not-allowed;
-    transition: 0.25s;
 }
 
 .save-btn.active {
@@ -2149,32 +2146,22 @@ TEMPLATE = """
     cursor: pointer;
 }
 
-.save-btn.active:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 25px rgba(34,197,94,0.4);
-}
-
-/* PASSWORD HINT */
 #passwordHint {
-    display: block;
-    margin-top: 8px;
     font-size: 12px;
+    margin-top: 5px;
 }
 
 /* TOAST */
 #toast {
     visibility: hidden;
-    min-width: 250px;
-    background: #111827;
-    color: white;
-    text-align: center;
-    border-radius: 8px;
-    padding: 14px;
     position: fixed;
     bottom: 30px;
     left: 50%;
     transform: translateX(-50%);
-    z-index: 1000;
+    background: #111827;
+    color: white;
+    padding: 14px;
+    border-radius: 8px;
     opacity: 0;
     transition: 0.3s;
 }
@@ -2184,13 +2171,8 @@ TEMPLATE = """
     opacity: 1;
 }
 
-#toast.success {
-    background: #22c55e;
-}
-
-#toast.error {
-    background: #ef4444;
-}
+#toast.success { background: #22c55e; }
+#toast.error { background: #ef4444; }
 </style>
 
 <script>
@@ -2203,27 +2185,11 @@ function toggleFields() {
     const passGroup = document.getElementById("passwordGroup");
     const passInputs = passGroup.querySelectorAll("input");
 
-    // EMAIL
-    if (emailToggle.checked) {
-        emailField.style.display = "block";
-        emailField.disabled = false;
-    } else {
-        emailField.style.display = "none";
-        emailField.disabled = true;
-        emailField.value = "";
-    }
+    emailField.style.display = emailToggle.checked ? "block" : "none";
+    emailField.disabled = !emailToggle.checked;
 
-    // PASSWORD
-    if (passToggle.checked) {
-        passGroup.style.display = "block";
-        passInputs.forEach(i => i.disabled = false);
-    } else {
-        passGroup.style.display = "none";
-        passInputs.forEach(i => {
-            i.disabled = true;
-            i.value = "";
-        });
-    }
+    passGroup.style.display = passToggle.checked ? "block" : "none";
+    passInputs.forEach(i => i.disabled = !passToggle.checked);
 
     validateForm();
 }
@@ -2234,7 +2200,6 @@ function validateForm() {
     const passToggle = document.getElementById("togglePassword").checked;
 
     const email = document.getElementById("emailField").value;
-
     const password = document.getElementById("password").value;
     const confirm = document.getElementById("confirm").value;
 
@@ -2243,12 +2208,8 @@ function validateForm() {
 
     let valid = false;
 
-    // EMAIL CHECK
-    if (emailToggle && email.length > 3) {
-        valid = true;
-    }
+    if (emailToggle && email.length > 3) valid = true;
 
-    // PASSWORD CHECK
     if (passToggle) {
         if (password.length < 6) {
             hint.innerText = "Minimo 6 caratteri";
@@ -2265,14 +2226,13 @@ function validateForm() {
         hint.innerText = "";
     }
 
-    // ATTIVA BOTTONE
-    if ((emailToggle || passToggle) && valid) {
-        btn.disabled = false;
-        btn.classList.add("active");
-    } else {
-        btn.disabled = true;
-        btn.classList.remove("active");
-    }
+    btn.disabled = !(emailToggle || passToggle) || !valid;
+    btn.classList.toggle("active", !btn.disabled);
+}
+
+/* 🔥 CONFERMA SUBMIT */
+function handleSubmit() {
+    showToast("Salvataggio in corso...", "success");
 }
 
 /* TOAST */
@@ -2286,14 +2246,43 @@ function showToast(msg, type="success") {
     }, 3000);
 }
 
-/* INIT */
-window.addEventListener("DOMContentLoaded", () => {
-    toggleFields();
-});
+/* 🔥 TOAST DA BACKEND */
+{% if message %}
+showToast("{{ message }}", "{{ 'success' if success else 'error' }}");
+{% endif %}
+
+window.addEventListener("DOMContentLoaded", toggleFields);
 </script>
 
 <br>
-<a href="/dashboard">⬅ Torna indietro</a>
+<a href="/dashboard" class="back-btn">
+    ⬅ Torna indietro
+</a>
+
+<style>
+.back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 20px;
+    padding: 10px 16px;
+    background: #020617;
+    color: #38bdf8;
+    text-decoration: none;
+    border-radius: 10px;
+    font-weight: bold;
+    border: 1px solid #334155;
+    transition: all 0.25s ease;
+    font-family: Arial, sans-serif;
+}
+
+.back-btn:hover {
+    background: #0f172a;
+    color: #22c55e;
+    transform: translateX(-4px);
+    border-color: #22c55e;
+}
+</style>
 """
 
 
