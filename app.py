@@ -191,20 +191,27 @@ def register():
         sector = request.form.get("sector")
         first_name = request.form.get("first_name")
         last_name = request.form.get("last_name")
-
+    
         # 🔒 controllo base
         if not username or not email or not password or not sector:
             return "Tutti i campi sono obbligatori"
-
+    
+        # 🔐 VALIDAZIONE PASSWORD
+        if len(password) < 6:
+            return "La password deve avere almeno 6 caratteri"
+    
+        if not any(char.isdigit() for char in password):
+            return "La password deve contenere almeno un numero"
+    
         # 🔎 evita duplicati username
         check = requests.get(
             f"{SUPABASE_URL}/rest/v1/users?username=eq.{username}",
             headers=HEADERS
         )
-
+    
         if check.json():
             return "Username già registrato"
-
+    
         # 🔐 hash password
         hashed = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
 
@@ -2333,30 +2340,58 @@ def settings():
             update_data["email"] = new_email
 
         # 🔹 CAMBIO PASSWORD
-        if new_password:
+if new_password:
 
-            if not current_password:
-                return render_template_string(TEMPLATE, message="Inserisci la password attuale", success=False)
+    # 🔐 VALIDAZIONE PASSWORD
+    if len(new_password) < 6:
+        return render_template_string(
+            TEMPLATE,
+            message="La password deve avere almeno 6 caratteri",
+            success=False
+        )
 
-            res = requests.get(
-                f"{SUPABASE_URL}/rest/v1/users?id=eq.{user_id}",
-                headers=headers
-            ).json()
+    if not any(char.isdigit() for char in new_password):
+        return render_template_string(
+            TEMPLATE,
+            message="La password deve contenere almeno un numero",
+            success=False
+        )
 
-            stored_hash = res[0]["password"]
+    if not current_password:
+        return render_template_string(
+            TEMPLATE,
+            message="Inserisci la password attuale",
+            success=False
+        )
 
-            if not bcrypt.checkpw(current_password.encode("utf-8"), stored_hash.encode("utf-8")):
-                return render_template_string(TEMPLATE, message="Password attuale errata", success=False)
+    res = requests.get(
+        f"{SUPABASE_URL}/rest/v1/users?id=eq.{user_id}",
+        headers=headers
+    ).json()
 
-            if new_password != confirm:
-                return render_template_string(TEMPLATE, message="Le password non corrispondono", success=False)
+    stored_hash = res[0]["password"]
 
-            hashed = bcrypt.hashpw(
-                new_password.encode("utf-8"),
-                bcrypt.gensalt()
-            ).decode("utf-8")
+    if not bcrypt.checkpw(current_password.encode("utf-8"), stored_hash.encode("utf-8")):
+        return render_template_string(
+            TEMPLATE,
+            message="Password attuale errata",
+            success=False
+        )
 
-            update_data["password"] = hashed
+    if new_password != confirm:
+        return render_template_string(
+            TEMPLATE,
+            message="Le password non corrispondono",
+            success=False
+        )
+
+    # 🔐 HASH
+    hashed = bcrypt.hashpw(
+        new_password.encode("utf-8"),
+        bcrypt.gensalt()
+    ).decode("utf-8")
+
+    update_data["password"] = hashed
 
         # 🔹 UPDATE DB
         if update_data:
